@@ -301,7 +301,7 @@ app.post('/api/analyze-bill', authenticate, upload.single('billImage'), async (r
     return res.status(400).json({ error: 'No image uploaded' });
   }
 
-  const relativeImagePath = `/uploads/${req.file.filename}`;
+  const relativeImagePath = '';
 
   // Custom API key configuration: Use the user's hardcoded key by default
   const apiKey = process.env.GEMINI_API_KEY; if (!apiKey) { console.log('No GEMINI_API_KEY found, running receipt mockup extraction'); /* fallback handling below */ }
@@ -332,7 +332,7 @@ app.post('/api/analyze-bill', authenticate, upload.single('billImage'), async (r
 
     const imageHelper = {
       inlineData: {
-        data: fs.readFileSync(req.file.path).toString('base64'),
+        data: req.file.buffer.toString('base64'),
         mimeType: req.file.mimetype
       }
     };
