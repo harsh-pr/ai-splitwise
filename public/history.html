@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splitwise AI - History Log Directory</title>
+  <meta name="description" content="Browse all your past receipt scans, bills and expenses splits categorized by restaurant, hotel, movie and grocery bills with detailed share breakdowns.">
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+  
+  <style>
+    /* Spaced out grid for columns on full history view */
+    .history-category-col {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: var(--border-radius-md);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 100%;
+      overflow: hidden;
+    }
+    
+    .history-category-col-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 0.75rem;
+    }
+    
+    .history-category-col-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .history-category-col-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-right: 4px;
+      min-height: 150px;
+    }
+    
+    .history-category-col-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .history-category-col-list::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 99px;
+    }
+    .history-category-col-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 99px;
+    }
+    .history-category-col-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+    
+    .empty-col-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin: auto 0;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <!-- App Background Glow Effects -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loader-container">
+      <div class="spinner"></div>
+      <p id="loader-text">Loading history...</p>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main id="app-container">
+    
+    <section class="workspace-section" style="max-width: 1200px; width: 94vw; height: 90vh;">
+      
+      <!-- App Header -->
+      <header class="app-header glass-panel">
+        <div class="header-logo">
+          <h2 class="logo-text mini">Splitwise <span>AI</span></h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <span id="user-display-name" class="user-name" style="font-weight: 600;">Loading...</span>
+          <a href="/index.html" class="btn btn-secondary btn-sm" style="display: flex; gap: 0.5rem; align-items: center; font-weight: 600; border-radius: 8px;">
+            <span>🏠 Workspace</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Directory Section -->
+      <div class="glass-panel" style="flex: 1; display: flex; flex-direction: column; padding: 2rem; overflow: hidden; min-height: 0;">
+        
+        <!-- Dashboard Spent Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem;">Expenses History Directory</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Review item splits, verify receipts, or continue editing previous bills.</p>
+          </div>
+          <div class="glass-card" style="padding: 0.65rem 1.25rem; display: flex; gap: 1rem; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 500; letter-spacing: 0.05em;">Total Spent Across All:</span>
+            <span id="total-spent-amount" style="font-size: 1.4rem; font-weight: 700; color: var(--color-success);">₹0.00</span>
+          </div>
+        </div>
+        
+        <!-- Categorized Columns Grid -->
+        <div id="history-grid-list" style="flex: 1; overflow: hidden; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; min-height: 0;">
+          
+          <!-- Column 1: Restaurant -->
+          <div class="history-category-col">
+            <div class="history-category-col-header">
+              <span class="history-category-col-title">🍽️ Restaurant Bills</span>
+              <span class="badge" id="badge-restaurant">0</span>
+            </div>
+            <div id="list-restaurant" class="history-category-col-list">
+              <p class="empty-col-text">No scans in this category</p>
+            </div>
+          </div>
+          
+          <!-- Column 2: Hotel -->
+          <div class="history-category-col">
+            <div class="history-category-col-header">
+              <span class="history-category-col-title">🏨 Hotel Bills</span>
+              <span class="badge" id="badge-hotel">0</span>
+            </div>
+            <div id="list-hotel" class="history-category-col-list">
+              <p class="empty-col-text">No hotel bills recorded</p>
+            </div>
+          </div>
+          
+          <!-- Column 3: Movie -->
+          <div class="history-category-col">
+            <div class="history-category-col-header">
+              <span class="history-category-col-title">🎬 Movie Bills</span>
+              <span class="badge" id="badge-movie">0</span>
+            </div>
+            <div id="list-movie" class="history-category-col-list">
+              <p class="empty-col-text">No movie bills recorded</p>
+            </div>
+          </div>
+          
+          <!-- Column 4: Grocery -->
+          <div class="history-category-col">
+            <div class="history-category-col-header">
+              <span class="history-category-col-title">🛒 Grocery Bills</span>
+              <span class="badge" id="badge-grocery">0</span>
+            </div>
+            <div id="list-grocery" class="history-category-col-list">
+              <p class="empty-col-text">No grocery bills recorded</p>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+    </section>
+
+    <!-- DETAILS MODAL -->
+    <div id="details-modal" class="modal hidden">
+      <div class="modal-content glass-panel animate-scale-in">
+        <span class="close-modal-btn" onclick="closeDetailsModal()">&times;</span>
+        <h3 id="modal-restaurant">Restaurant Name</h3>
+        <div class="modal-meta-row" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+          <span id="modal-date" class="modal-date" style="margin-bottom: 0;">Date: 2026-06-29</span>
+          <span id="modal-category" class="badge">Restaurant Bill</span>
+        </div>
+
+        <div class="modal-layout">
+          <!-- Receipt Photo -->
+          <div class="modal-photo-section">
+            <h4>Receipt Image</h4>
+            <div class="modal-img-container">
+              <img id="modal-img" src="" alt="Original bill" title="Click to view full image" onclick="window.open(this.src, '_blank')" style="cursor: pointer;">
+            </div>
+          </div>
+
+          <!-- Split Summary Details -->
+          <div class="modal-splits-section">
+            <h4>Split Details</h4>
+            <div id="modal-splits-list" class="modal-splits-list">
+              <!-- Dynamically populated summaries -->
+            </div>
+            
+            <div class="modal-totals-summary">
+              <div class="totals-summary-line"><span>Tax/GST:</span> <span id="modal-tax">₹0.00</span></div>
+              <div class="totals-summary-line"><span>Tips:</span> <span id="modal-tip">₹0.00</span></div>
+              <div class="totals-summary-line grand"><span>Grand Total:</span> <span id="modal-total">₹0.00</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="modal-edit-btn">Edit Bill Splits</button>
+          <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="history.js"></script>
+</body>
+</html>

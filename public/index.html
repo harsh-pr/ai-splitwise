@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splitwise AI - Receipt Scanner & Bill Splitter</title>
+  <meta name="description" content="Split restaurant bills easily with Splitwise AI. Upload a photo, let AI extract items, and share expenses with friends accurately including GST and tips.">
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+  
+  
+</head>
+<body>
+  <!-- App Background Glow Effects -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loader-container">
+      <div class="spinner"></div>
+      <p id="loader-text">Analyzing receipt image...</p>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main id="app-container">
+    
+    <!-- 1. AUTHENTICATION SECTION (Hidden if logged in) -->
+    <section id="auth-section" class="auth-section glass-panel">
+      <div class="auth-header">
+        <h1 class="logo-text">Splitwise <span>AI</span></h1>
+        <p class="tagline">Smart receipt extraction & exact splits</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="tab-login-btn" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+        <button id="tab-signup-btn" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form" onsubmit="handleEmailLogin(event)">
+        <div class="input-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" required placeholder="name@example.com">
+        </div>
+        <div class="input-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="Enter password">
+        </div>
+        <button type="submit" id="submit-login-btn" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signup-form" class="auth-form hidden" onsubmit="handleEmailSignup(event)">
+        <div class="input-group">
+          <label for="signup-name">Full Name</label>
+          <input type="text" id="signup-name" placeholder="John Doe">
+        </div>
+        <div class="input-group">
+          <label for="signup-email">Email Address</label>
+          <input type="email" id="signup-email" required placeholder="name@example.com">
+        </div>
+        <div class="input-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" required placeholder="Create secure password">
+        </div>
+        <button type="submit" id="submit-signup-btn" class="btn btn-primary btn-block">Create Account</button>
+      </form>
+
+      
+      <p id="auth-error-msg" class="error-text hidden"></p>
+    </section>
+
+    <!-- 2. MAIN APPLICATION WORKSPACE (Hidden if logged out) -->
+    <section id="workspace-section" class="workspace-section hidden">
+      
+      <!-- App Header -->
+      <header class="app-header glass-panel">
+        <div class="header-logo">
+          <h2 class="logo-text mini">Splitwise <span>AI</span></h2>
+        </div>
+        <div class="header-user">
+          <div class="user-menu-container">
+            <div class="user-menu-trigger">
+              <span class="user-avatar">👤</span>
+              <span id="user-display-name" class="user-name">Loading...</span>
+            </div>
+            <div class="user-dropdown-menu glass-panel">
+              <div class="dropdown-header">
+                <span class="dropdown-spent-label">Total Spent</span>
+                <span id="dropdown-spent-amount" class="dropdown-spent-value">₹0.00</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a href="/history.html" class="dropdown-item">
+                <span>📁 History Details</span>
+              </a>
+              <button onclick="handleLogout()" class="dropdown-item logout-item">
+                <span>🚪 Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Grid Layout for Dashboard -->
+      <div class="dashboard-grid">
+
+        <!-- Right Side: Interactive Scanner & Splitting Wizard -->
+        <main class="wizard-container glass-panel">
+          
+
+
+          <!-- Wizard Step Headers -->
+          <nav class="wizard-steps-nav">
+            <div class="step-indicator active" id="step-nav-1">1. Type</div>
+            <div class="step-indicator" id="step-nav-2">2. Upload</div>
+            <div class="step-indicator" id="step-nav-3">3. Review</div>
+            <div class="step-indicator" id="step-nav-4">4. Members</div>
+            <div class="step-indicator" id="step-nav-5">5. Split Board</div>
+            <div class="step-indicator" id="step-nav-6">6. Details</div>
+          </nav>
+
+          <!-- WIZARD STEP 1: Choose Split Type -->
+          <div id="wizard-step-1" class="wizard-step">
+            <div class="step-intro animate-fade-in">
+              <h3>What would you like to split?</h3>
+              <p>Choose the split template to optimize details extraction.</p>
+            </div>
+            <div class="split-options-grid">
+              <button class="split-option-card active" onclick="goToStep(2)">
+                <div class="option-icon">🍽️</div>
+                <h4>Restaurant Bill</h4>
+                <p>Scans items, taxes/GST, drinks and food totals. Splitting optimized by individual items consumed.</p>
+              </button>
+              <button class="split-option-card disabled" title="Coming soon">
+                <div class="option-icon">🏨</div>
+                <h4>Hotel Bill</h4>
+                <p>Coming soon: Split accommodation, room services, and shared amenities charges.</p>
+              </button>
+              <button class="split-option-card disabled" title="Coming soon">
+                <div class="option-icon">🎬</div>
+                <h4>Movie Bill</h4>
+                <p>Coming soon: Split ticket bookings, snacks, beverages and combos.</p>
+              </button>
+              <button class="split-option-card disabled" title="Coming soon">
+                <div class="option-icon">🛒</div>
+                <h4>Grocery Bill</h4>
+                <p>Coming soon: Split large household shopping bills, bulk items, and dynamic quantities.</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- WIZARD STEP 2: Upload Receipt Image -->
+          <div id="wizard-step-2" class="wizard-step hidden">
+            <div class="step-intro">
+              <h3>Upload Receipt Image</h3>
+              <p>Upload a photo of your receipt to extract all items instantly via Gemini AI.</p>
+            </div>
+            
+            <div class="upload-area-container animate-fade-in">
+              <!-- Mobile only camera trigger -->
+              <div class="mobile-camera-container mobile-only">
+                <button class="btn btn-primary btn-block camera-trigger-btn" onclick="triggerCameraInput()">
+                  <span>📸 Take Photo of Bill</span>
+                </button>
+                <div class="or-separator"><span>OR</span></div>
+                <input type="file" id="camera-input" class="hidden" accept="image/*" capture="environment" onchange="handleFileSelect(event)">
+              </div>
+
+              <div id="dropzone" class="dropzone" onclick="triggerFileInput()">
+                <div class="dropzone-icon">📁</div>
+                <p class="desktop-only">Drag and drop receipt photo here, or <span>browse files</span></p>
+                <p class="mobile-only">Choose an existing photo from <span>gallery</span></p>
+                <span class="file-limits">Supports JPG, PNG, WebP</span>
+                <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
+              </div>
+              
+              <div id="upload-preview-container" class="upload-preview-container hidden">
+                <img id="upload-preview" src="#" alt="Receipt Preview">
+                <div class="preview-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="resetUpload()">Change Image</button>
+                  <button class="btn btn-primary" id="proceed-upload-btn" onclick="uploadAndAnalyze()">Analyze Receipt</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="step-navigation-bar">
+              <button class="btn btn-secondary" onclick="goToStep(1)">Back</button>
+            </div>
+          </div>
+
+          <!-- WIZARD STEP 3: Review Extracted Receipt Info -->
+          <div id="wizard-step-3" class="wizard-step hidden">
+            <div class="step-intro">
+              <h3>Review Extracted Items</h3>
+              <p>Double check extracted item names, prices, taxes, and service tips before splitting.</p>
+            </div>
+
+            <div class="review-layout animate-fade-in">
+              <div class="review-form glass-card">
+                <div class="input-group">
+                  <label for="review-restaurant">Restaurant Name</label>
+                  <input type="text" id="review-restaurant">
+                </div>
+                <div class="input-group">
+                  <label for="review-date">Date</label>
+                  <input type="text" id="review-date" placeholder="YYYY-MM-DD or Unavailable">
+                </div>
+                <div class="input-group">
+                  <label for="review-category">Category</label>
+                  <select id="review-category" class="select-dropdown">
+                    <option value="Restaurant Bill">Restaurant Bills</option>
+                    <option value="Hotel Bill">Hotel Bills</option>
+                    <option value="Movie Bill">Movie Bills</option>
+                    <option value="Grocery Bill">Grocery Bills</option>
+                  </select>
+                </div>
+
+                <!-- Items Editor Container -->
+                <div class="items-editor-wrapper">
+                  <div class="items-header">
+                    <h4>Receipt Items</h4>
+                    <button class="btn btn-secondary btn-xs" onclick="addCustomItem()">+ Add Item</button>
+                  </div>
+                  <div id="extracted-items-list" class="items-list-container">
+                    <!-- Extracted items fields generated dynamically -->
+                  </div>
+                </div>
+
+                <!-- Totals Section -->
+                <div class="totals-form-grid">
+                  <div class="input-group">
+                    <label for="review-tax">Tax & GST</label>
+                    <input type="number" step="0.01" id="review-tax" onchange="recalculateReceiptTotal()">
+                  </div>
+                  <div class="input-group">
+                    <label for="review-tip">Tips / Service</label>
+                    <input type="number" step="0.01" id="review-tip" onchange="recalculateReceiptTotal()">
+                  </div>
+                  <div class="input-group">
+                    <label for="review-total">Grand Total</label>
+                    <input type="number" step="0.01" id="review-total" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-navigation-bar">
+              <button class="btn btn-secondary" onclick="goToStep(2)">Back</button>
+              <button class="btn btn-primary" onclick="proceedFromReview()">Proceed to Members</button>
+            </div>
+          </div>
+
+          <!-- WIZARD STEP 4: Add Members -->
+          <div id="wizard-step-4" class="wizard-step hidden">
+            <div class="step-intro">
+              <h3>Who is sharing this bill?</h3>
+              <p>Type member names and add them one by one to split the receipt items.</p>
+            </div>
+
+            <div class="members-layout animate-fade-in">
+              <div class="members-input-box">
+                <input type="text" id="member-name-input" placeholder="Type a friend's name..." onkeypress="handleMemberInputKeypress(event)">
+                <button class="btn btn-primary" id="add-member-btn" onclick="addMemberFromInput()">+</button>
+              </div>
+
+              <div class="added-members-wrapper">
+                <h4>Bill Members (<span id="member-count">0</span>)</h4>
+                <div id="members-list-tags" class="members-tags-container">
+                  <!-- Dynamic tag list -->
+                  <p class="placeholder-tag-text">No members added yet. Add at least one person.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-navigation-bar">
+              <button class="btn btn-secondary" onclick="goToStep(3)">Back</button>
+              <button class="btn btn-primary" id="members-next-btn" onclick="proceedToSplitBoard()">Proceed to Assignments</button>
+            </div>
+          </div>
+
+          <!-- WIZARD STEP 5: Interactive Split Item Assignment -->
+          <div id="wizard-step-5" class="wizard-step hidden">
+            <div class="step-intro">
+              <h3>Split Board</h3>
+              <p>Assign items by clicking on the members who shared them. Items will be divided equally among chosen members.</p>
+            </div>
+
+            <div class="split-board-container animate-fade-in">
+              <div class="split-board-header">
+                <span class="col-item">Receipt Item</span>
+                <span class="col-price">Price</span>
+                <span class="col-assign">Consumers / Shares</span>
+              </div>
+              <div id="split-items-assignment-list" class="split-board-list">
+                <!-- Dynamically populated items with member selection buttons -->
+              </div>
+            </div>
+
+            <div class="step-navigation-bar">
+              <button class="btn btn-secondary" onclick="goToStep(4)">Back</button>
+              <button class="btn btn-primary" onclick="calculateAndPresentSplit()">Calculate Split Bill</button>
+            </div>
+          </div>
+
+          <!-- WIZARD STEP 6: Calculation Results Summary -->
+          <div id="wizard-step-6" class="wizard-step hidden">
+            <div class="step-intro">
+              <h3>Split Bill Calculations</h3>
+              <p>Here is the split details breakdown per person. Proportional taxes & tips have been auto-applied.</p>
+            </div>
+
+            <div class="results-layout animate-fade-in">
+              <!-- Cards with individuals' shares -->
+              <div id="split-results-cards" class="results-cards-grid">
+                <!-- Dynamically generated share breakdowns -->
+              </div>
+
+              <!-- General Summary Table -->
+              <div class="bill-summary-report glass-card">
+                <h4>Bill Calculations Summary</h4>
+                <div class="summary-totals-row">
+                  <div>Subtotal: <span id="res-subtotal">₹0.00</span></div>
+                  <div>Tax/GST: <span id="res-tax">₹0.00</span></div>
+                  <div>Tip/Service: <span id="res-tip">₹0.00</span></div>
+                  <div class="highlight-total">Grand Total: <span id="res-total">₹0.00</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-navigation-bar">
+              <button class="btn btn-secondary" onclick="goToStep(5)">Edit Assignments</button>
+              <button class="btn btn-success" onclick="saveAndFinishSplit()">Save & Close</button>
+            </div>
+          </div>
+
+        </main>
+      </div>
+
+    </section>
+
+    <!-- 3. DETAILS MODAL (For history details check) -->
+    <div id="details-modal" class="modal hidden">
+      <div class="modal-content glass-panel animate-scale-in">
+        <span class="close-modal-btn" onclick="closeDetailsModal()">&times;</span>
+        <h3 id="modal-restaurant">Restaurant Name</h3>
+        <div class="modal-meta-row" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+          <span id="modal-date" class="modal-date" style="margin-bottom: 0;">Date: 2026-06-29</span>
+          <span id="modal-category" class="badge">Restaurant Bill</span>
+        </div>
+
+        <div class="modal-layout">
+          <!-- Receipt Photo -->
+          <div class="modal-photo-section">
+            <h4>Receipt Image</h4>
+            <div class="modal-img-container">
+              <img id="modal-img" src="" alt="Original bill" title="Click to view full image" onclick="window.open(this.src, '_blank')" style="cursor: pointer;">
+            </div>
+          </div>
+
+          <!-- Split Summary Details -->
+          <div class="modal-splits-section">
+            <h4>Split Details</h4>
+            <div id="modal-splits-list" class="modal-splits-list">
+              <!-- Dynamically populated summaries -->
+            </div>
+            
+            <div class="modal-totals-summary">
+              <div class="totals-summary-line"><span>Tax/GST:</span> <span id="modal-tax">₹0.00</span></div>
+              <div class="totals-summary-line"><span>Tips:</span> <span id="modal-tip">₹0.00</span></div>
+              <div class="totals-summary-line grand"><span>Grand Total:</span> <span id="modal-total">₹0.00</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="modal-edit-btn">Edit Bill Splits</button>
+          <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
