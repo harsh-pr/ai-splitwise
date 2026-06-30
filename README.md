@@ -26,7 +26,7 @@
 - **Environment‑Based Secrets** – All secrets (`JWT_SECRET`, `GEMINI_API_KEY`) are loaded from environment variables; no secrets are committed to the repository.
 
 ## Demo
-You can try the API locally after following the installation steps. See the `public/` folder for a simple front‑end that interacts with the back‑end.
+You can try the API locally after following the installation steps. See the `public/` folder for a simple front‑end that interacts with the back‑end. or you can try the link using the link mentioned above.
 
 ## Prerequisites
 - **Node.js** ≥ 18 (recommended LTS)
@@ -97,6 +97,3 @@ Contributions are welcome! Please follow these steps:
 5. Submit a pull request describing your changes.
 
 Remember to keep all secrets out of the code base; add any new files that should be ignored to `.gitignore`.
-
-## License
-This project is licensed under the **MIT License** – see the `LICENSE` file for details.
