@@ -186,7 +186,8 @@ function showHistoryDetails(id) {
     modalCategory.textContent = categoryMetadata[entry.splitType] || entry.splitType || 'Restaurant Bill';
   }
   
-  elements.modalImg.src = entry.imagePath || 'placeholder.jpg';
+  const storedImg = localStorage.getItem(`bill_img_${entry.id}`);
+  elements.modalImg.src = storedImg || entry.imagePath || 'placeholder.jpg';
   
   elements.modalTax.textContent = `₹${entry.tax.toFixed(2)}`;
   elements.modalTip.textContent = `₹${entry.tip.toFixed(2)}`;

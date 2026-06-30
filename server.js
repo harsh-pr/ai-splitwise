@@ -19,30 +19,29 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET; if (!JWT_SECRET) { console.error('Missing JWT_SECRET env variable'); process.exit(1); }
 
-// Create data directories if they don't exist
+// Create data directories and database files only if not using Firebase (local development)
 const dataDir = path.join(__dirname, 'data');
 const uploadsDir = path.join(dataDir, 'uploads');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Database file paths
 const USERS_FILE = path.join(dataDir, 'users.json');
 const HISTORY_FILE = path.join(dataDir, 'history.json');
 const CONFIG_FILE = path.join(dataDir, 'config.json');
 
-// Initialize database files if missing
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify([]));
-}
-if (!fs.existsSync(HISTORY_FILE)) {
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify([]));
-}
-if (!fs.existsSync(CONFIG_FILE)) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify({}));
+if (process.env.USE_FIREBASE !== 'true') {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  if (!fs.existsSync(USERS_FILE)) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify([]));
+  }
+  if (!fs.existsSync(HISTORY_FILE)) {
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify([]));
+  }
+  if (!fs.existsSync(CONFIG_FILE)) {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify({}));
+  }
 }
 
 // Helper functions for file DB operations
@@ -184,16 +183,8 @@ function standardizeDate(dateStr) {
   return 'Unavailable';
 }
 
-// Multer storage configuration for receipt images
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Use memory storage to process files without saving them to the server disk
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Middlewares
@@ -310,9 +301,8 @@ app.post('/api/analyze-bill', authenticate, upload.single('billImage'), async (r
     return res.status(400).json({ error: 'No image uploaded' });
   }
 
-  const relativeImagePath = '/uploads/' + req.file.filename;
-  const localFilePath = req.file.path;
-  
+  const relativeImagePath = '';
+
   // Custom API key configuration: Use the user's hardcoded key by default
   const apiKey = process.env.GEMINI_API_KEY; if (!apiKey) { console.log('No GEMINI_API_KEY found, running receipt mockup extraction'); /* fallback handling below */ }
 
@@ -342,7 +332,7 @@ app.post('/api/analyze-bill', authenticate, upload.single('billImage'), async (r
 
     const imageHelper = {
       inlineData: {
-        data: Buffer.from(fs.readFileSync(localFilePath)).toString('base64'),
+        data: req.file.buffer.toString('base64'),
         mimeType: req.file.mimetype
       }
     };

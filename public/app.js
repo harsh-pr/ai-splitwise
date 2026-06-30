@@ -7,6 +7,7 @@
 const state = {
   currentUser: null,
   currentBill: null,       // Current active bill object (extracted or manual)
+  currentBillImageBase64: null, // Temporary store for the uploaded/previewed image in base64
   members: [],             // Names of people sharing the bill
   assignments: {},         // { [itemName]: string[] } -> maps items to people who consumed them
   splits: [],              // Calculated splits per person
@@ -550,6 +551,7 @@ function setUploadedFile(file) {
   // Show image preview
   const reader = new FileReader();
   reader.onload = (e) => {
+    state.currentBillImageBase64 = e.target.result;
     elements.uploadPreview.src = e.target.result;
     
     // Hide upload dropzone and camera containers
@@ -566,6 +568,7 @@ function setUploadedFile(file) {
 
 function resetUpload() {
   selectedFile = null;
+  state.currentBillImageBase64 = null;
   elements.fileInput.value = '';
   const camInput = document.getElementById('camera-input');
   if (camInput) {
@@ -1061,6 +1064,15 @@ async function saveAndFinishSplit() {
     });
     
     if (res.ok) {
+      const savedEntry = await res.json();
+      const billId = savedEntry.id;
+      if (state.currentBillImageBase64) {
+        try {
+          localStorage.setItem(`bill_img_${billId}`, state.currentBillImageBase64);
+        } catch (storageErr) {
+          console.warn('Failed to save image to localStorage:', storageErr);
+        }
+      }
       await fetchHistory(); // Refresh sidebar list
       resetWizard();
       goToStep(1);
@@ -1105,7 +1117,8 @@ function showHistoryDetails(id) {
     modalCategory.textContent = categoryMetadata[entry.splitType] || entry.splitType || 'Restaurant Bill';
   }
   
-  elements.modalImg.src = entry.imagePath || 'placeholder.jpg';
+  const storedImg = localStorage.getItem(`bill_img_${entry.id}`);
+  elements.modalImg.src = storedImg || entry.imagePath || 'placeholder.jpg';
   
   elements.modalTax.textContent = `₹${entry.tax.toFixed(2)}`;
   elements.modalTip.textContent = `₹${entry.tip.toFixed(2)}`;
@@ -1167,9 +1180,11 @@ function loadBillForEditing(historyEntry) {
   elements.reviewTotal.value = state.currentBill.total.toFixed(2);
   renderItemsEditor();
   
-  // Set upload file mock preview
-  if (state.currentBill.imagePath) {
-    elements.uploadPreview.src = state.currentBill.imagePath;
+  // Set upload file preview
+  const storedImg = localStorage.getItem(`bill_img_${historyEntry.id}`);
+  state.currentBillImageBase64 = storedImg;
+  if (storedImg || state.currentBill.imagePath) {
+    elements.uploadPreview.src = storedImg || state.currentBill.imagePath;
     elements.dropzone.classList.add('hidden');
     elements.uploadPreviewContainer.classList.remove('hidden');
   }
