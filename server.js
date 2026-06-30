@@ -6,6 +6,13 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const admin = require('firebase-admin');
+// Initialize Firebase Admin SDK if using Firestore
+if (process.env.USE_FIREBASE === 'true') {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  var db = admin.firestore();
+}
 require('dotenv').config();
 
 const app = express();
@@ -39,23 +46,64 @@ if (!fs.existsSync(CONFIG_FILE)) {
 }
 
 // Helper functions for file DB operations
-function readJSON(file) {
-  try {
-    const data = fs.readFileSync(file, 'utf8');
-    return JSON.parse(data);
-  } catch (e) {
-    console.error(`Error reading ${file}:`, e);
-    return [];
+// Unified data access: file system (default) or Firestore (when USE_FIREBASE=true)
+async function readJSON(file) {
+  if (process.env.USE_FIREBASE === 'true') {
+    // Map file paths to Firestore collections
+    const colMap = {
+      [USERS_FILE]: 'users',
+      [HISTORY_FILE]: 'history',
+      [CONFIG_FILE]: 'config'
+    };
+    const collection = colMap[file];
+    if (!collection) return [];
+    const snapshot = await db.collection(collection).get();
+    const docs = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      data.id = doc.id;
+      docs.push(data);
+    });
+    return docs;
+  } else {
+    try {
+      const data = fs.readFileSync(file, 'utf8');
+      return JSON.parse(data);
+    } catch (e) {
+      console.error(`Error reading ${file}:`, e);
+      return [];
+    }
   }
 }
 
-function writeJSON(file, data) {
-  try {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+async function writeJSON(file, data) {
+  if (process.env.USE_FIREBASE === 'true') {
+    const colMap = {
+      [USERS_FILE]: 'users',
+      [HISTORY_FILE]: 'history',
+      [CONFIG_FILE]: 'config'
+    };
+    const collection = colMap[file];
+    if (!collection) return false;
+    const batch = db.batch();
+    // Clear existing docs in the collection
+    const existing = await db.collection(collection).listDocuments();
+    existing.forEach(docRef => batch.delete(docRef));
+    // Add new docs
+    data.forEach(item => {
+      const docRef = db.collection(collection).doc(item.id || undefined);
+      batch.set(docRef, item);
+    });
+    await batch.commit();
     return true;
-  } catch (e) {
-    console.error(`Error writing ${file}:`, e);
-    return false;
+  } else {
+    try {
+      fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+      return true;
+    } catch (e) {
+      console.error(`Error writing ${file}:`, e);
+      return false;
+    }
   }
 }
 
@@ -178,7 +226,7 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Missing registration details' });
   }
 
-  const users = readJSON(USERS_FILE);
+  const users = await readJSON(USERS_FILE);
   if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
     return res.status(400).json({ error: 'User already exists with this email' });
   }
@@ -193,7 +241,7 @@ app.post('/api/auth/register', async (req, res) => {
       createdAt: new Date().toISOString()
     };
     users.push(newUser);
-    writeJSON(USERS_FILE, users);
+    await writeJSON(USERS_FILE, users);
 
     const token = jwt.sign({ id: newUser.id, email: newUser.email, name: newUser.name }, JWT_SECRET, { expiresIn: '7d' });
     
@@ -217,7 +265,7 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(400).json({ error: 'Email and password required' });
   }
 
-  const users = readJSON(USERS_FILE);
+  const users = await readJSON(USERS_FILE);
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (!user || !user.passwordHash) {
     return res.status(400).json({ error: 'Invalid email or password' });
@@ -369,8 +417,8 @@ function getMockReceiptData() {
 }
 
 // History API Endpoints
-app.get('/api/history', authenticate, (req, res) => {
-  const history = readJSON(HISTORY_FILE);
+app.get('/api/history', authenticate, async (req, res) => {
+  const history = await readJSON(HISTORY_FILE);
   // Get history for the logged in user, sort by creation date descending, limit to 10
   const userHistory = history
     .filter(entry => entry.userId === req.user.id)
@@ -379,13 +427,13 @@ app.get('/api/history', authenticate, (req, res) => {
   return res.json(userHistory);
 });
 
-app.post('/api/history', authenticate, (req, res) => {
+app.post('/api/history', authenticate, async (req, res) => {
   const newEntry = req.body;
   if (!newEntry.restaurantName || !newEntry.items || !newEntry.people) {
     return res.status(400).json({ error: 'Missing entry details' });
   }
 
-  const history = readJSON(HISTORY_FILE);
+  const history = await readJSON(HISTORY_FILE);
   
   // Format entry
   const entry = {
@@ -413,13 +461,13 @@ app.post('/api/history', authenticate, (req, res) => {
     history.push(entry);
   }
 
-  writeJSON(HISTORY_FILE, history);
+  await writeJSON(HISTORY_FILE, history);
   return res.json(entry);
 });
 
-app.delete('/api/history/:id', authenticate, (req, res) => {
+app.delete('/api/history/:id', authenticate, async (req, res) => {
   const entryId = req.params.id;
-  let history = readJSON(HISTORY_FILE);
+  let history = await readJSON(HISTORY_FILE);
   const initialLength = history.length;
   
   // Keep files that don't match or belong to another user
@@ -429,11 +477,15 @@ app.delete('/api/history/:id', authenticate, (req, res) => {
     return res.status(404).json({ error: 'Entry not found' });
   }
   
-  writeJSON(HISTORY_FILE, history);
+  await writeJSON(HISTORY_FILE, history);
   return res.json({ success: true });
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Splitwise AI Server running on http://localhost:${PORT}`);
-});
+// Start server only in local development. Vercel provides its own handler.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Splitwise AI Server running on http://localhost:${PORT}`);
+  });
+}
+module.exports = app;
