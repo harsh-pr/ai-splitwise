@@ -1246,6 +1246,15 @@ async function fetchGoogleConfig() {
         firebase.initializeApp(data.firebaseConfig);
         state.firebaseInitialized = true;
         console.log('Firebase initialized successfully on client.');
+        
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            const profileModal = document.getElementById('profile-modal');
+            if (profileModal && !profileModal.classList.contains('hidden')) {
+              loadProfileData();
+            }
+          }
+        });
       } else {
         console.warn('Firebase configuration missing from config endpoint.');
       }
@@ -1325,9 +1334,14 @@ async function loadProfileData() {
       const linkStatusContainer = document.getElementById('google-link-status-container');
       const linkBtn = document.getElementById('google-link-btn');
       
-      if (user.googleId) {
+      const firebaseUser = firebase.auth().currentUser;
+      const isLinkedWithGoogle = firebaseUser && firebaseUser.providerData.some(p => p.providerId === 'google.com');
+      
+      if (isLinkedWithGoogle) {
+        const googleProvider = firebaseUser.providerData.find(p => p.providerId === 'google.com');
+        const googleEmail = googleProvider ? googleProvider.email : (user.googleEmail || user.email);
         linkStatusContainer.className = 'google-link-status linked';
-        linkStatusContainer.innerHTML = `Linked with Google (${escapeHtml(user.googleEmail || user.email)}) ✅`;
+        linkStatusContainer.innerHTML = `Linked with Google (${escapeHtml(googleEmail)}) ✅`;
         linkBtn.classList.add('hidden');
       } else {
         linkStatusContainer.className = 'google-link-status';
