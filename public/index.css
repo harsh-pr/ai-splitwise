@@ -682,7 +682,7 @@ h1, h2, h3, h4, h5, h6 {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0f111a;
+  background: #05060f;
   border: 2px solid rgba(255, 255, 255, 0.1);
   color: var(--text-muted);
   display: flex;
@@ -703,7 +703,7 @@ h1, h2, h3, h4, h5, h6 {
 .step-indicator.active .step-num {
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background: rgba(0, 242, 254, 0.08);
+  background: #05060f;
   box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
 }
 

@@ -54,6 +54,7 @@ async function checkSession() {
       state.currentUser = user;
       elements.userDisplayName.textContent = user.name;
       updateUserAvatar(user.name);
+      loadProfileData();
       
       // Load directory history lists
       await fetchHistory();
@@ -289,10 +290,7 @@ async function fetchGoogleConfig() {
         
         firebase.auth().onAuthStateChanged((user) => {
           if (user) {
-            const profileModal = document.getElementById('profile-modal');
-            if (profileModal && !profileModal.classList.contains('hidden')) {
-              loadProfileData();
-            }
+            loadProfileData();
           }
         });
       } else {
@@ -349,8 +347,12 @@ async function loadProfileData() {
     if (res.ok) {
       const user = await res.json();
       
-      document.getElementById('profile-name').textContent = user.name;
-      document.getElementById('profile-email').textContent = user.email;
+      const dropdownName = document.getElementById('dropdown-user-name');
+      const dropdownEmail = document.getElementById('dropdown-user-email');
+      const dropdownSpent = document.getElementById('dropdown-spent-amount');
+      
+      if (dropdownName) dropdownName.textContent = user.name;
+      if (dropdownEmail) dropdownEmail.textContent = user.email;
       
       const linkStatusContainer = document.getElementById('google-link-status-container');
       const linkBtn = document.getElementById('google-link-btn');
@@ -361,32 +363,27 @@ async function loadProfileData() {
       if (isLinkedWithGoogle) {
         const googleProvider = firebaseUser.providerData.find(p => p.providerId === 'google.com');
         const googleEmail = googleProvider ? googleProvider.email : (user.googleEmail || user.email);
-        linkStatusContainer.className = 'google-link-status linked';
-        linkStatusContainer.innerHTML = `Linked with Google (${escapeHtml(googleEmail)}) ✅`;
-        linkBtn.classList.add('hidden');
+        if (linkStatusContainer) {
+          linkStatusContainer.className = '';
+          linkStatusContainer.style.color = '#00ff87'; // Vibrant neon green
+          linkStatusContainer.innerHTML = `Linked with Google (${escapeHtml(googleEmail)}) ✅`;
+        }
+        if (linkBtn) linkBtn.classList.add('hidden');
       } else {
-        linkStatusContainer.className = 'google-link-status';
-        linkStatusContainer.innerHTML = 'Not Linked ❌';
-        linkBtn.classList.remove('hidden');
+        if (linkStatusContainer) {
+          linkStatusContainer.className = '';
+          linkStatusContainer.style.color = '#ff6b6b'; // Coral red
+          linkStatusContainer.innerHTML = 'Not Linked ❌';
+        }
+        if (linkBtn) linkBtn.classList.remove('hidden');
       }
       
       const totalSpent = state.history.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-      document.getElementById('profile-spent').textContent = `₹${totalSpent.toFixed(2)}`;
+      if (dropdownSpent) dropdownSpent.textContent = `₹${totalSpent.toFixed(2)}`;
     }
   } catch (err) {
     console.error('Failed to load profile details:', err);
   }
-}
-
-async function openProfileModal() {
-  showLoader('Opening Profile...');
-  await loadProfileData();
-  hideLoader();
-  elements.profileModal.classList.remove('hidden');
-}
-
-async function closeProfileModal() {
-  elements.profileModal.classList.add('hidden');
 }
 
 async function handleDeleteAccount() {
@@ -412,7 +409,6 @@ async function handleDeleteAccount() {
       }
       hideLoader();
       alert('Your account and all associated data have been permanently deleted.');
-      closeProfileModal();
       window.location.href = '/index.html';
     } else {
       const data = await res.json();
