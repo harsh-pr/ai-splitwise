@@ -99,12 +99,9 @@ const elements = {
 // Initialization & Authentication Logic
 // --------------------------------------------------------------------------
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Setup Upload Dropzone Event Listeners
   setupDropzone();
-  
-  // Track 2-minute tab-close session logout
-  initTabCloseLogoutTracker();
   
   // Initialize hover + click user dropdown menu
   initUserDropdownMenu();
@@ -112,12 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Fetch Google Client config
   fetchGoogleConfig();
   
-  // Check for session cookie
-  checkSession();
+  // Track 2-minute tab-close session logout
+  const wasLoggedOut = await initTabCloseLogoutTracker();
+  
+  // Check for session cookie if not just logged out
+  if (!wasLoggedOut) {
+    checkSession();
+  }
 });
 
 // Secure 2-minute tab-close session tracker
-function initTabCloseLogoutTracker() {
+async function initTabCloseLogoutTracker() {
   const lastActive = localStorage.getItem('last_active_heartbeat');
   const now = Date.now();
   
@@ -126,18 +128,20 @@ function initTabCloseLogoutTracker() {
     if (elapsed > 120000) { // 2 minutes
       console.log('Session was closed for more than 2 minutes. Logging out.');
       localStorage.removeItem('last_active_heartbeat');
-      handleLogoutQuietly();
-      return;
+      await handleLogoutQuietly();
+      return true;
     }
   }
   
   // Update heartbeat immediately
-  localStorage.setItem('last_active_heartbeat', Date.now().toString());
+  localStorage.setItem('last_active_heartbeat', now.toString());
   
   // Continuously update heartbeat every 5 seconds
   setInterval(() => {
     localStorage.setItem('last_active_heartbeat', Date.now().toString());
   }, 5000);
+  
+  return false;
 }
 
 function initUserDropdownMenu() {

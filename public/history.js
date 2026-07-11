@@ -39,8 +39,11 @@ const elements = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  fetchGoogleConfig().then(() => {
-    checkSession();
+  fetchGoogleConfig().then(async () => {
+    const wasLoggedOut = await initTabCloseLogoutTracker();
+    if (!wasLoggedOut) {
+      checkSession();
+    }
   });
 });
 
@@ -434,4 +437,42 @@ async function handleLogout() {
     hideLoader();
     window.location.href = '/index.html';
   }
+}
+
+async function handleLogoutQuietly() {
+  try {
+    if (state.firebaseInitialized) {
+      await firebase.auth().signOut();
+    }
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch (e) {
+    // Fail silently
+  } finally {
+    window.location.href = '/index.html';
+  }
+}
+
+async function initTabCloseLogoutTracker() {
+  const lastActive = localStorage.getItem('last_active_heartbeat');
+  const now = Date.now();
+  
+  if (lastActive) {
+    const elapsed = now - parseInt(lastActive, 10);
+    if (elapsed > 120000) { // 2 minutes
+      console.log('Session was closed for more than 2 minutes. Logging out.');
+      localStorage.removeItem('last_active_heartbeat');
+      await handleLogoutQuietly();
+      return true;
+    }
+  }
+  
+  // Update heartbeat immediately
+  localStorage.setItem('last_active_heartbeat', now.toString());
+  
+  // Continuously update heartbeat every 5 seconds
+  setInterval(() => {
+    localStorage.setItem('last_active_heartbeat', Date.now().toString());
+  }, 5000);
+  
+  return false;
 }
