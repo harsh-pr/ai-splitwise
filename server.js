@@ -210,31 +210,42 @@ function authenticate(req, res, next) {
   }
 }
 
-app.post('/api/auth/prepare-signup', async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
-  }
-
+app.delete('/api/auth/delete-account', authenticate, async (req, res) => {
   try {
     const users = await readJSON(USERS_FILE);
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const userIndex = users.findIndex(u => u.id === req.user.id);
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = users[userIndex];
     
-    if (user && !user.googleId) {
+    // 1. Delete from Firebase Authentication if using Firestore
+    if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0 && user.googleId) {
       try {
-        if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0) {
-          const firebaseUser = await admin.auth().getUserByEmail(email);
-          await admin.auth().deleteUser(firebaseUser.uid);
-          console.log(`[Signup Prep] Deleted unlinked Firebase Auth container for ${email}`);
-        }
-      } catch (err) {
-        // User not found in Firebase
+        await admin.auth().deleteUser(user.googleId);
+        console.log(`[Delete Account] Deleted Firebase Auth user: ${user.googleId}`);
+      } catch (firebaseErr) {
+        console.error('[Delete Account] Firebase Auth deletion error:', firebaseErr);
       }
     }
-    return res.json({ ready: true });
+
+    // 2. Delete all associated user history scans
+    let history = await readJSON(HISTORY_FILE);
+    history = history.filter(entry => entry.userId !== req.user.id);
+    await writeJSON(HISTORY_FILE, history);
+
+    // 3. Delete user document from users database
+    users.splice(userIndex, 1);
+    await writeJSON(USERS_FILE, users);
+
+    // 4. Clear cookie session
+    res.clearCookie('session_token');
+
+    return res.json({ success: true, message: 'Account deleted successfully' });
   } catch (err) {
-    console.error('Error during signup preparation:', err);
-    return res.json({ ready: true });
+    console.error('Error during account deletion:', err);
+    return res.status(500).json({ error: 'Server error during account deletion' });
   }
 });
 
@@ -646,58 +657,7 @@ app.delete('/api/history/:id', authenticate, async (req, res) => {
   return res.json({ success: true });
 });
 
-// Migrate existing users to Firebase Authentication on startup
-async function migrateUsersToFirebaseAuth() {
-  if (process.env.USE_FIREBASE !== 'true') return;
-  try {
-    const users = await readJSON(USERS_FILE);
-    let updated = false;
-    for (let user of users) {
-      if (!user.email) continue;
-      
-      try {
-        const firebaseUser = await admin.auth().getUserByEmail(user.email);
-        if (!user.googleId) {
-          user.googleId = firebaseUser.uid;
-          updated = true;
-          console.log(`[Migration] Linked existing Firebase Auth user ${user.email} to DB profile`);
-        }
-      } catch (err) {
-        if (err.code === 'auth/user-not-found') {
-          // Standard Bcrypt hashes are not natively compatible with Firebase Auth imports without complex salt configurations.
-          // Let users Register (Sign Up) with their password, which will create the Firebase Auth user,
-          // and then match/link them automatically via their email.
-        } else {
-          console.error(`[Migration] Error checking Firebase user ${user.email}:`, err);
-        }
-      }
-    }
 
-    // Clean up any previously imported unlinked users in Firebase Auth so they can Register cleanly
-    for (let user of users) {
-      if (user.email && !user.googleId) {
-        try {
-          const firebaseUser = await admin.auth().getUserByEmail(user.email);
-          await admin.auth().deleteUser(firebaseUser.uid);
-          console.log(`[Cleanup] Deleted unlinked imported Firebase user ${user.email}`);
-        } catch (err) {
-          // User not found in Firebase Auth, safe to ignore
-        }
-      }
-    }
-
-    if (updated) {
-      await writeJSON(USERS_FILE, users);
-    }
-  } catch (err) {
-    console.error('[Migration] Error during Firebase migration utility:', err);
-  }
-}
-
-// Run user migration on startup if using Firebase
-if (process.env.USE_FIREBASE === 'true') {
-  migrateUsersToFirebaseAuth().catch(console.error);
-}
 
 // Start the server
 // Start server only in local development. Vercel provides its own handler.

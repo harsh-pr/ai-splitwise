@@ -271,17 +271,6 @@ async function handleEmailSignup(e) {
       throw new Error('Firebase Auth is not initialized. Please verify backend configurations.');
     }
     
-    // Prepare signup by clearing legacy unlinked Firebase credentials if they exist
-    try {
-      await fetch('/api/auth/prepare-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-    } catch (prepErr) {
-      console.warn('Signup preparation call bypassed:', prepErr);
-    }
-    
     const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
     if (name) {
       await userCredential.user.updateProfile({ displayName: name });
@@ -331,6 +320,43 @@ async function handleForgotPassword(e) {
     console.error('Password reset error:', err);
     showAuthError(err.message || 'Failed to send password reset email.');
   } finally {
+    hideLoader();
+  }
+}
+
+async function handleDeleteAccount() {
+  const confirmFirst = confirm("ARE YOU ABSOLUTELY SURE?\n\nThis will permanently delete your profile, all receipt scans, expense splits, and credentials. This action CANNOT be undone.");
+  if (!confirmFirst) return;
+  
+  const confirmSecond = confirm("LAST WARNING!\n\nAll your data will be permanently wiped from both authentication and database systems. Confirm deletion?");
+  if (!confirmSecond) return;
+  
+  showLoader('Deleting your account...');
+  try {
+    const res = await fetch('/api/auth/delete-account', {
+      method: 'DELETE'
+    });
+    
+    if (res.ok) {
+      // Also sign out from client-side Firebase Auth
+      if (state.firebaseInitialized) {
+        try {
+          await firebase.auth().signOut();
+        } catch (firebaseErr) {
+          console.warn('Firebase signout during deletion bypassed:', firebaseErr);
+        }
+      }
+      hideLoader();
+      alert('Your account and all associated data have been permanently deleted.');
+      closeProfileModal();
+      showAuthSection();
+    } else {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete account.');
+    }
+  } catch (err) {
+    console.error('Account deletion error:', err);
+    alert(err.message || 'An error occurred during account deletion.');
     hideLoader();
   }
 }
