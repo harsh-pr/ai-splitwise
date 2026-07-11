@@ -203,9 +203,43 @@ function showAuthSection() {
   elements.workspaceSection.classList.add('hidden');
 }
 
+function updateUserAvatar(name) {
+  const avatarEl = document.getElementById('user-avatar-circle');
+  if (!avatarEl) return;
+  
+  const firstLetter = name ? name.trim().charAt(0).toUpperCase() : 'U';
+  
+  let hash = 0;
+  const nameStr = name || 'User';
+  for (let i = 0; i < nameStr.length; i++) {
+    hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    '#7f00ff', // Indigo
+    '#ff007f', // Pink
+    '#00f2fe', // Cyan
+    '#00ff87', // Neon Green
+    '#ec4899', // Rosy
+    '#f59e0b', // Amber
+    '#3b82f6', // Blue
+    '#8b5cf6'  // Purple
+  ];
+  const color = colors[Math.abs(hash) % colors.length];
+  
+  avatarEl.textContent = firstLetter;
+  avatarEl.style.background = color;
+  
+  if (color === '#00f2fe' || color === '#00ff87') {
+    avatarEl.style.color = '#05060f';
+  } else {
+    avatarEl.style.color = '#ffffff';
+  }
+}
+
 function onLoginSuccess(user) {
   state.currentUser = user;
   elements.userDisplayName.textContent = user.name;
+  updateUserAvatar(user.name);
   elements.authSection.classList.add('hidden');
   elements.workspaceSection.classList.remove('hidden');
   
@@ -979,8 +1013,10 @@ function renderSplitBoard() {
     });
     
     row.innerHTML = `
-      <div class="assignment-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
-      <div class="assignment-item-price">₹${item.price.toFixed(2)}</div>
+      <div class="split-board-item-row-left">
+        <div class="assignment-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+        <div class="assignment-item-price">₹${item.price.toFixed(2)}</div>
+      </div>
       <div class="assignment-members-buttons">
         ${userButtonsHtml}
       </div>

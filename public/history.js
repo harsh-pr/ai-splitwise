@@ -1,7 +1,8 @@
 // History Workspace controller logic
 const state = {
   currentUser: null,
-  history: []
+  history: [],
+  firebaseInitialized: false
 };
 
 const elements = {
@@ -33,12 +34,14 @@ const elements = {
   modalTip: document.getElementById('modal-tip'),
   modalTotal: document.getElementById('modal-total'),
   modalSplitsList: document.getElementById('modal-splits-list'),
-  modalEditBtn: document.getElementById('modal-edit-btn')
+  modalEditBtn: document.getElementById('modal-edit-btn'),
+  profileModal: document.getElementById('profile-modal')
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Check user session first
-  checkSession();
+  fetchGoogleConfig().then(() => {
+    checkSession();
+  });
 });
 
 // Authentication session checker
@@ -50,6 +53,7 @@ async function checkSession() {
       const user = await res.json();
       state.currentUser = user;
       elements.userDisplayName.textContent = user.name;
+      updateUserAvatar(user.name);
       
       // Load directory history lists
       await fetchHistory();
@@ -238,4 +242,200 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function updateUserAvatar(name) {
+  const avatarEl = document.getElementById('user-avatar-circle');
+  if (!avatarEl) return;
+  
+  const firstLetter = name ? name.trim().charAt(0).toUpperCase() : 'U';
+  
+  let hash = 0;
+  const nameStr = name || 'User';
+  for (let i = 0; i < nameStr.length; i++) {
+    hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    '#7f00ff', // Indigo
+    '#ff007f', // Pink
+    '#00f2fe', // Cyan
+    '#00ff87', // Neon Green
+    '#ec4899', // Rosy
+    '#f59e0b', // Amber
+    '#3b82f6', // Blue
+    '#8b5cf6'  // Purple
+  ];
+  const color = colors[Math.abs(hash) % colors.length];
+  
+  avatarEl.textContent = firstLetter;
+  avatarEl.style.background = color;
+  
+  if (color === '#00f2fe' || color === '#00ff87') {
+    avatarEl.style.color = '#05060f';
+  } else {
+    avatarEl.style.color = '#ffffff';
+  }
+}
+
+async function fetchGoogleConfig() {
+  try {
+    const res = await fetch('/api/auth/config');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.firebaseConfig && data.firebaseConfig.apiKey) {
+        firebase.initializeApp(data.firebaseConfig);
+        state.firebaseInitialized = true;
+        console.log('Firebase initialized successfully on client.');
+        
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            const profileModal = document.getElementById('profile-modal');
+            if (profileModal && !profileModal.classList.contains('hidden')) {
+              loadProfileData();
+            }
+          }
+        });
+      } else {
+        console.warn('Firebase configuration missing from config endpoint.');
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching config:', err);
+  }
+}
+
+async function triggerGoogleLink() {
+  const currentUser = firebase.auth().currentUser;
+  if (!currentUser) {
+    alert('No user is logged in via Firebase client.');
+    return;
+  }
+  showLoader('Linking Google account...');
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await currentUser.linkWithPopup(provider);
+    const idToken = await result.user.getIdToken();
+    await handleFirebaseLinkBackend(idToken);
+  } catch (err) {
+    console.error('Link Google error:', err);
+    alert('Linking failed: ' + (err.message || 'Unknown error'));
+  } finally {
+    hideLoader();
+  }
+}
+
+async function handleFirebaseLinkBackend(idToken) {
+  try {
+    const res = await fetch('/api/auth/link-google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('Google account linked successfully! 🎉');
+      await loadProfileData();
+    } else {
+      alert('Linking failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Connection error linking Google account.');
+  }
+}
+
+async function loadProfileData() {
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) {
+      const user = await res.json();
+      
+      document.getElementById('profile-name').textContent = user.name;
+      document.getElementById('profile-email').textContent = user.email;
+      
+      const linkStatusContainer = document.getElementById('google-link-status-container');
+      const linkBtn = document.getElementById('google-link-btn');
+      
+      const firebaseUser = firebase.auth().currentUser;
+      const isLinkedWithGoogle = firebaseUser && firebaseUser.providerData.some(p => p.providerId === 'google.com');
+      
+      if (isLinkedWithGoogle) {
+        const googleProvider = firebaseUser.providerData.find(p => p.providerId === 'google.com');
+        const googleEmail = googleProvider ? googleProvider.email : (user.googleEmail || user.email);
+        linkStatusContainer.className = 'google-link-status linked';
+        linkStatusContainer.innerHTML = `Linked with Google (${escapeHtml(googleEmail)}) ✅`;
+        linkBtn.classList.add('hidden');
+      } else {
+        linkStatusContainer.className = 'google-link-status';
+        linkStatusContainer.innerHTML = 'Not Linked ❌';
+        linkBtn.classList.remove('hidden');
+      }
+      
+      const totalSpent = state.history.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+      document.getElementById('profile-spent').textContent = `₹${totalSpent.toFixed(2)}`;
+    }
+  } catch (err) {
+    console.error('Failed to load profile details:', err);
+  }
+}
+
+async function openProfileModal() {
+  showLoader('Opening Profile...');
+  await loadProfileData();
+  hideLoader();
+  elements.profileModal.classList.remove('hidden');
+}
+
+async function closeProfileModal() {
+  elements.profileModal.classList.add('hidden');
+}
+
+async function handleDeleteAccount() {
+  const confirmFirst = confirm("ARE YOU ABSOLUTELY SURE?\n\nThis will permanently delete your profile, all receipt scans, expense splits, and credentials. This action CANNOT be undone.");
+  if (!confirmFirst) return;
+  
+  const confirmSecond = confirm("LAST WARNING!\n\nAll your data will be permanently wiped from both authentication and database systems. Confirm deletion?");
+  if (!confirmSecond) return;
+  
+  showLoader('Deleting your account...');
+  try {
+    const res = await fetch('/api/auth/delete-account', {
+      method: 'DELETE'
+    });
+    
+    if (res.ok) {
+      if (state.firebaseInitialized) {
+        try {
+          await firebase.auth().signOut();
+        } catch (firebaseErr) {
+          console.warn('Firebase signout during deletion bypassed:', firebaseErr);
+        }
+      }
+      hideLoader();
+      alert('Your account and all associated data have been permanently deleted.');
+      closeProfileModal();
+      window.location.href = '/index.html';
+    } else {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete account.');
+    }
+  } catch (err) {
+    console.error('Account deletion error:', err);
+    alert(err.message || 'An error occurred during account deletion.');
+    hideLoader();
+  }
+}
+
+async function handleLogout() {
+  showLoader('Signing out...');
+  try {
+    if (state.firebaseInitialized) {
+      await firebase.auth().signOut();
+    }
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch (e) {
+    // Fail silently
+  } finally {
+    hideLoader();
+    window.location.href = '/index.html';
+  }
 }
