@@ -210,6 +210,34 @@ function authenticate(req, res, next) {
   }
 }
 
+app.post('/api/auth/prepare-signup', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  try {
+    const users = await readJSON(USERS_FILE);
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (user && !user.googleId) {
+      try {
+        if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0) {
+          const firebaseUser = await admin.auth().getUserByEmail(email);
+          await admin.auth().deleteUser(firebaseUser.uid);
+          console.log(`[Signup Prep] Deleted unlinked Firebase Auth container for ${email}`);
+        }
+      } catch (err) {
+        // User not found in Firebase
+      }
+    }
+    return res.json({ ready: true });
+  } catch (err) {
+    console.error('Error during signup preparation:', err);
+    return res.json({ ready: true });
+  }
+});
+
 // Auth API endpoints
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, name } = req.body;

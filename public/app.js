@@ -270,6 +270,18 @@ async function handleEmailSignup(e) {
     if (!state.firebaseInitialized) {
       throw new Error('Firebase Auth is not initialized. Please verify backend configurations.');
     }
+    
+    // Prepare signup by clearing legacy unlinked Firebase credentials if they exist
+    try {
+      await fetch('/api/auth/prepare-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+    } catch (prepErr) {
+      console.warn('Signup preparation call bypassed:', prepErr);
+    }
+    
     const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
     if (name) {
       await userCredential.user.updateProfile({ displayName: name });
@@ -295,6 +307,31 @@ async function handleFirebaseLoginBackend(idToken) {
     onLoginSuccess(data);
   } else {
     throw new Error(data.error || 'Authentication verification failed.');
+  }
+}
+
+async function handleForgotPassword(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('login-email');
+  const email = emailInput.value.trim();
+  if (!email) {
+    showAuthError('Please enter your email address in the field above first.');
+    emailInput.focus();
+    return;
+  }
+  
+  showLoader('Sending password reset...');
+  try {
+    if (!state.firebaseInitialized) {
+      throw new Error('Firebase Auth is not initialized.');
+    }
+    await firebase.auth().sendPasswordResetEmail(email);
+    alert('Password reset email sent! Please check your inbox. 📧');
+  } catch (err) {
+    console.error('Password reset error:', err);
+    showAuthError(err.message || 'Failed to send password reset email.');
+  } finally {
+    hideLoader();
   }
 }
 
