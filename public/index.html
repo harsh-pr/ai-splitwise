@@ -25,6 +25,7 @@
   <!-- App Background Glow Effects -->
   <div class="glow-bg glow-1"></div>
   <div class="glow-bg glow-2"></div>
+  <div class="glow-bg glow-3"></div>
 
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay hidden">
@@ -113,6 +114,7 @@
 
     <!-- 2. MAIN APPLICATION WORKSPACE (Hidden if logged out) -->
     <section id="workspace-section" class="workspace-section hidden">
+      <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="toggleMobileSidebar(false)"></div>
       
       <!-- App Header -->
       <header class="app-header glass-panel">
@@ -121,6 +123,9 @@
           <h2 class="logo-text mini">Splitwise <span>AI</span></h2>
         </div>
         <div class="header-user">
+          <button id="mobile-sidebar-toggle" class="btn btn-secondary btn-sm mobile-only" onclick="toggleMobileSidebar(true)" style="border-radius: 8px; font-weight:600; padding:0.45rem 0.8rem; margin-right: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+            📁 <span>History</span>
+          </button>
           <div class="user-menu-container">
             <div class="user-menu-trigger">
               <span class="user-avatar">👤</span>
@@ -156,12 +161,31 @@
 
           <!-- Wizard Step Headers -->
           <nav class="wizard-steps-nav">
-            <div class="step-indicator active" id="step-nav-1">1. Type</div>
-            <div class="step-indicator" id="step-nav-2">2. Upload</div>
-            <div class="step-indicator" id="step-nav-3">3. Review</div>
-            <div class="step-indicator" id="step-nav-4">4. Members</div>
-            <div class="step-indicator" id="step-nav-5">5. Split Board</div>
-            <div class="step-indicator" id="step-nav-6">6. Details</div>
+            <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
+            <div class="step-indicator active" id="step-nav-1">
+              <span class="step-num">1</span>
+              <span class="step-label">Type</span>
+            </div>
+            <div class="step-indicator" id="step-nav-2">
+              <span class="step-num">2</span>
+              <span class="step-label">Upload</span>
+            </div>
+            <div class="step-indicator" id="step-nav-3">
+              <span class="step-num">3</span>
+              <span class="step-label">Review</span>
+            </div>
+            <div class="step-indicator" id="step-nav-4">
+              <span class="step-num">4</span>
+              <span class="step-label">Members</span>
+            </div>
+            <div class="step-indicator" id="step-nav-5">
+              <span class="step-num">5</span>
+              <span class="step-label">Assign</span>
+            </div>
+            <div class="step-indicator" id="step-nav-6">
+              <span class="step-num">6</span>
+              <span class="step-label">Details</span>
+            </div>
           </nav>
 
           <!-- WIZARD STEP 1: Choose Split Type -->

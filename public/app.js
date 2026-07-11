@@ -535,8 +535,32 @@ function renderHistorySidebar() {
 // --------------------------------------------------------------------------
 let activeStep = 1;
 
+function toggleMobileSidebar(show) {
+  const sidebar = document.getElementById('history-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (!sidebar) return;
+  
+  if (show) {
+    sidebar.classList.add('open');
+    if (overlay) overlay.classList.remove('hidden');
+  } else {
+    sidebar.classList.remove('open');
+    if (overlay) overlay.classList.add('hidden');
+  }
+}
+
 function goToStep(stepIndex) {
   activeStep = stepIndex;
+  
+  // Close mobile drawer on step navigation
+  toggleMobileSidebar(false);
+  
+  // Update wizard progress line
+  const progressLine = document.getElementById('wizard-progress-bar');
+  if (progressLine) {
+    const progressWidth = ((stepIndex - 1) / 5) * 100;
+    progressLine.style.width = `${progressWidth}%`;
+  }
   
   // Toggle Visibility of Step panels
   elements.steps.forEach((step, idx) => {
@@ -547,12 +571,18 @@ function goToStep(stepIndex) {
     }
   });
 
-  // Highlight step indicators
+  // Highlight circular step indicators
   elements.stepIndicators.forEach((ind, idx) => {
-    if (idx + 1 === stepIndex) {
+    const stepNum = idx + 1;
+    if (stepNum < stepIndex) {
+      ind.classList.remove('active');
+      ind.classList.add('completed');
+    } else if (stepNum === stepIndex) {
       ind.classList.add('active');
+      ind.classList.remove('completed');
     } else {
       ind.classList.remove('active');
+      ind.classList.remove('completed');
     }
   });
   
