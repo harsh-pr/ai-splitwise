@@ -14,8 +14,7 @@ const state = {
   history: [],             // User's bill scan history list (max 10)
   geminiApiKey: '',
   googleClientId: null,
-  googleTokenClient: null,
-  isGoogleLinkingMode: false
+  firebaseInitialized: false
 };
 
 // UI Section Elements
@@ -170,6 +169,9 @@ function initUserDropdownMenu() {
 
 async function handleLogoutQuietly() {
   try {
+    if (state.firebaseInitialized) {
+      await firebase.auth().signOut();
+    }
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch (e) {
     // Fail silently
@@ -241,20 +243,15 @@ async function handleEmailLogin(e) {
   elements.authErrorMsg.classList.add('hidden');
   
   try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      onLoginSuccess(data);
-    } else {
-      showAuthError(data.error || 'Login failed. Please check credentials.');
+    if (!state.firebaseInitialized) {
+      throw new Error('Firebase Auth is not initialized. Please verify backend configurations.');
     }
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const idToken = await userCredential.user.getIdToken();
+    await handleFirebaseLoginBackend(idToken);
   } catch (err) {
-    showAuthError('Connection error. Please try again.');
+    console.error('Login error:', err);
+    showAuthError(err.message || 'Login failed. Please check credentials.');
   } finally {
     hideLoader();
   }
@@ -270,22 +267,34 @@ async function handleEmailSignup(e) {
   elements.authErrorMsg.classList.add('hidden');
   
   try {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      onLoginSuccess(data);
-    } else {
-      showAuthError(data.error || 'Signup failed. Email may already be in use.');
+    if (!state.firebaseInitialized) {
+      throw new Error('Firebase Auth is not initialized. Please verify backend configurations.');
     }
+    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    if (name) {
+      await userCredential.user.updateProfile({ displayName: name });
+    }
+    const idToken = await userCredential.user.getIdToken();
+    await handleFirebaseLoginBackend(idToken);
   } catch (err) {
-    showAuthError('Connection error. Please try again.');
+    console.error('Signup error:', err);
+    showAuthError(err.message || 'Signup failed. Email may already be in use.');
   } finally {
     hideLoader();
+  }
+}
+
+async function handleFirebaseLoginBackend(idToken) {
+  const res = await fetch('/api/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    onLoginSuccess(data);
+  } else {
+    throw new Error(data.error || 'Authentication verification failed.');
   }
 }
 
@@ -293,6 +302,9 @@ async function handleEmailSignup(e) {
 async function handleLogout() {
   showLoader('Signing out...');
   try {
+    if (state.firebaseInitialized) {
+      await firebase.auth().signOut();
+    }
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch (e) {
     // Fail silently
@@ -1221,7 +1233,7 @@ function escapeHtml(str) {
 }
 
 // --------------------------------------------------------------------------
-// Google Authentication & Profile Integration
+// Firebase Authentication & Profile Integration
 // --------------------------------------------------------------------------
 
 async function fetchGoogleConfig() {
@@ -1230,138 +1242,64 @@ async function fetchGoogleConfig() {
     if (res.ok) {
       const data = await res.json();
       state.googleClientId = data.googleClientId;
-      if (state.googleClientId) {
-        loadGoogleScript();
+      if (data.firebaseConfig && data.firebaseConfig.apiKey) {
+        firebase.initializeApp(data.firebaseConfig);
+        state.firebaseInitialized = true;
+        console.log('Firebase initialized successfully on client.');
       } else {
-        console.warn('Google Client ID is not configured in .env');
-        renderWarningMessage();
+        console.warn('Firebase configuration missing from config endpoint.');
       }
     }
   } catch (err) {
-    console.error('Error fetching Google config:', err);
+    console.error('Error fetching config:', err);
   }
 }
 
-function renderWarningMessage() {
-  const warningHTML = `<p style="font-size: 0.8rem; color: var(--color-danger); text-align: center;">Google Sign-In needs GOOGLE_CLIENT_ID in env</p>`;
-  const loginContainer = document.getElementById("google-login-btn-container");
-  const signupContainer = document.getElementById("google-signup-btn-container");
-  if (loginContainer) loginContainer.innerHTML = warningHTML;
-  if (signupContainer) signupContainer.innerHTML = warningHTML;
-}
-
-function loadGoogleScript() {
-  if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-    initGoogleGSI();
-    return;
-  }
-  const script = document.createElement('script');
-  script.src = 'https://accounts.google.com/gsi/client';
-  script.async = true;
-  script.defer = true;
-  script.onload = initGoogleGSI;
-  document.head.appendChild(script);
-}
-
-function initGoogleGSI() {
-  if (!state.googleClientId || typeof google === 'undefined') return;
-
+async function triggerGoogleAuth(type) {
+  elements.authErrorMsg.classList.add('hidden');
+  showLoader('Signing in with Google...');
   try {
-    // 1. Initialize Google ID (Sign-In & One Tap)
-    google.accounts.id.initialize({
-      client_id: state.googleClientId,
-      callback: handleGoogleCredentialResponse
-    });
-
-    // 2. Render Google Buttons in placeholders
-    renderGoogleButtons();
-
-    // 3. Initialize Token client for Profile Google linking
-    state.googleTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: state.googleClientId,
-      scope: 'email profile openid',
-      callback: async (tokenResponse) => {
-        if (tokenResponse && tokenResponse.access_token) {
-          await handleGoogleLinkBackend(tokenResponse.access_token);
-        }
-      }
-    });
-  } catch (e) {
-    console.error('Error initializing Google GSI client:', e);
-  }
-}
-
-function renderGoogleButtons() {
-  if (typeof google === 'undefined') return;
-  
-  const loginContainer = document.getElementById("google-login-btn-container");
-  const signupContainer = document.getElementById("google-signup-btn-container");
-
-  if (loginContainer) {
-    google.accounts.id.renderButton(loginContainer, {
-      theme: "outline",
-      size: "large",
-      width: loginContainer.offsetWidth || 358
-    });
-  }
-
-  if (signupContainer) {
-    google.accounts.id.renderButton(signupContainer, {
-      theme: "outline",
-      size: "large",
-      width: signupContainer.offsetWidth || 358
-    });
-  }
-}
-
-async function handleGoogleCredentialResponse(response) {
-  if (!response || !response.credential) return;
-  await handleGoogleLoginBackend(response.credential);
-}
-
-async function handleGoogleLoginBackend(idToken) {
-  showLoader('Authenticating with Google...');
-  try {
-    const res = await fetch('/api/auth/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      onLoginSuccess(data);
-    } else {
-      showAuthError(data.error || 'Google login verification failed.');
+    if (!state.firebaseInitialized) {
+      throw new Error('Firebase Auth is not initialized. Please verify your environment configurations.');
     }
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const userCredential = await firebase.auth().signInWithPopup(provider);
+    const idToken = await userCredential.user.getIdToken();
+    await handleFirebaseLoginBackend(idToken);
   } catch (err) {
-    showAuthError('Connection error during Google login verification.');
+    console.error('Google Sign-In error:', err);
+    showAuthError(err.message || 'Google Authentication failed.');
   } finally {
     hideLoader();
   }
 }
 
-function triggerGoogleLink() {
-  if (state.googleClientId) {
-    if (!state.googleTokenClient) {
-      initGoogleGSI();
-    }
-    if (state.googleTokenClient) {
-      state.googleTokenClient.requestAccessToken();
-    } else {
-      alert('Google link client failed to initialize.');
-    }
-  } else {
-    alert('Google linking requires GOOGLE_CLIENT_ID to be set in .env');
+async function triggerGoogleLink() {
+  const currentUser = firebase.auth().currentUser;
+  if (!currentUser) {
+    alert('No user is logged in via Firebase client.');
+    return;
+  }
+  showLoader('Linking Google account...');
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await currentUser.linkWithPopup(provider);
+    const idToken = await result.user.getIdToken();
+    await handleFirebaseLinkBackend(idToken);
+  } catch (err) {
+    console.error('Link Google error:', err);
+    alert('Linking failed: ' + (err.message || 'Unknown error'));
+  } finally {
+    hideLoader();
   }
 }
 
-async function handleGoogleLinkBackend(accessToken) {
-  showLoader('Linking Google account...');
+async function handleFirebaseLinkBackend(idToken) {
   try {
     const res = await fetch('/api/auth/link-google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken })
+      body: JSON.stringify({ idToken })
     });
     const data = await res.json();
     if (res.ok) {
@@ -1372,8 +1310,6 @@ async function handleGoogleLinkBackend(accessToken) {
     }
   } catch (err) {
     alert('Connection error linking Google account.');
-  } finally {
-    hideLoader();
   }
 }
 

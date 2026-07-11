@@ -291,7 +291,15 @@ app.post('/api/auth/logout', (req, res) => {
 
 app.get('/api/auth/config', (req, res) => {
   return res.json({
-    googleClientId: process.env.GOOGLE_CLIENT_ID || null
+    googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+    firebaseConfig: {
+      apiKey: process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || null,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN || process.env.VITE_FIREBASE_AUTH_DOMAIN || null,
+      projectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || null,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || process.env.VITE_FIREBASE_STORAGE_BUCKET || null,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || null,
+      appId: process.env.FIREBASE_APP_ID || process.env.VITE_FIREBASE_APP_ID || null
+    }
   });
 });
 
@@ -315,70 +323,52 @@ app.get('/api/auth/me', authenticate, async (req, res) => {
 });
 
 app.post('/api/auth/google', async (req, res) => {
-  const { idToken, accessToken } = req.body;
-  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const { idToken } = req.body;
 
-  let email, name, googleId;
-
-  if (idToken) {
-    try {
-      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
-      if (!googleRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google ID token' });
-      }
-      const data = await googleRes.json();
-      
-      // Optionally check if client ID matches if set in env
-      if (googleClientId && data.aud !== googleClientId) {
-        return res.status(400).json({ error: 'Google Client ID mismatch' });
-      }
-
-      email = data.email;
-      name = data.name || data.email.split('@')[0];
-      googleId = data.sub;
-    } catch (err) {
-      return res.status(500).json({ error: 'Failed to verify Google ID token with Google APIs' });
-    }
-  } else if (accessToken) {
-    try {
-      const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
-      if (!googleRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google Access token' });
-      }
-      const data = await googleRes.json();
-      email = data.email;
-      name = data.name || data.email.split('@')[0];
-      googleId = data.sub;
-    } catch (err) {
-      return res.status(500).json({ error: 'Failed to verify Google Access token with Google APIs' });
-    }
-  } else {
-    return res.status(400).json({ error: 'Google ID Token or Access Token is required' });
+  if (!idToken) {
+    return res.status(400).json({ error: 'Firebase ID Token is required' });
   }
 
+  let decodedToken;
+  try {
+    if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0) {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } else {
+      // Local development fallback: decode JWT without signature verification
+      decodedToken = jwt.decode(idToken);
+      if (!decodedToken) {
+        return res.status(400).json({ error: 'Invalid ID Token format' });
+      }
+      decodedToken.uid = decodedToken.user_id || decodedToken.sub || 'usr_mock_' + Math.random().toString(36).substr(2, 9);
+    }
+  } catch (err) {
+    console.error('Firebase token verification error:', err);
+    return res.status(401).json({ error: 'Unauthorized: Invalid Firebase ID token' });
+  }
+
+  const googleId = decodedToken.uid;
+  const email = decodedToken.email;
+  const name = decodedToken.name || decodedToken.email.split('@')[0];
+
   if (!email || !googleId) {
-    return res.status(400).json({ error: 'Invalid Google user details extracted' });
+    return res.status(400).json({ error: 'Invalid token payload' });
   }
 
   try {
     const users = await readJSON(USERS_FILE);
-    // Find user by Google ID or Email
+    // Find user by Firebase UID/Google ID or Email
     let user = users.find(u => u.googleId === googleId);
     if (!user) {
       user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
       if (user) {
-        // Link Google ID
         user.googleId = googleId;
-        user.googleEmail = email;
         await writeJSON(USERS_FILE, users);
       } else {
-        // Register new Google account user
         user = {
           id: 'usr_' + Math.random().toString(36).substr(2, 9),
           email: email.toLowerCase(),
           name: name,
           googleId: googleId,
-          googleEmail: email,
           createdAt: new Date().toISOString()
         };
         users.push(user);
@@ -397,52 +387,35 @@ app.post('/api/auth/google', async (req, res) => {
 
     return res.json({ id: user.id, email: user.email, name: user.name, googleId: user.googleId });
   } catch (err) {
-    return res.status(500).json({ error: 'Server error during Google login' });
+    return res.status(500).json({ error: 'Server error during Firebase login' });
   }
 });
 
 app.post('/api/auth/link-google', authenticate, async (req, res) => {
-  const { idToken, accessToken } = req.body;
-  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const { idToken } = req.body;
 
-  let email, googleId;
-
-  if (idToken) {
-    try {
-      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
-      if (!googleRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google ID token' });
-      }
-      const data = await googleRes.json();
-      
-      if (googleClientId && data.aud !== googleClientId) {
-        return res.status(400).json({ error: 'Google Client ID mismatch' });
-      }
-
-      email = data.email;
-      googleId = data.sub;
-    } catch (err) {
-      return res.status(500).json({ error: 'Failed to verify Google ID token with Google APIs' });
-    }
-  } else if (accessToken) {
-    try {
-      const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
-      if (!googleRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google Access token' });
-      }
-      const data = await googleRes.json();
-      email = data.email;
-      googleId = data.sub;
-    } catch (err) {
-      return res.status(500).json({ error: 'Failed to verify Google Access token with Google APIs' });
-    }
-  } else {
-    return res.status(400).json({ error: 'Google ID Token or Access Token is required' });
+  if (!idToken) {
+    return res.status(400).json({ error: 'Firebase ID Token is required' });
   }
 
-  if (!email || !googleId) {
-    return res.status(400).json({ error: 'Invalid Google user details extracted' });
+  let decodedToken;
+  try {
+    if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0) {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } else {
+      decodedToken = jwt.decode(idToken);
+      if (!decodedToken) {
+        return res.status(400).json({ error: 'Invalid ID Token format' });
+      }
+      decodedToken.uid = decodedToken.user_id || decodedToken.sub || 'usr_linked_123';
+    }
+  } catch (err) {
+    console.error('Firebase token verification error:', err);
+    return res.status(401).json({ error: 'Unauthorized: Invalid Firebase ID token' });
   }
+
+  const googleId = decodedToken.uid;
+  const email = decodedToken.email;
 
   try {
     const users = await readJSON(USERS_FILE);
