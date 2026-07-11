@@ -315,34 +315,49 @@ app.get('/api/auth/me', authenticate, async (req, res) => {
 });
 
 app.post('/api/auth/google', async (req, res) => {
-  const { accessToken, mockUser } = req.body;
+  const { idToken, accessToken } = req.body;
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
 
   let email, name, googleId;
 
-  if (googleClientId && accessToken) {
+  if (idToken) {
+    try {
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      if (!googleRes.ok) {
+        return res.status(400).json({ error: 'Failed to verify Google ID token' });
+      }
+      const data = await googleRes.json();
+      
+      // Optionally check if client ID matches if set in env
+      if (googleClientId && data.aud !== googleClientId) {
+        return res.status(400).json({ error: 'Google Client ID mismatch' });
+      }
+
+      email = data.email;
+      name = data.name || data.email.split('@')[0];
+      googleId = data.sub;
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to verify Google ID token with Google APIs' });
+    }
+  } else if (accessToken) {
     try {
       const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
       if (!googleRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google token' });
+        return res.status(400).json({ error: 'Failed to verify Google Access token' });
       }
       const data = await googleRes.json();
       email = data.email;
       name = data.name || data.email.split('@')[0];
       googleId = data.sub;
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to verify Google token with Google APIs' });
+      return res.status(500).json({ error: 'Failed to verify Google Access token with Google APIs' });
     }
-  } else if (mockUser) {
-    email = mockUser.email;
-    name = mockUser.name;
-    googleId = mockUser.googleId;
   } else {
-    return res.status(400).json({ error: 'Google Client ID or Access Token is missing' });
+    return res.status(400).json({ error: 'Google ID Token or Access Token is required' });
   }
 
   if (!email || !googleId) {
-    return res.status(400).json({ error: 'Invalid Google user details' });
+    return res.status(400).json({ error: 'Invalid Google user details extracted' });
   }
 
   try {
@@ -387,32 +402,46 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 app.post('/api/auth/link-google', authenticate, async (req, res) => {
-  const { accessToken, mockUser } = req.body;
+  const { idToken, accessToken } = req.body;
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
 
   let email, googleId;
 
-  if (googleClientId && accessToken) {
+  if (idToken) {
+    try {
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      if (!googleRes.ok) {
+        return res.status(400).json({ error: 'Failed to verify Google ID token' });
+      }
+      const data = await googleRes.json();
+      
+      if (googleClientId && data.aud !== googleClientId) {
+        return res.status(400).json({ error: 'Google Client ID mismatch' });
+      }
+
+      email = data.email;
+      googleId = data.sub;
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to verify Google ID token with Google APIs' });
+    }
+  } else if (accessToken) {
     try {
       const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
       if (!googleRes.ok) {
-        return res.status(400).json({ error: 'Failed to verify Google token' });
+        return res.status(400).json({ error: 'Failed to verify Google Access token' });
       }
       const data = await googleRes.json();
       email = data.email;
       googleId = data.sub;
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to verify Google token with Google APIs' });
+      return res.status(500).json({ error: 'Failed to verify Google Access token with Google APIs' });
     }
-  } else if (mockUser) {
-    email = mockUser.email;
-    googleId = mockUser.googleId;
   } else {
-    return res.status(400).json({ error: 'Google Client ID or Access Token is missing' });
+    return res.status(400).json({ error: 'Google ID Token or Access Token is required' });
   }
 
   if (!email || !googleId) {
-    return res.status(400).json({ error: 'Invalid Google user details' });
+    return res.status(400).json({ error: 'Invalid Google user details extracted' });
   }
 
   try {

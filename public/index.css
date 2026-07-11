@@ -2084,76 +2084,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-/* Mock Google Modal */
-.mock-accounts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 1rem 0;
-}
 
-.mock-account-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1.25rem;
-  border-radius: var(--border-radius-sm);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.mock-account-item:hover {
-  background: rgba(0, 242, 254, 0.08);
-  border-color: var(--color-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 242, 254, 0.15);
-}
-
-.mock-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.mock-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.mock-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #fff;
-}
-
-.mock-email {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.mock-custom-input-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 1rem;
-}
-
-.mock-custom-input-section h5 {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
 
 /* Glassmorphism details and glows enhancements */
 .glass-panel {

@@ -1232,6 +1232,9 @@ async function fetchGoogleConfig() {
       state.googleClientId = data.googleClientId;
       if (state.googleClientId) {
         loadGoogleScript();
+      } else {
+        console.warn('Google Client ID is not configured in .env');
+        renderWarningMessage();
       }
     }
   } catch (err) {
@@ -1239,109 +1242,130 @@ async function fetchGoogleConfig() {
   }
 }
 
+function renderWarningMessage() {
+  const warningHTML = `<p style="font-size: 0.8rem; color: var(--color-danger); text-align: center;">Google Sign-In needs GOOGLE_CLIENT_ID in env</p>`;
+  const loginContainer = document.getElementById("google-login-btn-container");
+  const signupContainer = document.getElementById("google-signup-btn-container");
+  if (loginContainer) loginContainer.innerHTML = warningHTML;
+  if (signupContainer) signupContainer.innerHTML = warningHTML;
+}
+
 function loadGoogleScript() {
   if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-    initGoogleTokenClient();
+    initGoogleGSI();
     return;
   }
   const script = document.createElement('script');
   script.src = 'https://accounts.google.com/gsi/client';
   script.async = true;
   script.defer = true;
-  script.onload = initGoogleTokenClient;
+  script.onload = initGoogleGSI;
   document.head.appendChild(script);
 }
 
-function initGoogleTokenClient() {
+function initGoogleGSI() {
   if (!state.googleClientId || typeof google === 'undefined') return;
-  state.googleTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: state.googleClientId,
-    scope: 'email profile openid',
-    callback: async (tokenResponse) => {
-      if (tokenResponse && tokenResponse.access_token) {
-        showLoader(state.isGoogleLinkingMode ? 'Linking Google account...' : 'Signing in with Google...');
-        if (state.isGoogleLinkingMode) {
+
+  try {
+    // 1. Initialize Google ID (Sign-In & One Tap)
+    google.accounts.id.initialize({
+      client_id: state.googleClientId,
+      callback: handleGoogleCredentialResponse
+    });
+
+    // 2. Render Google Buttons in placeholders
+    renderGoogleButtons();
+
+    // 3. Initialize Token client for Profile Google linking
+    state.googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: state.googleClientId,
+      scope: 'email profile openid',
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
           await handleGoogleLinkBackend(tokenResponse.access_token);
-        } else {
-          await handleGoogleLoginBackend(tokenResponse.access_token);
         }
-        hideLoader();
       }
-    }
-  });
+    });
+  } catch (e) {
+    console.error('Error initializing Google GSI client:', e);
+  }
 }
 
-function triggerGoogleAuth(type) {
-  state.isGoogleLinkingMode = false;
-  elements.authErrorMsg.classList.add('hidden');
+function renderGoogleButtons() {
+  if (typeof google === 'undefined') return;
   
-  if (state.googleClientId) {
-    if (!state.googleTokenClient) {
-      initGoogleTokenClient();
-    }
-    if (state.googleTokenClient) {
-      state.googleTokenClient.requestAccessToken();
-    } else {
-      showAuthError('Google Client failed to initialize. Using demo login instead.');
-      showMockGoogleModal();
-    }
-  } else {
-    // Show mock Google Account Picker Modal
-    showMockGoogleModal();
+  const loginContainer = document.getElementById("google-login-btn-container");
+  const signupContainer = document.getElementById("google-signup-btn-container");
+
+  if (loginContainer) {
+    google.accounts.id.renderButton(loginContainer, {
+      theme: "outline",
+      size: "large",
+      width: loginContainer.offsetWidth || 358
+    });
+  }
+
+  if (signupContainer) {
+    google.accounts.id.renderButton(signupContainer, {
+      theme: "outline",
+      size: "large",
+      width: signupContainer.offsetWidth || 358
+    });
   }
 }
 
-function triggerGoogleLink() {
-  state.isGoogleLinkingMode = true;
-  if (state.googleClientId) {
-    if (!state.googleTokenClient) {
-      initGoogleTokenClient();
-    }
-    if (state.googleTokenClient) {
-      state.googleTokenClient.requestAccessToken();
-    } else {
-      alert('Google Client failed to initialize. Using demo picker instead.');
-      showMockGoogleModal();
-    }
-  } else {
-    // Show mock Google Account Picker Modal
-    showMockGoogleModal();
-  }
+async function handleGoogleCredentialResponse(response) {
+  if (!response || !response.credential) return;
+  await handleGoogleLoginBackend(response.credential);
 }
 
-async function handleGoogleLoginBackend(accessToken, mockUser = null) {
+async function handleGoogleLoginBackend(idToken) {
   showLoader('Authenticating with Google...');
   try {
     const res = await fetch('/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken, mockUser })
+      body: JSON.stringify({ idToken })
     });
     const data = await res.json();
     if (res.ok) {
       onLoginSuccess(data);
     } else {
-      showAuthError(data.error || 'Google Authentication failed.');
+      showAuthError(data.error || 'Google login verification failed.');
     }
   } catch (err) {
-    showAuthError('Connection error during Google login.');
+    showAuthError('Connection error during Google login verification.');
   } finally {
     hideLoader();
   }
 }
 
-async function handleGoogleLinkBackend(accessToken, mockUser = null) {
-  showLoader('Linking Google Account...');
+function triggerGoogleLink() {
+  if (state.googleClientId) {
+    if (!state.googleTokenClient) {
+      initGoogleGSI();
+    }
+    if (state.googleTokenClient) {
+      state.googleTokenClient.requestAccessToken();
+    } else {
+      alert('Google link client failed to initialize.');
+    }
+  } else {
+    alert('Google linking requires GOOGLE_CLIENT_ID to be set in .env');
+  }
+}
+
+async function handleGoogleLinkBackend(accessToken) {
+  showLoader('Linking Google account...');
   try {
     const res = await fetch('/api/auth/link-google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken, mockUser })
+      body: JSON.stringify({ accessToken })
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Google Account linked successfully! 🎉');
-      // Refresh Profile data
+      alert('Google account linked successfully! 🎉');
       await loadProfileData();
     } else {
       alert('Linking failed: ' + (data.error || 'Unknown error'));
@@ -1393,46 +1417,4 @@ async function openProfileModal() {
 
 function closeProfileModal() {
   document.getElementById('profile-modal').classList.add('hidden');
-}
-
-function showMockGoogleModal() {
-  document.getElementById('mock-google-modal').classList.remove('hidden');
-}
-
-function closeMockGoogleModal() {
-  document.getElementById('mock-google-modal').classList.add('hidden');
-}
-
-function selectMockGoogleAccount(name, email) {
-  closeMockGoogleModal();
-  const mockUser = {
-    name,
-    email,
-    googleId: 'g_mock_' + Math.random().toString(36).substr(2, 9)
-  };
-  
-  if (state.isGoogleLinkingMode) {
-    handleGoogleLinkBackend(null, mockUser);
-  } else {
-    handleGoogleLoginBackend(null, mockUser);
-  }
-}
-
-function selectMockGoogleAccountFromInputs() {
-  const nameInput = document.getElementById('mock-custom-name');
-  const emailInput = document.getElementById('mock-custom-email');
-  
-  const name = nameInput.value.trim();
-  const email = emailInput.value.trim();
-  
-  if (!name || !email) {
-    alert('Please enter both name and email.');
-    return;
-  }
-  
-  // Clear inputs
-  nameInput.value = '';
-  emailInput.value = '';
-  
-  selectMockGoogleAccount(name, email);
 }
