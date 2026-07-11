@@ -626,54 +626,38 @@ async function migrateUsersToFirebaseAuth() {
     let updated = false;
     for (let user of users) {
       if (!user.email) continue;
-      if (user.googleId) continue; // Already migrated, skip!
       
       try {
         const firebaseUser = await admin.auth().getUserByEmail(user.email);
-        user.googleId = firebaseUser.uid;
-        updated = true;
-        console.log(`[Migration] Linked existing Firebase Auth user ${user.email} to DB profile`);
+        if (!user.googleId) {
+          user.googleId = firebaseUser.uid;
+          updated = true;
+          console.log(`[Migration] Linked existing Firebase Auth user ${user.email} to DB profile`);
+        }
       } catch (err) {
         if (err.code === 'auth/user-not-found') {
-          console.log(`[Migration] Migrating ${user.email} from DB to Firebase Auth...`);
-          try {
-            const importRecord = {
-              uid: user.id,
-              email: user.email,
-              displayName: user.name
-            };
-            if (user.passwordHash) {
-              importRecord.passwordHash = Buffer.from(user.passwordHash);
-            }
-            
-            const result = await admin.auth().importUsers([importRecord], {
-              hash: {
-                algorithm: 'BCRYPT'
-              }
-            });
-            
-            if (result.failureCount > 0) {
-              console.warn(`[Migration] Bcrypt import failed for ${user.email}:`, result.errors[0].error);
-              // Fallback: create account without password
-              const createdUser = await admin.auth().createUser({
-                uid: user.id,
-                email: user.email,
-                displayName: user.name
-              });
-              user.googleId = createdUser.uid;
-            } else {
-              user.googleId = user.id;
-            }
-            updated = true;
-            console.log(`[Migration] Successfully imported user ${user.email}`);
-          } catch (createErr) {
-            console.error(`[Migration] Could not create Firebase Auth account for ${user.email}:`, createErr);
-          }
+          // Standard Bcrypt hashes are not natively compatible with Firebase Auth imports without complex salt configurations.
+          // Let users Register (Sign Up) with their password, which will create the Firebase Auth user,
+          // and then match/link them automatically via their email.
         } else {
           console.error(`[Migration] Error checking Firebase user ${user.email}:`, err);
         }
       }
     }
+
+    // Clean up any previously imported unlinked users in Firebase Auth so they can Register cleanly
+    for (let user of users) {
+      if (user.email && !user.googleId) {
+        try {
+          const firebaseUser = await admin.auth().getUserByEmail(user.email);
+          await admin.auth().deleteUser(firebaseUser.uid);
+          console.log(`[Cleanup] Deleted unlinked imported Firebase user ${user.email}`);
+        } catch (err) {
+          // User not found in Firebase Auth, safe to ignore
+        }
+      }
+    }
+
     if (updated) {
       await writeJSON(USERS_FILE, users);
     }
