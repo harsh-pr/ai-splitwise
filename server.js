@@ -239,8 +239,8 @@ app.post('/api/auth/register', async (req, res) => {
     // Set secure HttpOnly cookie
     res.cookie('session_token', token, {
       httpOnly: true,
-      secure: false, // Set to true if running https
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -272,8 +272,8 @@ app.post('/api/auth/login', async (req, res) => {
 
     res.cookie('session_token', token, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -390,8 +390,8 @@ app.post('/api/auth/google', async (req, res) => {
 
     res.cookie('session_token', token, {
       httpOnly: true,
-      secure: false, // Set to true if running https
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
