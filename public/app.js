@@ -13,7 +13,6 @@ const state = {
   splits: [],              // Calculated splits per person
   history: [],             // User's bill scan history list (max 10)
   geminiApiKey: '',
-  googleClientId: null,
   firebaseInitialized: false
 };
 
@@ -1304,7 +1303,6 @@ async function fetchGoogleConfig() {
     const res = await fetch('/api/auth/config');
     if (res.ok) {
       const data = await res.json();
-      state.googleClientId = data.googleClientId;
       if (data.firebaseConfig && data.firebaseConfig.apiKey) {
         firebase.initializeApp(data.firebaseConfig);
         state.firebaseInitialized = true;

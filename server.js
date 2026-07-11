@@ -1,6 +1,5 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const fs = require('fs');
@@ -108,24 +107,24 @@ async function writeJSON(file, data) {
 
 function standardizeDate(dateStr) {
   if (!dateStr) return 'Unavailable';
-  
+
   dateStr = dateStr.trim();
-  
+
   // If it matches unknown or unavailable variations
   if (/unknown|unavailable|none|n\/a/i.test(dateStr)) {
     return 'Unavailable';
   }
-  
+
   // Standard format YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return dateStr;
   }
-  
+
   // Match DD-MM-YYYY, MM/DD/YYYY, etc.
   const parts = dateStr.split(/[-/.]/);
   if (parts.length === 3) {
     let day, month, year;
-    
+
     if (parts[0].length === 4) {
       // YYYY-MM-DD or YYYY-DD-MM
       year = parseInt(parts[0], 10);
@@ -163,7 +162,7 @@ function standardizeDate(dateStr) {
       day = p0;
       month = p1;
     }
-    
+
     if (year && month && day) {
       const y = year.toString();
       const m = month.toString().padStart(2, '0');
@@ -171,15 +170,15 @@ function standardizeDate(dateStr) {
       return `${y}-${m}-${d}`;
     }
   }
-  
+
   // Final fallback
   try {
     const parsed = new Date(dateStr);
     if (!isNaN(parsed.getTime())) {
       return parsed.toISOString().split('T')[0];
     }
-  } catch (e) {}
-  
+  } catch (e) { }
+
   return 'Unavailable';
 }
 
@@ -219,7 +218,7 @@ app.delete('/api/auth/delete-account', authenticate, async (req, res) => {
     }
 
     const user = users[userIndex];
-    
+
     // 1. Delete from Firebase Authentication if using Firestore
     if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0 && user.googleId) {
       try {
@@ -250,77 +249,6 @@ app.delete('/api/auth/delete-account', authenticate, async (req, res) => {
 });
 
 // Auth API endpoints
-app.post('/api/auth/register', async (req, res) => {
-  const { email, password, name } = req.body;
-  if (!email || !password || !name) {
-    return res.status(400).json({ error: 'Missing registration details' });
-  }
-
-  const users = await readJSON(USERS_FILE);
-  if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-    return res.status(400).json({ error: 'User already exists with this email' });
-  }
-
-  try {
-    const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = {
-      id: 'usr_' + Math.random().toString(36).substr(2, 9),
-      email: email.toLowerCase(),
-      name,
-      passwordHash,
-      createdAt: new Date().toISOString()
-    };
-    users.push(newUser);
-    await writeJSON(USERS_FILE, users);
-
-    const token = jwt.sign({ id: newUser.id, email: newUser.email, name: newUser.name }, JWT_SECRET, { expiresIn: '7d' });
-    
-    // Set secure HttpOnly cookie
-    res.cookie('session_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
-
-    return res.json({ id: newUser.id, email: newUser.email, name: newUser.name });
-  } catch (err) {
-    return res.status(500).json({ error: 'Server error during registration' });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
-  }
-
-  const users = await readJSON(USERS_FILE);
-  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (!user || !user.passwordHash) {
-    return res.status(400).json({ error: 'Invalid email or password' });
-  }
-
-  try {
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid email or password' });
-    }
-
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-
-    res.cookie('session_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    return res.json({ id: user.id, email: user.email, name: user.name });
-  } catch (err) {
-    return res.status(500).json({ error: 'Server error during login' });
-  }
-});
 
 
 app.post('/api/auth/logout', (req, res) => {
@@ -505,12 +433,12 @@ app.post('/api/analyze-bill', authenticate, upload.single('billImage'), async (r
     // Use gemini-2.5-flash as default, fallback to gemini-1.5-flash
     let model;
     try {
-      model = genAI.getGenerativeModel({ 
+      model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: 'application/json' }
       });
     } catch (e) {
-      model = genAI.getGenerativeModel({ 
+      model = genAI.getGenerativeModel({
         model: 'gemini-1.5-flash',
         generationConfig: { responseMimeType: 'application/json' }
       });
@@ -563,10 +491,10 @@ app.post('/api/analyze-bill', authenticate, upload.single('billImage'), async (r
     // Return high quality mockup fallback but let user know AI failed
     const mockData = getMockReceiptData();
     mockData.imagePath = relativeImagePath;
-    return res.json({ 
-      ...mockData, 
-      isMock: true, 
-      error: 'AI Extraction failed. Showing mock receipt contents. Please review and edit items.' 
+    return res.json({
+      ...mockData,
+      isMock: true,
+      error: 'AI Extraction failed. Showing mock receipt contents. Please review and edit items.'
     });
   }
 });
@@ -610,7 +538,7 @@ app.post('/api/history', authenticate, async (req, res) => {
   }
 
   const history = await readJSON(HISTORY_FILE);
-  
+
   // Format entry
   const entry = {
     id: newEntry.id || 'bill_' + Math.random().toString(36).substr(2, 9),
@@ -645,14 +573,14 @@ app.delete('/api/history/:id', authenticate, async (req, res) => {
   const entryId = req.params.id;
   let history = await readJSON(HISTORY_FILE);
   const initialLength = history.length;
-  
+
   // Keep files that don't match or belong to another user
   history = history.filter(entry => !(entry.id === entryId && entry.userId === req.user.id));
-  
+
   if (history.length === initialLength) {
     return res.status(404).json({ error: 'Entry not found' });
   }
-  
+
   await writeJSON(HISTORY_FILE, history);
   return res.json({ success: true });
 });
