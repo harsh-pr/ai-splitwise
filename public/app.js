@@ -12,7 +12,10 @@ const state = {
   assignments: {},         // { [itemName]: string[] } -> maps items to people who consumed them
   splits: [],              // Calculated splits per person
   history: [],             // User's bill scan history list (max 10)
-  geminiApiKey: ''
+  geminiApiKey: '',
+  googleClientId: null,
+  googleTokenClient: null,
+  isGoogleLinkingMode: false
 };
 
 // UI Section Elements
@@ -107,6 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize hover + click user dropdown menu
   initUserDropdownMenu();
+  
+  // Fetch Google Client config
+  fetchGoogleConfig();
   
   // Check for session cookie
   checkSession();
@@ -1212,4 +1218,221 @@ function escapeHtml(str) {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+}
+
+// --------------------------------------------------------------------------
+// Google Authentication & Profile Integration
+// --------------------------------------------------------------------------
+
+async function fetchGoogleConfig() {
+  try {
+    const res = await fetch('/api/auth/config');
+    if (res.ok) {
+      const data = await res.json();
+      state.googleClientId = data.googleClientId;
+      if (state.googleClientId) {
+        loadGoogleScript();
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching Google config:', err);
+  }
+}
+
+function loadGoogleScript() {
+  if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+    initGoogleTokenClient();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.async = true;
+  script.defer = true;
+  script.onload = initGoogleTokenClient;
+  document.head.appendChild(script);
+}
+
+function initGoogleTokenClient() {
+  if (!state.googleClientId || typeof google === 'undefined') return;
+  state.googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: state.googleClientId,
+    scope: 'email profile openid',
+    callback: async (tokenResponse) => {
+      if (tokenResponse && tokenResponse.access_token) {
+        showLoader(state.isGoogleLinkingMode ? 'Linking Google account...' : 'Signing in with Google...');
+        if (state.isGoogleLinkingMode) {
+          await handleGoogleLinkBackend(tokenResponse.access_token);
+        } else {
+          await handleGoogleLoginBackend(tokenResponse.access_token);
+        }
+        hideLoader();
+      }
+    }
+  });
+}
+
+function triggerGoogleAuth(type) {
+  state.isGoogleLinkingMode = false;
+  elements.authErrorMsg.classList.add('hidden');
+  
+  if (state.googleClientId) {
+    if (!state.googleTokenClient) {
+      initGoogleTokenClient();
+    }
+    if (state.googleTokenClient) {
+      state.googleTokenClient.requestAccessToken();
+    } else {
+      showAuthError('Google Client failed to initialize. Using demo login instead.');
+      showMockGoogleModal();
+    }
+  } else {
+    // Show mock Google Account Picker Modal
+    showMockGoogleModal();
+  }
+}
+
+function triggerGoogleLink() {
+  state.isGoogleLinkingMode = true;
+  if (state.googleClientId) {
+    if (!state.googleTokenClient) {
+      initGoogleTokenClient();
+    }
+    if (state.googleTokenClient) {
+      state.googleTokenClient.requestAccessToken();
+    } else {
+      alert('Google Client failed to initialize. Using demo picker instead.');
+      showMockGoogleModal();
+    }
+  } else {
+    // Show mock Google Account Picker Modal
+    showMockGoogleModal();
+  }
+}
+
+async function handleGoogleLoginBackend(accessToken, mockUser = null) {
+  showLoader('Authenticating with Google...');
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken, mockUser })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      onLoginSuccess(data);
+    } else {
+      showAuthError(data.error || 'Google Authentication failed.');
+    }
+  } catch (err) {
+    showAuthError('Connection error during Google login.');
+  } finally {
+    hideLoader();
+  }
+}
+
+async function handleGoogleLinkBackend(accessToken, mockUser = null) {
+  showLoader('Linking Google Account...');
+  try {
+    const res = await fetch('/api/auth/link-google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken, mockUser })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('Google Account linked successfully! 🎉');
+      // Refresh Profile data
+      await loadProfileData();
+    } else {
+      alert('Linking failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Connection error linking Google account.');
+  } finally {
+    hideLoader();
+  }
+}
+
+async function loadProfileData() {
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) {
+      const user = await res.json();
+      
+      document.getElementById('profile-name').textContent = user.name;
+      document.getElementById('profile-email').textContent = user.email;
+      
+      const linkStatusContainer = document.getElementById('google-link-status-container');
+      const linkBtn = document.getElementById('google-link-btn');
+      
+      if (user.googleId) {
+        linkStatusContainer.className = 'google-link-status linked';
+        linkStatusContainer.innerHTML = `Linked with Google (${escapeHtml(user.googleEmail || user.email)}) ✅`;
+        linkBtn.classList.add('hidden');
+      } else {
+        linkStatusContainer.className = 'google-link-status';
+        linkStatusContainer.innerHTML = 'Not Linked ❌';
+        linkBtn.classList.remove('hidden');
+      }
+      
+      // Calculate total amount spent
+      const totalSpent = state.history.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+      document.getElementById('profile-spent').textContent = `₹${totalSpent.toFixed(2)}`;
+    }
+  } catch (err) {
+    console.error('Failed to load profile details:', err);
+  }
+}
+
+async function openProfileModal() {
+  showLoader('Opening Profile...');
+  await loadProfileData();
+  hideLoader();
+  document.getElementById('profile-modal').classList.remove('hidden');
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').classList.add('hidden');
+}
+
+function showMockGoogleModal() {
+  document.getElementById('mock-google-modal').classList.remove('hidden');
+}
+
+function closeMockGoogleModal() {
+  document.getElementById('mock-google-modal').classList.add('hidden');
+}
+
+function selectMockGoogleAccount(name, email) {
+  closeMockGoogleModal();
+  const mockUser = {
+    name,
+    email,
+    googleId: 'g_mock_' + Math.random().toString(36).substr(2, 9)
+  };
+  
+  if (state.isGoogleLinkingMode) {
+    handleGoogleLinkBackend(null, mockUser);
+  } else {
+    handleGoogleLoginBackend(null, mockUser);
+  }
+}
+
+function selectMockGoogleAccountFromInputs() {
+  const nameInput = document.getElementById('mock-custom-name');
+  const emailInput = document.getElementById('mock-custom-email');
+  
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  
+  if (!name || !email) {
+    alert('Please enter both name and email.');
+    return;
+  }
+  
+  // Clear inputs
+  nameInput.value = '';
+  emailInput.value = '';
+  
+  selectMockGoogleAccount(name, email);
 }

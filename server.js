@@ -289,8 +289,153 @@ app.post('/api/auth/logout', (req, res) => {
   return res.json({ success: true });
 });
 
-app.get('/api/auth/me', authenticate, (req, res) => {
-  return res.json(req.user);
+app.get('/api/auth/config', (req, res) => {
+  return res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || null
+  });
+});
+
+app.get('/api/auth/me', authenticate, async (req, res) => {
+  try {
+    const users = await readJSON(USERS_FILE);
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    return res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      googleId: user.googleId || null,
+      googleEmail: user.googleEmail || null
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Server error retrieving profile' });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  const { accessToken, mockUser } = req.body;
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+
+  let email, name, googleId;
+
+  if (googleClientId && accessToken) {
+    try {
+      const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      if (!googleRes.ok) {
+        return res.status(400).json({ error: 'Failed to verify Google token' });
+      }
+      const data = await googleRes.json();
+      email = data.email;
+      name = data.name || data.email.split('@')[0];
+      googleId = data.sub;
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to verify Google token with Google APIs' });
+    }
+  } else if (mockUser) {
+    email = mockUser.email;
+    name = mockUser.name;
+    googleId = mockUser.googleId;
+  } else {
+    return res.status(400).json({ error: 'Google Client ID or Access Token is missing' });
+  }
+
+  if (!email || !googleId) {
+    return res.status(400).json({ error: 'Invalid Google user details' });
+  }
+
+  try {
+    const users = await readJSON(USERS_FILE);
+    // Find user by Google ID or Email
+    let user = users.find(u => u.googleId === googleId);
+    if (!user) {
+      user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (user) {
+        // Link Google ID
+        user.googleId = googleId;
+        user.googleEmail = email;
+        await writeJSON(USERS_FILE, users);
+      } else {
+        // Register new Google account user
+        user = {
+          id: 'usr_' + Math.random().toString(36).substr(2, 9),
+          email: email.toLowerCase(),
+          name: name,
+          googleId: googleId,
+          googleEmail: email,
+          createdAt: new Date().toISOString()
+        };
+        users.push(user);
+        await writeJSON(USERS_FILE, users);
+      }
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('session_token', token, {
+      httpOnly: true,
+      secure: false, // Set to true if running https
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    return res.json({ id: user.id, email: user.email, name: user.name, googleId: user.googleId });
+  } catch (err) {
+    return res.status(500).json({ error: 'Server error during Google login' });
+  }
+});
+
+app.post('/api/auth/link-google', authenticate, async (req, res) => {
+  const { accessToken, mockUser } = req.body;
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+
+  let email, googleId;
+
+  if (googleClientId && accessToken) {
+    try {
+      const googleRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      if (!googleRes.ok) {
+        return res.status(400).json({ error: 'Failed to verify Google token' });
+      }
+      const data = await googleRes.json();
+      email = data.email;
+      googleId = data.sub;
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to verify Google token with Google APIs' });
+    }
+  } else if (mockUser) {
+    email = mockUser.email;
+    googleId = mockUser.googleId;
+  } else {
+    return res.status(400).json({ error: 'Google Client ID or Access Token is missing' });
+  }
+
+  if (!email || !googleId) {
+    return res.status(400).json({ error: 'Invalid Google user details' });
+  }
+
+  try {
+    const users = await readJSON(USERS_FILE);
+    // Check if this Google account is already linked to ANOTHER user
+    const otherLinkedUser = users.find(u => u.googleId === googleId && u.id !== req.user.id);
+    if (otherLinkedUser) {
+      return res.status(400).json({ error: 'This Google account is already linked to another Splitwise AI user' });
+    }
+
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.googleId = googleId;
+    user.googleEmail = email;
+    await writeJSON(USERS_FILE, users);
+
+    return res.json({ success: true, googleId: user.googleId, googleEmail: user.googleEmail });
+  } catch (err) {
+    return res.status(500).json({ error: 'Server error linking Google account' });
+  }
 });
 
 
