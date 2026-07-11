@@ -618,6 +618,75 @@ app.delete('/api/history/:id', authenticate, async (req, res) => {
   return res.json({ success: true });
 });
 
+// Migrate existing users to Firebase Authentication on startup
+async function migrateUsersToFirebaseAuth() {
+  if (process.env.USE_FIREBASE !== 'true') return;
+  try {
+    const users = await readJSON(USERS_FILE);
+    let updated = false;
+    for (let user of users) {
+      if (!user.email) continue;
+      if (user.googleId) continue; // Already migrated, skip!
+      
+      try {
+        const firebaseUser = await admin.auth().getUserByEmail(user.email);
+        user.googleId = firebaseUser.uid;
+        updated = true;
+        console.log(`[Migration] Linked existing Firebase Auth user ${user.email} to DB profile`);
+      } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+          console.log(`[Migration] Migrating ${user.email} from DB to Firebase Auth...`);
+          try {
+            const importRecord = {
+              uid: user.id,
+              email: user.email,
+              displayName: user.name
+            };
+            if (user.passwordHash) {
+              importRecord.passwordHash = Buffer.from(user.passwordHash);
+            }
+            
+            const result = await admin.auth().importUsers([importRecord], {
+              hash: {
+                algorithm: 'BCRYPT'
+              }
+            });
+            
+            if (result.failureCount > 0) {
+              console.warn(`[Migration] Bcrypt import failed for ${user.email}:`, result.errors[0].error);
+              // Fallback: create account without password
+              const createdUser = await admin.auth().createUser({
+                uid: user.id,
+                email: user.email,
+                displayName: user.name
+              });
+              user.googleId = createdUser.uid;
+            } else {
+              user.googleId = user.id;
+            }
+            updated = true;
+            console.log(`[Migration] Successfully imported user ${user.email}`);
+          } catch (createErr) {
+            console.error(`[Migration] Could not create Firebase Auth account for ${user.email}:`, createErr);
+          }
+        } else {
+          console.error(`[Migration] Error checking Firebase user ${user.email}:`, err);
+        }
+      }
+    }
+    if (updated) {
+      await writeJSON(USERS_FILE, users);
+    }
+  } catch (err) {
+    console.error('[Migration] Error during Firebase migration utility:', err);
+  }
+}
+
+// Run user migration on startup if using Firebase
+if (process.env.USE_FIREBASE === 'true') {
+  migrateUsersToFirebaseAuth().catch(console.error);
+}
+
 // Start the server
 // Start server only in local development. Vercel provides its own handler.
 if (process.env.NODE_ENV !== 'production') {
