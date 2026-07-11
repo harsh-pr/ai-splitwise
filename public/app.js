@@ -20,7 +20,7 @@ const state = {
 const elements = {
   authSection: document.getElementById('auth-section'),
   workspaceSection: document.getElementById('workspace-section'),
-  userDisplayName: document.getElementById('user-display-name'),
+  userDisplayName: document.getElementById('dropdown-user-name'),
   authErrorMsg: document.getElementById('auth-error-msg'),
   loginForm: document.getElementById('login-form'),
   signupForm: document.getElementById('signup-form'),

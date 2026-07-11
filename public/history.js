@@ -6,7 +6,7 @@ const state = {
 };
 
 const elements = {
-  userDisplayName: document.getElementById('user-display-name'),
+  userDisplayName: document.getElementById('dropdown-user-name'),
   totalSpentEl: document.getElementById('total-spent-amount'),
   
   // Columns lists

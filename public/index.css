@@ -2000,21 +2000,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .user-menu-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 1rem;
-  border-radius: var(--border-radius-sm);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   cursor: pointer;
   transition: var(--transition-fast);
   user-select: none;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .user-menu-container:hover .user-menu-trigger {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(99, 102, 241, 0.25);
+  transform: scale(1.05);
 }
 
 .user-avatar {
@@ -2292,8 +2293,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* User Avatar circle element style */
 .user-avatar-circle-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
