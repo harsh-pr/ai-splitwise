@@ -190,6 +190,26 @@ const upload = multer({ storage: storage });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Maintenance Mode Middleware
+app.use((req, res, next) => {
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    res.status(503); // Service Unavailable (SEO friendly status)
+    
+    // Serve JSON for API endpoints
+    if (req.path.startsWith('/api/')) {
+      return res.json({
+        error: 'Service Unavailable',
+        message: 'The website is temporarily undergoing scheduled maintenance. Please try again later.'
+      });
+    }
+    
+    // Serve the maintenance HTML page for web clients
+    return res.sendFile(path.join(__dirname, 'maintainance.html'));
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 
