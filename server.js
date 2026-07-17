@@ -193,7 +193,27 @@ app.use(cookieParser());
 
 // Maintenance Mode Middleware
 app.use((req, res, next) => {
+  const bypassKey = process.env.MAINTENANCE_BYPASS_KEY;
+  
+  // 1. Check if the user is trying to set the bypass key via query parameter
+  if (bypassKey && req.query.bypass === bypassKey) {
+    res.cookie('bypass_maintenance', bypassKey, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+    // Redirect to the same path but strip the query param for a clean URL
+    return res.redirect(req.path);
+  }
+
+  // 2. Check if maintenance mode is active
   if (process.env.MAINTENANCE_MODE === 'true') {
+    // If the browser holds the correct bypass cookie, let them pass
+    if (bypassKey && req.cookies.bypass_maintenance === bypassKey) {
+      return next();
+    }
+
     res.status(503); // Service Unavailable (SEO friendly status)
     
     // Serve JSON for API endpoints
