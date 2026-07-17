@@ -485,7 +485,13 @@ async function handleDeleteAccount() {
       }
       hideLoader();
       alert('Your account and all associated data have been permanently deleted.');
-      closeProfileModal();
+      
+      // Close the user dropdown menu safely
+      const userMenu = document.querySelector('.user-menu-container');
+      if (userMenu) {
+        userMenu.classList.remove('active');
+      }
+      
       showAuthSection();
     } else {
       const data = await res.json();
