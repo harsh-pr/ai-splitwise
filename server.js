@@ -338,6 +338,37 @@ const DISPOSABLE_DOMAINS = [
   'getnada.com', 'boun.cr', 'jetable.org', 'temp-mail.org', 'tempmail-alt.com'
 ];
 
+function isFakeOrTestEmail(email) {
+  const parts = email.trim().split('@');
+  if (parts.length !== 2) return true;
+  
+  const localPart = parts[0].toLowerCase();
+  const domainPart = parts[1].toLowerCase();
+  
+  const fakePrefixes = [
+    'test', 'demo', 'fake', 'dummy', 'temp', 'placeholder', 'example', 
+    'admin', 'guest', 'user', 'testing'
+  ];
+  
+  const matchesPrefix = fakePrefixes.some(prefix => {
+    if (localPart.startsWith(prefix)) {
+      const remainder = localPart.slice(prefix.length);
+      return remainder === '' || /^[0-9_\-\.]+$/.test(remainder);
+    }
+    return false;
+  });
+  
+  if (matchesPrefix) return true;
+
+  const fakeDomains = [
+    'example.com', 'idk.com', 'test.com', 'demo.com', 'fake.com', 
+    'dummy.com', 'temp.com', 'none.com', 'null.com', 'invalid.com',
+    'domain.com', 'myemail.com', 'email.com', 'mail.com'
+  ];
+  
+  return fakeDomains.includes(domainPart);
+}
+
 app.post('/api/auth/google', async (req, res) => {
   const { idToken } = req.body;
 
@@ -378,10 +409,10 @@ app.post('/api/auth/google', async (req, res) => {
     return res.status(403).json({ error: 'Email not verified', message: 'Please verify your email address before logging in.' });
   }
 
-  // 2. Enforce disposable domain validation
+  // 2. Enforce disposable domain and fake email validation
   const emailDomain = email.split('@')[1]?.toLowerCase();
-  if (DISPOSABLE_DOMAINS.includes(emailDomain)) {
-    return res.status(400).json({ error: 'Invalid email domain', message: 'Temporary/disposable email accounts are not allowed.' });
+  if (DISPOSABLE_DOMAINS.includes(emailDomain) || isFakeOrTestEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email address', message: 'Test, demo, or temporary email accounts are not allowed.' });
   }
 
   try {

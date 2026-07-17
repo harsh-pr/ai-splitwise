@@ -287,6 +287,40 @@ function isDisposableEmail(email) {
   return DISPOSABLE_DOMAINS.includes(domain);
 }
 
+function isFakeOrTestEmail(email) {
+  const parts = email.trim().split('@');
+  if (parts.length !== 2) return true;
+  
+  const localPart = parts[0].toLowerCase();
+  const domainPart = parts[1].toLowerCase();
+  
+  // Blacklist of test/fake prefixes (local part)
+  const fakePrefixes = [
+    'test', 'demo', 'fake', 'dummy', 'temp', 'placeholder', 'example', 
+    'admin', 'guest', 'user', 'testing'
+  ];
+  
+  // Check if local part starts with any fake prefixes (e.g. test123, demo_user)
+  const matchesPrefix = fakePrefixes.some(prefix => {
+    if (localPart.startsWith(prefix)) {
+      const remainder = localPart.slice(prefix.length);
+      return remainder === '' || /^[0-9_\-\.]+$/.test(remainder);
+    }
+    return false;
+  });
+  
+  if (matchesPrefix) return true;
+
+  // Blacklist of fake/invalid domains
+  const fakeDomains = [
+    'example.com', 'idk.com', 'test.com', 'demo.com', 'fake.com', 
+    'dummy.com', 'temp.com', 'none.com', 'null.com', 'invalid.com',
+    'domain.com', 'myemail.com', 'email.com', 'mail.com'
+  ];
+  
+  return fakeDomains.includes(domainPart);
+}
+
 // Email & Password Authentication handlers
 async function handleEmailLogin(e) {
   e.preventDefault();
@@ -328,8 +362,8 @@ async function handleEmailSignup(e) {
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   
-  if (isDisposableEmail(email)) {
-    showAuthError('Temporary/disposable email addresses are not allowed. Please use a real, permanent email address.');
+  if (isDisposableEmail(email) || isFakeOrTestEmail(email)) {
+    showAuthError('Test, demo, or placeholder email addresses are not allowed. Please use a real email address.');
     return;
   }
   
