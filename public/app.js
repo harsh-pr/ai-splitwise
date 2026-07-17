@@ -338,11 +338,34 @@ async function handleEmailLogin(e) {
     
     // Check if email is verified
     if (!userCredential.user.emailVerified) {
-      // Send a fresh verification link
-      await userCredential.user.sendEmailVerification();
-      // Sign out immediately
+      // Sign out immediately without sending email automatically to prevent rate-limiting (too-many-requests)
       await firebase.auth().signOut();
-      showAuthError('Your email address is not verified yet. We have sent a fresh verification link to your inbox. Please check your email to activate your account.');
+      
+      // Store credentials briefly to allow manual resending
+      state.lastAttemptedEmail = email;
+      state.lastAttemptedPassword = password;
+      
+      showAuthError('Your email address is not verified yet. Please check your inbox. ' +
+                    'If you need a new link, <a href="#" id="resend-verification-link" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">click here to resend</a>.');
+      
+      // Set up manual resend listener
+      document.getElementById('resend-verification-link')?.addEventListener('click', async (clickEvent) => {
+        clickEvent.preventDefault();
+        showLoader('Resending verification email...');
+        try {
+          // Temporarily sign in again in the background to access the user object
+          const tempUserCred = await firebase.auth().signInWithEmailAndPassword(state.lastAttemptedEmail, state.lastAttemptedPassword);
+          await tempUserCred.user.sendEmailVerification();
+          await firebase.auth().signOut();
+          alert('A fresh verification link has been sent to your email! 📧');
+          showAuthError('Verification email resent. Please check your inbox to verify your account.');
+        } catch (resendErr) {
+          console.error('Resend error:', resendErr);
+          showAuthError(resendErr.message || 'Failed to resend verification email. Please try again later.');
+        } finally {
+          hideLoader();
+        }
+      });
       return;
     }
     
