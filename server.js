@@ -309,6 +309,15 @@ app.get('/api/auth/me', authenticate, async (req, res) => {
   }
 });
 
+// Disposable Email Domain Blacklist (Backend)
+const DISPOSABLE_DOMAINS = [
+  'mailinator.com', 'yopmail.com', 'tempmail.com', '10minutemail.com',
+  'sharklasers.com', 'guerrillamail.com', 'trashmail.com', 'getairmail.com',
+  'dispostable.com', 'generator.email', 'maildrop.cc', 'tempmailo.com',
+  'mailcia.com', 'fakeinbox.com', 'mailnesia.com', 'mintemail.com',
+  'getnada.com', 'boun.cr', 'jetable.org', 'temp-mail.org', 'tempmail-alt.com'
+];
+
 app.post('/api/auth/google', async (req, res) => {
   const { idToken } = req.body;
 
@@ -327,6 +336,9 @@ app.post('/api/auth/google', async (req, res) => {
         return res.status(400).json({ error: 'Invalid ID Token format' });
       }
       decodedToken.uid = decodedToken.user_id || decodedToken.sub || 'usr_mock_' + Math.random().toString(36).substr(2, 9);
+      if (decodedToken.email_verified === undefined) {
+        decodedToken.email_verified = true;
+      }
     }
   } catch (err) {
     console.error('Firebase token verification error:', err);
@@ -339,6 +351,17 @@ app.post('/api/auth/google', async (req, res) => {
 
   if (!email || !googleId) {
     return res.status(400).json({ error: 'Invalid token payload' });
+  }
+
+  // 1. Enforce email verification (if Firebase is active)
+  if (process.env.USE_FIREBASE === 'true' && admin.apps.length > 0 && !decodedToken.email_verified) {
+    return res.status(403).json({ error: 'Email not verified', message: 'Please verify your email address before logging in.' });
+  }
+
+  // 2. Enforce disposable domain validation
+  const emailDomain = email.split('@')[1]?.toLowerCase();
+  if (DISPOSABLE_DOMAINS.includes(emailDomain)) {
+    return res.status(400).json({ error: 'Invalid email domain', message: 'Temporary/disposable email accounts are not allowed.' });
   }
 
   try {

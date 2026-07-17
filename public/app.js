@@ -273,10 +273,24 @@ function switchAuthTab(tab) {
   }
 }
 
+// Disposable Email Domain Blacklist
+const DISPOSABLE_DOMAINS = [
+  'mailinator.com', 'yopmail.com', 'tempmail.com', '10minutemail.com',
+  'sharklasers.com', 'guerrillamail.com', 'trashmail.com', 'getairmail.com',
+  'dispostable.com', 'generator.email', 'maildrop.cc', 'tempmailo.com',
+  'mailcia.com', 'fakeinbox.com', 'mailnesia.com', 'mintemail.com',
+  'getnada.com', 'boun.cr', 'jetable.org', 'temp-mail.org', 'tempmail-alt.com'
+];
+
+function isDisposableEmail(email) {
+  const domain = email.trim().split('@')[1]?.toLowerCase();
+  return DISPOSABLE_DOMAINS.includes(domain);
+}
+
 // Email & Password Authentication handlers
 async function handleEmailLogin(e) {
   e.preventDefault();
-  const email = document.getElementById('login-email').value;
+  const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   
   showLoader('Signing in...');
@@ -287,6 +301,17 @@ async function handleEmailLogin(e) {
       throw new Error('Firebase Auth is not initialized. Please verify backend configurations.');
     }
     const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    
+    // Check if email is verified
+    if (!userCredential.user.emailVerified) {
+      // Send a fresh verification link
+      await userCredential.user.sendEmailVerification();
+      // Sign out immediately
+      await firebase.auth().signOut();
+      showAuthError('Your email address is not verified yet. We have sent a fresh verification link to your inbox. Please check your email to activate your account.');
+      return;
+    }
+    
     const idToken = await userCredential.user.getIdToken();
     await handleFirebaseLoginBackend(idToken);
   } catch (err) {
@@ -300,8 +325,13 @@ async function handleEmailLogin(e) {
 async function handleEmailSignup(e) {
   e.preventDefault();
   const name = document.getElementById('signup-name').value;
-  const email = document.getElementById('signup-email').value;
+  const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
+  
+  if (isDisposableEmail(email)) {
+    showAuthError('Temporary/disposable email addresses are not allowed. Please use a real, permanent email address.');
+    return;
+  }
   
   showLoader('Creating account...');
   elements.authErrorMsg.classList.add('hidden');
@@ -315,8 +345,18 @@ async function handleEmailSignup(e) {
     if (name) {
       await userCredential.user.updateProfile({ displayName: name });
     }
-    const idToken = await userCredential.user.getIdToken();
-    await handleFirebaseLoginBackend(idToken);
+    
+    // Send email verification link
+    await userCredential.user.sendEmailVerification();
+    
+    // Log out client-side immediately so they can't browse before verification
+    await firebase.auth().signOut();
+    
+    hideLoader();
+    alert('Account created successfully! 📧 A verification link has been sent to your email. Please click the link in that email to verify your account, then sign in.');
+    
+    // Switch to login tab
+    switchAuthTab('login');
   } catch (err) {
     console.error('Signup error:', err);
     showAuthError(err.message || 'Signup failed. Email may already be in use.');
