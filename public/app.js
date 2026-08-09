@@ -521,8 +521,61 @@ async function handleLogout() {
 }
 
 function showAuthError(msg) {
-  elements.authErrorMsg.textContent = msg;
+  const errText = document.getElementById('auth-error-text');
+  if (errText) {
+    errText.innerHTML = msg;
+  } else {
+    elements.authErrorMsg.textContent = msg;
+  }
   elements.authErrorMsg.classList.remove('hidden');
+}
+
+function togglePasswordVisibility(inputId, btnEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btnEl.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btnEl.textContent = '👁️';
+  }
+}
+
+function validatePasswordRequirements(val) {
+  const container = document.getElementById('pw-reqs-container');
+  if (!container) return;
+  
+  if (!val || val.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'flex';
+  
+  const isLen = val.length >= 8;
+  const isUpper = /[A-Z]/.test(val);
+  const isLower = /[a-z]/.test(val);
+  const isNum = /[0-9]/.test(val);
+  const isSpec = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+  
+  updateReqItem('pw-req-len', isLen, '8+ chars');
+  updateReqItem('pw-req-upper', isUpper, 'Upper');
+  updateReqItem('pw-req-lower', isLower, 'Lower');
+  updateReqItem('pw-req-num', isNum, 'Number');
+  updateReqItem('pw-req-spec', isSpec, 'Symbol');
+}
+
+function updateReqItem(id, isValid, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (isValid) {
+    el.classList.add('valid');
+    el.textContent = `✓ ${label}`;
+  } else {
+    el.classList.remove('valid');
+    el.textContent = `• ${label}`;
+  }
 }
 
 
