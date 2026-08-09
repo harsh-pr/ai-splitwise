@@ -912,26 +912,33 @@ h1, h2, h3, h4, h5, h6 {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem 1.75rem;
   overflow: hidden;
   position: relative;
   height: 100%;
+  border-radius: 28px !important;
+  background: rgba(13, 14, 30, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 242, 254, 0.04) !important;
 }
 
 /* API Key Config Floating panel */
 .api-key-config {
   position: absolute;
-  top: 1.5rem;
-  right: 2rem;
+  top: 1.25rem;
+  right: 1.5rem;
   z-index: 10;
 }
 
 #toggle-config-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--border-radius-sm);
+  border-radius: 12px;
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
   padding: 0.35rem 0.7rem;
   cursor: pointer;
   transition: var(--transition-fast);
@@ -947,19 +954,20 @@ h1, h2, h3, h4, h5, h6 {
   top: 2rem;
   right: 0;
   width: 250px;
-  background: #181922;
-  border: 1px solid var(--panel-border-focus);
-  border-radius: var(--border-radius-sm);
+  background: rgba(13, 14, 30, 0.95);
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  border-radius: 20px;
   padding: 1rem;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  backdrop-filter: blur(20px);
 }
 
 .config-panel h4 {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .config-desc {
@@ -970,32 +978,36 @@ h1, h2, h3, h4, h5, h6 {
 
 .config-panel input {
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
   color: #fff;
   font-size: 0.8rem;
   outline: none;
 }
 
-/* Wizard Steps Indicators */
+/* Wizard Steps Indicators - Kokonut Segmented Pill Bar */
 .wizard-steps-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: relative;
-  margin-bottom: 2rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 6px 12px;
   flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
 }
 
 .wizard-steps-nav::before {
   content: '';
   position: absolute;
-  top: 16px;
-  left: 20px;
-  right: 20px;
-  height: 3px;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  transform: translateY(-50%);
+  height: 2px;
   background: rgba(255, 255, 255, 0.06);
   z-index: 1;
   border-radius: 99px;
@@ -1003,71 +1015,73 @@ h1, h2, h3, h4, h5, h6 {
 
 .wizard-progress-bar {
   position: absolute;
-  top: 16px;
-  left: 20px;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+  top: 50%;
+  left: 24px;
+  transform: translateY(-50%);
+  height: 2px;
+  background: linear-gradient(90deg, #00f2fe, #7f00ff, #00ff87);
   z-index: 2;
   border-radius: 99px;
   transition: width var(--transition-normal);
   width: 0%;
-  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
 }
 
 .step-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   z-index: 3;
   position: relative;
-  cursor: default;
+  cursor: pointer;
   user-select: none;
   transition: var(--transition-fast);
 }
 
 .step-num {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #05060f;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: #090a16;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   transition: var(--transition-normal);
 }
 
 .step-label {
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.7rem;
+  font-weight: 800;
   color: var(--text-muted);
   transition: var(--transition-normal);
 }
 
 .step-indicator.active .step-num {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: #05060f;
-  box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+  border-color: #00f2fe;
+  color: #00f2fe;
+  background: #090a16;
+  box-shadow: 0 0 14px rgba(0, 242, 254, 0.4);
 }
 
 .step-indicator.active .step-label {
-  color: var(--color-primary);
-  font-weight: 700;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .step-indicator.completed .step-num {
-  border-color: var(--color-success);
-  color: #030307;
-  background: var(--color-success);
+  border-color: #00ff87;
+  color: #05060f;
+  background: #00ff87;
+  box-shadow: 0 0 10px rgba(0, 255, 135, 0.3);
 }
 
 .step-indicator.completed .step-label {
-  color: var(--text-secondary);
+  color: #00ff87;
 }
 
 /* Base Wizard Step */
