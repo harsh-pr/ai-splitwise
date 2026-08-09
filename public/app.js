@@ -146,7 +146,7 @@ async function initTabCloseLogoutTracker() {
 
 function initUserDropdownMenu() {
   const container = document.querySelector('.user-menu-container');
-  const trigger = document.querySelector('.user-menu-trigger');
+  const trigger = document.querySelector('.user-avatar-trigger') || document.querySelector('.user-menu-trigger');
   
   if (!container || !trigger) return;
   
@@ -162,7 +162,7 @@ function initUserDropdownMenu() {
   });
 
   // Also close menu when clicking inside links
-  const dropdownItems = container.querySelectorAll('.dropdown-item');
+  const dropdownItems = container.querySelectorAll('.dropdown-item, .dropdown-menu-item, .dropdown-action-btn');
   dropdownItems.forEach(item => {
     item.addEventListener('click', () => {
       container.classList.remove('active');
@@ -209,34 +209,14 @@ function showAuthSection() {
 
 function updateUserAvatar(name) {
   const avatarEl = document.getElementById('user-avatar-circle');
-  if (!avatarEl) return;
-  
+  const dropAvatarEl = document.getElementById('dropdown-user-avatar');
   const firstLetter = name ? name.trim().charAt(0).toUpperCase() : 'U';
   
-  let hash = 0;
-  const nameStr = name || 'User';
-  for (let i = 0; i < nameStr.length; i++) {
-    hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+  if (avatarEl) {
+    avatarEl.textContent = firstLetter;
   }
-  const colors = [
-    '#7f00ff', // Indigo
-    '#ff007f', // Pink
-    '#00f2fe', // Cyan
-    '#00ff87', // Neon Green
-    '#ec4899', // Rosy
-    '#f59e0b', // Amber
-    '#3b82f6', // Blue
-    '#8b5cf6'  // Purple
-  ];
-  const color = colors[Math.abs(hash) % colors.length];
-  
-  avatarEl.textContent = firstLetter;
-  avatarEl.style.background = color;
-  
-  if (color === '#00f2fe' || color === '#00ff87') {
-    avatarEl.style.color = '#05060f';
-  } else {
-    avatarEl.style.color = '#ffffff';
+  if (dropAvatarEl) {
+    dropAvatarEl.textContent = firstLetter;
   }
 }
 
@@ -782,6 +762,18 @@ function goToStep(stepIndex) {
       ind.classList.remove('completed');
     }
   });
+
+  // Sync mobile bottom dock items
+  for (let i = 1; i <= 6; i++) {
+    const dockItem = document.getElementById(`dock-item-${i}`);
+    if (dockItem) {
+      if (i === stepIndex) {
+        dockItem.classList.add('active');
+      } else {
+        dockItem.classList.remove('active');
+      }
+    }
+  }
   
   // Custom hooks per step transition
   if (stepIndex === 4) {
