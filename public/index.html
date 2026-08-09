@@ -310,25 +310,34 @@
                   🗑 Delete Account
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Grid Layout for Dashboard -->
-      <div class="dashboard-grid">
-
-        <!-- Right Side: Interactive Scanner & Splitting Wizard -->
+            </div        <!-- Right Side: Command Center & Splitting Wizard Stage -->
         <main class="wizard-container glass-panel">
           
-
+          <!-- Top Command Live Ticker Bar -->
+          <div class="command-ticker-bar">
+            <div class="ticker-status-group">
+              <span class="ticker-live-dot"></span>
+              <span class="ticker-status-text">⚡ AI Engine Ready • Instant Bill OCR Active</span>
+            </div>
+            <div class="ticker-actions-group">
+              <button type="button" class="quick-action-pill" onclick="quickScanBill()">
+                <span>📸 Quick Scan</span>
+              </button>
+              <button type="button" class="quick-action-pill" onclick="quickAddMembers()">
+                <span>👥 Add Members</span>
+              </button>
+              <a href="/history.html" class="quick-action-pill">
+                <span>📊 History Log</span>
+              </a>
+            </div>
+          </div>
 
           <!-- Wizard Step Headers -->
           <nav class="wizard-steps-nav">
             <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
             <div class="step-indicator active" id="step-nav-1">
               <span class="step-num">1</span>
-              <span class="step-label">Type</span>
+              <span class="step-label">Command</span>
             </div>
             <div class="step-indicator" id="step-nav-2">
               <span class="step-num">2</span>
@@ -352,32 +361,89 @@
             </div>
           </nav>
 
-          <!-- WIZARD STEP 1: Choose Split Type -->
+          <!-- WIZARD STEP 1: Command Center & Interactive Hero Stage -->
           <div id="wizard-step-1" class="wizard-step">
-            <div class="step-intro animate-fade-in">
-              <h3>What would you like to split?</h3>
-              <p>Choose the split template to optimize details extraction.</p>
+            <div class="command-center-stage animate-fade-in">
+              
+              <!-- Left Column: Intro & Split Templates -->
+              <div class="command-left-col">
+                <div class="command-title-badge">✨ Smart AI Bill & Receipt Hub</div>
+                <h2 class="command-hero-heading">Split bills effortlessly with <span>Gemini AI</span></h2>
+                <p class="command-hero-subtext">Snap a receipt photo, auto-extract line items & GST taxes, and assign individual shares to friends in seconds.</p>
+                
+                <div class="command-templates-grid">
+                  <div class="template-card" onclick="goToStep(2)">
+                    <div class="template-icon-box">🍽️</div>
+                    <div class="template-card-info">
+                      <span class="template-card-title">Restaurant Bill</span>
+                      <span class="template-card-sub">AI Item & GST Scanner</span>
+                    </div>
+                  </div>
+                  <div class="template-card disabled" title="Coming soon">
+                    <div class="template-icon-box">🏨</div>
+                    <div class="template-card-info">
+                      <span class="template-card-title">Hotel Stay</span>
+                      <span class="template-card-sub">Room & Amenities</span>
+                    </div>
+                  </div>
+                  <div class="template-card disabled" title="Coming soon">
+                    <div class="template-icon-box">🎬</div>
+                    <div class="template-card-info">
+                      <span class="template-card-title">Movie Tickets</span>
+                      <span class="template-card-sub">Tickets & Combos</span>
+                    </div>
+                  </div>
+                  <div class="template-card disabled" title="Coming soon">
+                    <div class="template-icon-box">🛒</div>
+                    <div class="template-card-info">
+                      <span class="template-card-title">Grocery Shopping</span>
+                      <span class="template-card-sub">Bulk Mart Receipts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: 3D Perspective Hero Scanner Card -->
+              <div class="command-right-col">
+                <div class="hero-scanner-stage">
+                  <div class="laser-scan-beam"></div>
+                  
+                  <div class="receipt-mock-header">
+                    <div>
+                      <div class="receipt-merchant">Trattoria Italian Cafe</div>
+                      <div style="font-size: 0.68rem; color: #94a3b8;">Receipt #AI-89420</div>
+                    </div>
+                    <span class="receipt-ai-badge">✓ AI Scanned</span>
+                  </div>
+
+                  <div class="receipt-mock-items">
+                    <div class="receipt-mock-row">
+                      <span class="mock-item-title">🍕 Woodfired Margherita</span>
+                      <span class="mock-item-price">₹450.00</span>
+                    </div>
+                    <div class="receipt-mock-row">
+                      <span class="mock-item-title">🥤 Sparkling Cold Brew</span>
+                      <span class="mock-item-price">₹180.00</span>
+                    </div>
+                    <div class="receipt-mock-row">
+                      <span class="mock-item-title">🍰 Tiramisu Special</span>
+                      <span class="mock-item-price">₹260.00</span>
+                    </div>
+                  </div>
+
+                  <div class="receipt-mock-total-row">
+                    <span class="mock-total-label">Grand Total</span>
+                    <span class="mock-total-amount">₹890.00</span>
+                  </div>
+
+                  <button type="button" class="start-scan-hero-btn" onclick="goToStep(2)">
+                    <span>✨ Start AI Receipt Scan</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
-            <div class="split-options-grid">
-              <button class="split-option-card active" onclick="goToStep(2)">
-                <div class="option-icon">🍽️</div>
-                <h4>Restaurant Bill</h4>
-                <p>Scans items, taxes/GST, drinks and food totals. Splitting optimized by individual items consumed.</p>
-              </button>
-              <button class="split-option-card disabled" title="Coming soon">
-                <div class="option-icon">🏨</div>
-                <h4>Hotel Bill</h4>
-                <p>Coming soon: Split accommodation, room services, and shared amenities charges.</p>
-              </button>
-              <button class="split-option-card disabled" title="Coming soon">
-                <div class="option-icon">🎬</div>
-                <h4>Movie Bill</h4>
-                <p>Coming soon: Split ticket bookings, snacks, beverages and combos.</p>
-              </button>
-              <button class="split-option-card disabled" title="Coming soon">
-                <div class="option-icon">🛒</div>
-                <h4>Grocery Bill</h4>
-                <p>Coming soon: Split large household shopping bills, bulk items, and dynamic quantities.</p>
+          </div>oon: Split large household shopping bills, bulk items, and dynamic quantities.</p>
               </button>
             </div>
           </div>

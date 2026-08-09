@@ -785,6 +785,14 @@ function goToStep(stepIndex) {
   }
 }
 
+function quickScanBill() {
+  goToStep(2);
+}
+
+function quickAddMembers() {
+  goToStep(4);
+}
+
 // --------------------------------------------------------------------------
 // Step 2: Upload Actions & Listeners
 // --------------------------------------------------------------------------
