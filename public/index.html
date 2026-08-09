@@ -310,7 +310,27 @@
                   🗑 Delete Account
                 </button>
               </div>
-            </div        <!-- Right Side: Command Center & Splitting Wizard Stage -->
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Grid Layout for Dashboard -->
+      <div class="dashboard-grid">
+
+        <!-- Left Side: History Sidebar -->
+        <aside id="history-sidebar" class="history-sidebar glass-panel">
+          <div class="sidebar-header">
+            <h3>📁 Recent Scans</h3>
+            <span class="badge" id="history-count-badge">0</span>
+          </div>
+          <div id="history-list" class="history-list">
+            <!-- Dynamic history cards populated by JS -->
+            <p class="empty-text">No scans yet. Start splitting!</p>
+          </div>
+        </aside>
+
+        <!-- Right Side: Command Center & Splitting Wizard Stage -->
         <main class="wizard-container glass-panel">
           
           <!-- Top Command Live Ticker Bar -->
@@ -442,9 +462,6 @@
                 </div>
               </div>
 
-            </div>
-          </div>oon: Split large household shopping bills, bulk items, and dynamic quantities.</p>
-              </button>
             </div>
           </div>
 
