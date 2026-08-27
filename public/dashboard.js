@@ -264,97 +264,73 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // History Tab: Opens previous bills modal
-  navTabHistory?.addEventListener("click", () => {
-    navTabHome?.classList.remove("active");
-    navTabSplit?.classList.remove("active");
-    navTabHistory.classList.add("active");
-    splitDropdownWrapper?.classList.remove("open");
-    profileDropdownWrapper?.classList.remove("open");
-    profileDropdownPanel?.classList.add("hidden");
-    openHistoryModal();
-  });
-
-  // Global Click Outside Handler to Close Dropdowns
-  document.addEventListener("click", (e) => {
-    if (!profileDropdownWrapper?.contains(e.target)) {
-      profileDropdownWrapper?.classList.remove("open");
-      profileDropdownPanel?.classList.add("hidden");
-      profilePillTrigger?.setAttribute("aria-expanded", "false");
-    }
-    if (!splitDropdownWrapper?.contains(e.target)) {
-      splitDropdownWrapper?.classList.remove("open");
-      navTabSplit?.setAttribute("aria-expanded", "false");
-    }
-  });
-
   // ===================================================================
-  // 4. Bill History Modal Controller
+  // 4. Persistent Bill History Storage System
   // ===================================================================
-  const historyModal = document.getElementById("history-modal");
-  const historyModalClose = document.getElementById("history-modal-close");
-  const historyList = document.getElementById("history-list");
-
-  function openHistoryModal() {
-    renderHistoryList();
-    historyModal?.classList.remove("hidden");
+  function getSavedBills() {
+    try {
+      const raw = localStorage.getItem("splitwise_bills_history");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error("Error reading saved bills:", e);
+    }
+    return savedHistoryBills;
   }
 
-  function closeHistoryModal() {
-    historyModal?.classList.add("hidden");
+  function saveCurrentBillToHistory() {
+    if (!wizardState.totalAmount || !wizardState.items || wizardState.items.length === 0) return;
+    try {
+      let bills = [];
+      const raw = localStorage.getItem("splitwise_bills_history");
+      if (raw) {
+        try {
+          bills = JSON.parse(raw);
+        } catch (e) {
+          bills = [];
+        }
+      }
+      if (!Array.isArray(bills) || bills.length === 0) {
+        bills = [...savedHistoryBills];
+      }
+
+      if (!wizardState.billId) {
+        wizardState.billId = 'bill_' + Date.now();
+      }
+
+      const isSettled = wizardState.settlements.length > 0 && wizardState.settlements.every(s => s.paid);
+      const record = {
+        id: wizardState.billId,
+        title: wizardState.categoryName || 'Restaurant Bill',
+        category: wizardState.category || 'restaurant',
+        categoryName: wizardState.categoryName || 'Restaurant & Dining',
+        date: wizardState.billDate || new Date().toISOString().split('T')[0],
+        total: wizardState.totalAmount,
+        tax: wizardState.taxAmount || 0,
+        payer: wizardState.payer || 'Harsh',
+        payerShare: wizardState.payerShare || 0,
+        participants: wizardState.participants || ['Harsh'],
+        items: wizardState.items || [],
+        settlements: wizardState.settlements || [],
+        status: isSettled ? 'Settled' : 'Pending',
+        statusClass: isSettled ? 'badge-paid' : 'badge-pending',
+        updatedAt: Date.now()
+      };
+
+      const existingIndex = bills.findIndex(b => b.id === record.id);
+      if (existingIndex >= 0) {
+        bills[existingIndex] = record;
+      } else {
+        bills.unshift(record);
+      }
+
+      localStorage.setItem("splitwise_bills_history", JSON.stringify(bills));
+    } catch (err) {
+      console.error("Error saving bill to history:", err);
+    }
   }
-
-  historyModalClose?.addEventListener("click", closeHistoryModal);
-  historyModal?.addEventListener("click", (e) => {
-    if (e.target === historyModal) closeHistoryModal();
-  });
-
-  function renderHistoryList() {
-    if (!historyList) return;
-    historyList.innerHTML = savedHistoryBills.map(bill => {
-      const catConfig = categoryIconMap[bill.category] || { icon: 'ph-receipt', colorClass: 'cat-emerald' };
-
-      return `
-        <div class="history-card">
-          <div class="history-card-left">
-            <div class="history-cat-icon ${catConfig.colorClass}">
-              <i class="ph-bold ${catConfig.icon}"></i>
-            </div>
-            <div class="history-card-details">
-              <strong>${bill.title}</strong>
-              <span>${bill.categoryName} • ${bill.date} • Paid by ${bill.payer}</span>
-              <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 2px;">
-                ${bill.participants.join(", ")}
-              </div>
-            </div>
-          </div>
-          <div class="history-card-right">
-            <span class="history-total-amt">₹${bill.total.toLocaleString()}</span>
-            <span class="history-status-pill ${bill.statusClass}">${bill.status}</span>
-            <button class="btn-load-history" onclick="loadHistoryBill('${bill.id}')">
-              Load Bill
-            </button>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  window.loadHistoryBill = function(billId) {
-    const found = savedHistoryBills.find(b => b.id === billId);
-    if (!found) return;
-
-    wizardState.totalAmount = found.total;
-    wizardState.taxAmount = found.tax || 0;
-    wizardState.payer = found.payer;
-    wizardState.participants = found.participants;
-    wizardState.items = found.items;
-    wizardState.settlements = found.settlements;
-    selectCategory(found.category, found.categoryName);
-
-    closeHistoryModal();
-    goToStep(5); // View loaded settlement status
-  };
 
   // 3. Wizard Step Panels
   const stepPanels = {
@@ -416,8 +392,10 @@ document.addEventListener("DOMContentLoaded", () => {
       renderParticipantsChips();
       renderItemsEditor();
     } else if (targetStep === 4) {
+      saveCurrentBillToHistory();
       renderUpiCards();
     } else if (targetStep === 5) {
+      saveCurrentBillToHistory();
       renderSettlementTracker();
     }
 
@@ -1118,10 +1096,11 @@ document.addEventListener("DOMContentLoaded", () => {
     settlement.verifiedAt = new Date().toLocaleTimeString();
     playPaymentChime();
     showPaymentToast(settlement.from, settlement.amount, utr);
+    saveCurrentBillToHistory();
     renderSettlementTracker();
   };
 
-  // Instant Simulate Button
+  // Instant Simulate Button (Manual user-triggered only)
   document.getElementById("simulate-auto-pay-btn")?.addEventListener("click", () => {
     const unpaid = wizardState.settlements.find(s => !s.paid);
     if (unpaid) {
@@ -1130,22 +1109,6 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("All friends have already settled their payments!");
     }
   });
-
-  // Background Auto-Polling Listener (runs every 9s when on Step 5)
-  let autoPollTimer = null;
-  function startAutoPaymentPolling() {
-    if (autoPollTimer) clearInterval(autoPollTimer);
-    autoPollTimer = setInterval(() => {
-      const toggle = document.getElementById("auto-poll-toggle");
-      if (wizardState.step !== 5 || !toggle || !toggle.checked) return;
-
-      const unpaid = wizardState.settlements.find(s => !s.paid);
-      if (unpaid) {
-        verifyPaymentAutomatically(unpaid.from, "auto-polling");
-      }
-    }, 9000);
-  }
-  startAutoPaymentPolling();
 
   document.getElementById("restart-wizard-btn")?.addEventListener("click", () => {
     wizardState.settlements.forEach(s => s.paid = false);
@@ -1157,6 +1120,32 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://wa.me/?text=${summary}`, "_blank");
   });
 
-  // Initialize Wizard at Step 1
-  goToStep(1);
+  // Check if directed from history.html to load a saved bill
+  const activeBillId = localStorage.getItem("splitwise_active_bill_id");
+  if (activeBillId) {
+    localStorage.removeItem("splitwise_active_bill_id");
+    const bills = getSavedBills();
+    const found = bills.find(b => b.id === activeBillId);
+    if (found) {
+      wizardState.billId = found.id;
+      wizardState.category = found.category || 'restaurant';
+      wizardState.categoryName = found.categoryName || 'Restaurant & Dining';
+      wizardState.totalAmount = found.total || 0;
+      wizardState.taxAmount = found.tax || 0;
+      wizardState.payer = found.payer || 'Harsh';
+      wizardState.payerShare = found.payerShare || 0;
+      wizardState.participants = found.participants || ['Harsh'];
+      wizardState.items = found.items || [];
+      wizardState.settlements = found.settlements || [];
+      recalculateSettlements();
+      renderItemsEditor();
+      renderParticipantsChips();
+      goToStep(5);
+    } else {
+      goToStep(1);
+    }
+  } else {
+    // Initialize Wizard at Step 1
+    goToStep(1);
+  }
 });

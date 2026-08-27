@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bill History & Saved Splits - SplitWise AI</title>
+  <meta name="description" content="View and manage all past split bills, line item assignments, and UPI settlement records in SplitWise AI.">
+
+  <!-- PWA Metadata & Favicon -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- Firebase Client SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="/firebase-config.js"></script>
+
+  <link rel="stylesheet" href="/landing.css?v=1.3">
+  <link rel="stylesheet" href="/dashboard.css?v=1.7">
+  <link rel="stylesheet" href="/history.css?v=1.0">
+</head>
+<body class="dark-theme dashboard-body">
+  <!-- Background Glow Orbs -->
+  <div class="mesh-glow mesh-1"></div>
+  <div class="mesh-glow mesh-2"></div>
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="dash-navbar glass-panel">
+    <div class="dash-nav-container">
+      <!-- Logo -->
+      <a href="/dashboard.html" class="dash-logo" aria-label="SplitWise AI Home">
+        <div class="logo-icon-wrapper">
+          <i class="ph-bold ph-receipt"></i>
+          <span class="sparkle-dot"></span>
+        </div>
+        <div class="logo-text-group">
+          <span class="brand-title">SplitWise<span class="brand-ai">.AI</span></span>
+          <span class="brand-badge">Smart Engine</span>
+        </div>
+      </a>
+
+      <!-- Center Nav Links -->
+      <nav class="dash-nav-links" id="main-nav-links">
+        <a href="/dashboard.html" class="dash-tab" id="nav-tab-home" title="Go to Dashboard Home">
+          <i class="ph-bold ph-squares-four"></i>
+          <span>Home</span>
+        </a>
+
+        <!-- Split Dropdown Menu -->
+        <div class="split-dropdown-wrapper" id="split-dropdown-wrapper">
+          <button class="dash-tab split-tab-btn" id="nav-tab-split" aria-expanded="false" aria-haspopup="true">
+            <i class="ph-bold ph-plus-circle"></i>
+            <span>Split</span>
+            <i class="ph-bold ph-caret-down split-caret"></i>
+          </button>
+          <div class="split-dropdown-menu" id="split-dropdown-menu">
+            <div class="dropdown-header">Choose Category to Split</div>
+            <a href="/dashboard.html?category=restaurant" class="split-drop-item">
+              <span class="drop-icon cat-emerald"><i class="ph-bold ph-fork-knife"></i></span>
+              <div class="drop-item-info">
+                <strong>Restaurant & Dining</strong>
+                <span>Food, dining & bar bills</span>
+              </div>
+            </a>
+            <a href="/dashboard.html?category=hotel" class="split-drop-item">
+              <span class="drop-icon cat-indigo"><i class="ph-bold ph-bed"></i></span>
+              <div class="drop-item-info">
+                <strong>Hotels & Stays</strong>
+                <span>Resorts, Airbnb & room service</span>
+              </div>
+            </a>
+            <a href="/dashboard.html?category=grocery" class="split-drop-item">
+              <span class="drop-icon cat-cyan"><i class="ph-bold ph-shopping-cart"></i></span>
+              <div class="drop-item-info">
+                <strong>Groceries & Mart</strong>
+                <span>Supermarket & household splits</span>
+              </div>
+            </a>
+            <a href="/dashboard.html?category=trip" class="split-drop-item drop-trip-mode">
+              <span class="drop-icon cat-violet"><i class="ph-bold ph-airplane-tilt"></i></span>
+              <div class="drop-item-info">
+                <div class="flex-align-center">
+                  <strong>Trip Mode</strong>
+                  <span class="trip-tag-sm">Multi-Day</span>
+                </div>
+                <span>Group balances & vacation expenses</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- History: Active -->
+        <a href="/history.html" class="dash-tab active" id="nav-tab-history" title="View previous bills history">
+          <i class="ph-bold ph-clock-counter-clockwise"></i>
+          <span>History</span>
+        </a>
+      </nav>
+
+      <!-- User Profile Dropdown Menu -->
+      <div class="dash-user-actions">
+        <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
+          <button class="profile-pill-trigger" id="profile-pill-trigger" aria-label="User profile menu">
+            <div class="profile-avatar-ring">
+              <div class="profile-avatar-inner" id="user-avatar-initial">H</div>
+            </div>
+            <div class="profile-text-block desktop-only">
+              <span class="profile-display-name" id="user-display-name">Harsh Prasad</span>
+              <span class="profile-status-indicator">
+                <span class="status-dot-pulse"></span>
+                <span id="user-status-label">Online</span>
+              </span>
+            </div>
+            <i class="ph-bold ph-caret-down profile-caret desktop-only"></i>
+          </button>
+
+          <div class="profile-dropdown-panel hidden" id="profile-dropdown-panel">
+            <div class="profile-panel-header">
+              <div class="header-avatar-circle">H</div>
+              <div class="header-user-meta">
+                <strong id="menu-user-name">Harsh Prasad</strong>
+                <span id="menu-user-email">harsh@example.com</span>
+              </div>
+            </div>
+            <div class="profile-panel-body">
+              <div class="menu-item-row">
+                <div class="flex-align-center gap-2">
+                  <i class="ph-bold ph-qr-code text-emerald"></i>
+                  <span>Default UPI</span>
+                </div>
+                <span class="menu-sub-value" id="menu-upi-val">harsh@okhdfcbank</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="profile-menu-link text-rose" id="btn-sign-out">
+                <i class="ph-bold ph-sign-out"></i>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN HISTORY VIEW CONTAINER -->
+  <main class="history-page-main">
+    <div class="history-container">
+      <!-- Page Hero Header -->
+      <div class="history-page-header">
+        <div>
+          <div class="history-badge">
+            <i class="ph-fill ph-clock-counter-clockwise"></i>
+            <span>Expense Records</span>
+          </div>
+          <h1>Saved Bills & History</h1>
+          <p>Review past itemized splits, debt balances, and payment verification records.</p>
+        </div>
+        <a href="/dashboard.html" class="btn btn-large btn-gradient">
+          <i class="ph-bold ph-plus"></i>
+          <span>Create New Split</span>
+        </a>
+      </div>
+
+      <!-- Lifetime Aggregate Statistics Cards -->
+      <div class="history-stats-grid">
+        <div class="stat-card glass-panel">
+          <div class="stat-icon-wrap icon-indigo">
+            <i class="ph-bold ph-receipt"></i>
+          </div>
+          <div class="stat-meta">
+            <span class="stat-label">Total Bills Saved</span>
+            <strong class="stat-value text-white" id="stat-total-bills">0</strong>
+          </div>
+        </div>
+
+        <div class="stat-card glass-panel">
+          <div class="stat-icon-wrap icon-cyan">
+            <i class="ph-bold ph-currency-inr"></i>
+          </div>
+          <div class="stat-meta">
+            <span class="stat-label">Total Spend Tracked</span>
+            <strong class="stat-value text-cyan" id="stat-total-spend">₹0</strong>
+          </div>
+        </div>
+
+        <div class="stat-card glass-panel">
+          <div class="stat-icon-wrap icon-emerald">
+            <i class="ph-bold ph-check-circle"></i>
+          </div>
+          <div class="stat-meta">
+            <span class="stat-label">Amount Settled</span>
+            <strong class="stat-value text-emerald" id="stat-total-settled">₹0</strong>
+          </div>
+        </div>
+
+        <div class="stat-card glass-panel">
+          <div class="stat-icon-wrap icon-rose">
+            <i class="ph-bold ph-hourglass-high"></i>
+          </div>
+          <div class="stat-meta">
+            <span class="stat-label">Pending Receivables</span>
+            <strong class="stat-value text-rose" id="stat-total-pending">₹0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search and Filtering Controls -->
+      <div class="history-filter-bar glass-panel">
+        <div class="history-search-wrap">
+          <i class="ph-bold ph-magnifying-glass search-icon"></i>
+          <input type="text" id="history-search-input" placeholder="Search by merchant, dish name, or friend..." autocomplete="off">
+          <button id="clear-search-btn" class="clear-search-btn hidden" title="Clear search">
+            <i class="ph-bold ph-x"></i>
+          </button>
+        </div>
+
+        <div class="history-filter-pills" id="category-filter-pills">
+          <button class="filter-pill active" data-cat="all">All Categories</button>
+          <button class="filter-pill" data-cat="restaurant">🍽️ Dining</button>
+          <button class="filter-pill" data-cat="hotel">🏨 Hotels</button>
+          <button class="filter-pill" data-cat="grocery">🛒 Groceries</button>
+          <button class="filter-pill" data-cat="trip">✈️ Trip Mode</button>
+          <button class="filter-pill" data-cat="travel">🚕 Cab & Fuel</button>
+        </div>
+
+        <div class="status-filter-group">
+          <select id="status-filter-select" class="status-select">
+            <option value="all">All Status</option>
+            <option value="settled">Settled Only</option>
+            <option value="pending">Pending Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- History Bills List -->
+      <div class="history-bills-list" id="history-bills-list">
+        <!-- Rendered dynamically by history.js -->
+      </div>
+
+      <!-- Empty State (Shown when no bills match) -->
+      <div class="history-empty-state glass-panel hidden" id="history-empty-state">
+        <div class="empty-icon-wrap">
+          <i class="ph-bold ph-receipt-x"></i>
+        </div>
+        <h3>No Bills Found</h3>
+        <p id="empty-state-message">You haven't split any bills yet, or no bills match your active search filter.</p>
+        <a href="/dashboard.html" class="btn btn-gradient">
+          <i class="ph-bold ph-plus-circle"></i>
+          <span>Scan & Split a Bill</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/history.js?v=1.0"></script>
+</body>
+</html>

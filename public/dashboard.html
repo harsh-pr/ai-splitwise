@@ -23,7 +23,7 @@
   <script src="/firebase-config.js"></script>
 
   <link rel="stylesheet" href="/landing.css?v=1.3">
-  <link rel="stylesheet" href="/dashboard.css?v=1.7">
+  <link rel="stylesheet" href="/dashboard.css?v=1.8">
 </head>
 <body class="dark-theme dashboard-body">
   <!-- Background Glow Orbs -->
@@ -112,11 +112,11 @@
           </div>
         </div>
 
-        <!-- History: View all previous bills info saved -->
-        <button class="dash-tab" id="nav-tab-history" title="View previous bills history">
+        <!-- History: View all previous bills info saved on dedicated page -->
+        <a href="/history.html" class="dash-tab" id="nav-tab-history" title="View previous bills history">
           <i class="ph-bold ph-clock-counter-clockwise"></i>
           <span>History</span>
-        </button>
+        </a>
       </nav>
 
       <!-- User Profile Dropdown Menu (Patterned after attendance-tracker Kokonut UI) -->
@@ -554,10 +554,10 @@
             <span class="live-pulse-dot"></span>
             <div class="autoverify-text">
               <div class="flex-align-center gap-2">
-                <strong>Automatic UPI Payment Detection</strong>
-                <span class="autoverify-badge">Live Active</span>
+                <strong>Instant UPI Verification Engine</strong>
+                <span class="autoverify-badge">Ready</span>
               </div>
-              <span class="autoverify-sub">Listening for incoming bank UTRs & Google Pay / PhonePe transfers...</span>
+              <span class="autoverify-sub">Tap 'Auto-Verify' on any friend or click below to simulate an incoming bank payment</span>
             </div>
           </div>
           <div class="autoverify-controls">
@@ -565,11 +565,6 @@
               <i class="ph-bold ph-lightning"></i>
               <span>Simulate Auto-Detect</span>
             </button>
-            <label class="autoverify-switch-label" title="Enable/Disable 8-second auto polling">
-              <input type="checkbox" id="auto-poll-toggle" checked>
-              <span class="switch-slider"></span>
-              <span class="switch-text">Auto-Detect</span>
-            </label>
           </div>
         </div>
 
@@ -702,34 +697,9 @@
     </aside>
   </div>
 
-  <!-- Bill History Modal -->
-  <div class="history-modal-overlay hidden" id="history-modal" aria-hidden="true">
-    <div class="history-modal-box glass-panel">
-      <div class="history-modal-header">
-        <div class="flex-align-center gap-2">
-          <div class="logo-icon-wrapper sm">
-            <i class="ph-bold ph-receipt"></i>
-            <span class="sparkle-dot"></span>
-          </div>
-          <div>
-            <h3>Saved Bills & Split History</h3>
-            <span class="history-subtitle">View details, settlements, and balances</span>
-          </div>
-        </div>
-        <button class="history-close-btn" id="history-modal-close" aria-label="Close history modal">
-          <i class="ph-bold ph-x"></i>
-        </button>
-      </div>
-
-      <div class="history-modal-body">
-        <div class="history-list" id="history-list">
-          <!-- Dynamically populated by dashboard.js -->
-        </div>
-      </div>
-    </div>
   <!-- Live Payment Notification Toast Container -->
   <div class="payment-toast-container" id="payment-toast-container"></div>
 
-  <script src="/dashboard.js?v=1.7"></script>
+  <script src="/dashboard.js?v=1.8"></script>
 </body>
 </html>
