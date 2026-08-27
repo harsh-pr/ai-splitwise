@@ -412,6 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Trigger step-specific logic
     if (targetStep === 3) {
+      renderParticipantsChips();
       renderItemsEditor();
     } else if (targetStep === 4) {
       renderUpiCards();
@@ -514,6 +515,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 price: parseFloat(it.price) || 0,
                 assigned: ['You (Harsh)']
               }));
+              // Reset participants to current user for new bill scan
+              wizardState.participants = ['You (Harsh)'];
+              wizardState.payer = 'You (Harsh)';
+
+              // Update initial chat greeting
+              if (chatMessages) {
+                chatMessages.innerHTML = `
+                  <div class="chat-msg bot-msg">
+                    <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
+                    <div class="msg-body">
+                      <p>I've extracted <strong>${wizardState.items.length} items</strong> totaling <strong class="text-white">₹${(data.total || wizardState.totalAmount).toLocaleString()}</strong> from your ${data.restaurantName || 'receipt'}!</p>
+                      <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"Harsh ate butter naan, Shreya ate chicken kabuli, everyone got water"</em>), or add friends using the bar above.</p>
+                    </div>
+                  </div>
+                `;
+              }
             }
             if (data.total) wizardState.totalAmount = parseFloat(data.total);
             if (data.tax) wizardState.taxAmount = parseFloat(data.tax);
@@ -525,6 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
           dropzoneIdle?.classList.remove("hidden");
           scannerStage?.classList.add("hidden");
           if (step2NextBtn) step2NextBtn.disabled = false;
+          renderParticipantsChips();
           recalculateSettlements();
           goToStep(3);
         }
@@ -605,6 +623,69 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorTaxVal = document.getElementById("editor-tax-val");
   const editorPayerName = document.getElementById("editor-payer-name");
   const skeletonItems = document.getElementById("skeleton-items");
+  const participantsChipsContainer = document.getElementById("participants-chips-container");
+  const addFriendForm = document.getElementById("add-friend-form");
+  const inlineFriendInput = document.getElementById("inline-friend-input");
+
+  function renderParticipantsChips() {
+    if (!participantsChipsContainer) return;
+    participantsChipsContainer.innerHTML = wizardState.participants.map(name => {
+      const isPayer = name === wizardState.payer;
+      return `
+        <div class="person-chip ${isPayer ? 'is-payer' : ''}" title="${name}">
+          <span>👤 ${name}</span>
+          ${isPayer ? '<span class="payer-badge-tag">Payer</span>' : ''}
+          ${wizardState.participants.length > 1 ? `
+            <button type="button" class="chip-remove-btn" onclick="removeParticipant('${name}')" title="Remove ${name}">
+              <i class="ph-bold ph-x"></i>
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join("");
+
+    if (sidePeopleCount) sidePeopleCount.textContent = `${wizardState.participants.length} Friends`;
+  }
+
+  window.removeParticipant = function(nameToRemove) {
+    if (wizardState.participants.length <= 1) {
+      alert("At least one person is required in the split.");
+      return;
+    }
+    wizardState.participants = wizardState.participants.filter(p => p !== nameToRemove);
+    // Unassign from items if only assigned to this person
+    wizardState.items.forEach(item => {
+      item.assigned = item.assigned.filter(p => p !== nameToRemove);
+      if (item.assigned.length === 0) {
+        item.assigned = [wizardState.participants[0]];
+      }
+    });
+    if (wizardState.payer === nameToRemove) {
+      wizardState.payer = wizardState.participants[0];
+      if (editorPayerName) editorPayerName.textContent = wizardState.payer;
+    }
+    renderParticipantsChips();
+    renderItemsEditor();
+    recalculateSettlements();
+    addChatMessage(`Removed ${nameToRemove} from this split. Recomputed balances proportionally.`, false);
+  };
+
+  addFriendForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const newName = inlineFriendInput?.value.trim();
+    if (!newName) return;
+
+    if (wizardState.participants.some(p => p.toLowerCase() === newName.toLowerCase())) {
+      alert(`${newName} is already in the split.`);
+      return;
+    }
+
+    wizardState.participants.push(newName);
+    if (inlineFriendInput) inlineFriendInput.value = "";
+    renderParticipantsChips();
+    recalculateSettlements();
+    addChatMessage(`✓ Added ${newName} to the split! You can now assign dishes to them in chat.`, false);
+  });
 
   function recalculateSettlements() {
     const friendTotals = {};
@@ -613,7 +694,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Sum item allocations
     let allocatedTotal = 0;
     wizardState.items.forEach(item => {
-      const assigned = (item.assigned && item.assigned.length > 0) ? item.assigned : ['You (Harsh)'];
+      const assigned = (item.assigned && item.assigned.length > 0) ? item.assigned : [wizardState.participants[0] || 'You (Harsh)'];
       const perPerson = item.price / assigned.length;
       assigned.forEach(p => {
         if (friendTotals[p] !== undefined) {
@@ -635,7 +716,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Settlements: Everyone owes the payer
-    const payer = wizardState.payer || 'You (Harsh)';
+    const payer = wizardState.payer || wizardState.participants[0] || 'You (Harsh)';
     const newSettlements = [];
     Object.keys(friendTotals).forEach(p => {
       if (p !== payer && friendTotals[p] > 0) {
@@ -673,7 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="item-edit-left">
               <span class="dish-name">${item.name}</span>
               <div class="dish-chips-group">
-                ${(item.assigned || ['You (Harsh)']).map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
+                ${(item.assigned || [wizardState.participants[0] || 'You (Harsh)']).map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
               </div>
             </div>
             <span class="dish-price-tag">₹${item.price}</span>
@@ -730,9 +811,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       document.getElementById(thinkingId)?.remove();
 
+      if (data.updatedParticipants && Array.isArray(data.updatedParticipants) && data.updatedParticipants.length > 0) {
+        wizardState.participants = data.updatedParticipants;
+        renderParticipantsChips();
+      }
+
       if (data.updatedItems && Array.isArray(data.updatedItems)) {
         wizardState.items = data.updatedItems;
       }
+
       addChatMessage(data.assistantMessage || `✓ Split updated successfully based on your instruction!`, false);
       recalculateSettlements();
       renderItemsEditor();

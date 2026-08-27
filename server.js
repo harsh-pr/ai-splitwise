@@ -167,21 +167,38 @@ app.post('/api/split-chat', async (req, res) => {
     if (!apiKey) {
       return res.json({
         assistantMessage: `Allocated items among ${participants.join(", ")} according to your prompt.`,
+        updatedParticipants: participants,
         updatedItems: items
       });
     }
 
-    const sysPrompt = `You are the SplitWise AI natural language assistant.
-Receipt items: ${JSON.stringify(items)}
-Participants/friends: ${JSON.stringify(participants)}
+    const sysPrompt = `You are SplitWise AI's intelligent split allocation engine.
+Receipt line items: ${JSON.stringify(items)}
+Current participants: ${JSON.stringify(participants)}
 User instruction: "${prompt}"
 
-Interpret how each item should be assigned to the participants based on the prompt.
-Return strictly valid JSON:
+CRITICAL RULES:
+1. AUTOMATIC PARTICIPANT DISCOVERY:
+   - If the user mentions ANY names (e.g., "Shreya", "Mansi", "Sara", "Harsh", etc.) or says "add X, Y and Z to friends list", AUTOMATICALLY include them in "updatedParticipants".
+   - NEVER say someone is not on the list! Always welcome and add them immediately.
+   - If user asks to remove someone, remove them from "updatedParticipants".
+
+2. NEVER DELETE ANY ITEMS (ABSOLUTE MANDATE):
+   - "updatedItems" MUST contain EVERY SINGLE item from the input "Receipt line items" array (exact same count, same ids, same prices).
+   - NEVER drop, omit, or delete any dish or item!
+   - If an item was not mentioned in the prompt, PRESERVE its existing assigned list unchanged.
+   - Match item names leniently (e.g. "butter naan" matches "Butter Naan", "chicken kabuli" matches "Chicken Kabuli", etc.).
+
+3. "EVERYONE" / "ALL":
+   - When user says "everyone got mineral water" or "split fries with all", assign all names currently in "updatedParticipants" to that item.
+
+4. RESPONSE FORMAT:
+Respond STRICTLY with raw JSON matching this schema:
 {
-  "assistantMessage": "Short friendly summary of what was updated",
+  "assistantMessage": "Friendly 1-2 sentence confirmation of who got what and any new friends added",
+  "updatedParticipants": ["Name 1", "Name 2"],
   "updatedItems": [
-    { "id": 1, "name": "...", "price": 0, "assigned": ["Name1", "Name2"] }
+    { "id": 1, "name": "Item Name", "price": 100, "assigned": ["Name 1"] }
   ]
 }`;
 
@@ -204,11 +221,49 @@ Return strictly valid JSON:
     const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
-    return res.json(parsed);
+    // SAFETY GUARANTEE 1: Merge participants so no names are lost
+    let mergedParticipants = Array.isArray(participants) ? [...participants] : [];
+    if (Array.isArray(parsed.updatedParticipants)) {
+      parsed.updatedParticipants.forEach(p => {
+        const trimmed = typeof p === 'string' ? p.trim() : '';
+        if (trimmed && !mergedParticipants.some(existing => existing.toLowerCase() === trimmed.toLowerCase())) {
+          mergedParticipants.push(trimmed);
+        }
+      });
+    }
+
+    // SAFETY GUARANTEE 2: Ensure 100% of original items are preserved!
+    const returnedItemsMap = new Map();
+    if (Array.isArray(parsed.updatedItems)) {
+      parsed.updatedItems.forEach(item => {
+        if (item.id !== undefined) returnedItemsMap.set(String(item.id), item);
+        if (item.name) returnedItemsMap.set(item.name.toLowerCase().trim(), item);
+      });
+    }
+
+    const finalItems = items.map(orig => {
+      const match = returnedItemsMap.get(String(orig.id)) || returnedItemsMap.get(orig.name.toLowerCase().trim());
+      if (match && Array.isArray(match.assigned) && match.assigned.length > 0) {
+        // Map assigned names so they match standard casing in mergedParticipants
+        const cleanAssigned = match.assigned.map(name => {
+          const found = mergedParticipants.find(p => p.toLowerCase() === name.toLowerCase());
+          return found || name;
+        });
+        return { ...orig, assigned: cleanAssigned };
+      }
+      return orig;
+    });
+
+    return res.json({
+      assistantMessage: parsed.assistantMessage || `Updated assignments for your items!`,
+      updatedParticipants: mergedParticipants.length > 0 ? mergedParticipants : ['You (Harsh)'],
+      updatedItems: finalItems
+    });
   } catch (err) {
     console.error('Split chat error:', err.message);
     return res.json({
       assistantMessage: `Updated allocations according to prompt: "${req.body.prompt || ''}"`,
+      updatedParticipants: req.body.participants || ['You (Harsh)'],
       updatedItems: req.body.items || []
     });
   }
