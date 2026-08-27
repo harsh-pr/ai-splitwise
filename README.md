@@ -1,99 +1,66 @@
-# Splitwise AI
+# SplitWise AI ⚡
+> Intelligent Expense Sharing & Multimodal Receipt Splitting (Java College Mini Project)
 
-![GitHub](https://img.shields.io/github/license/harsh-pr/ai-splitwise)
-![Node.js](https://img.shields.io/badge/Node.js-18.x-brightgreen)
+SplitWise AI is an AI-powered expense splitting and debt optimization platform. It combines Google Gemini Multimodal Vision to automatically read and itemize paper bills and UPI receipts with a Java Greedy Cash-Flow Minimization Engine that simplifies group debts into the minimum possible transfers.
 
-## Overview
+---
 
-**Splitwise AI** is a lightweight web service that helps users analyse restaurant receipts, extract structured data using Google Gemini, and manage bill‑splitting history. It provides a simple authentication system, an AI‑powered receipt analysis endpoint, and CRUD operations for bill history.
+## 🌟 Key Features
 
-## Table of Contents
-- [Features](#features)
-- [Demo](#demo)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the Server](#running-the-server)
-- [API Endpoints](#api-endpoints)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
+- **Multimodal AI Receipt Scanner:** Upload receipts or snap photos; Google Gemini extracts items, prices, and taxes.
+- **Java Cash-Flow Engine:** Greedy priority-queue algorithm $O(V \log V)$ to collapse complex circular debts into minimal direct payments.
+- **Item-Level Assignment:** Easily assign specific items, shared platters, or split equally among select friends.
+- **Proportional Taxes & Tips:** Automatically and fairly distributes GST, VAT, and tips based on consumed items.
+- **1-Click Live Demo Mode:** Seamless evaluation with preloaded sample receipts for quick demonstrations.
 
-## Features
-- **User Authentication** – Register, login, logout using JWT stored in HTTP‑only cookies.
-- **Receipt Analysis** – Upload a receipt image; the server calls Google Gemini to return JSON with restaurant name, date, items, tax, tip, and total.
-- **Bill History** – Store, retrieve, update and delete past analyses for each authenticated user.
-- **Environment‑Based Secrets** – All secrets (`JWT_SECRET`, `GEMINI_API_KEY`) are loaded from environment variables; no secrets are committed to the repository.
+---
 
-## Demo
-You can try the API locally after following the installation steps. See the `public/` folder for a simple front‑end that interacts with the back‑end. or you can try the link using the link mentioned above.
+## 🏗️ Project Architecture
 
-## Prerequisites
-- **Node.js** ≥ 18 (recommended LTS)
-- **npm** (comes with Node.js)
-- A **Google Gemini API key** – sign up at https://ai.google.dev/gemini-api
+```
+splitwise-ai-app/
+├── public/                 # Modern Glassmorphic Frontend
+│   ├── index.html          # Semantic Landing Page & App Entry
+│   ├── landing.css         # Responsive Dark Theme & Design Tokens
+│   └── landing.js          # Interactive Presets, Simulator & Demo Modal
+├── src/                    # Java Core Algorithmic Engine
+│   └── com/splitwise/
+│       └── DebtSimplifier.java # Cash-Flow Minimization Engine
+├── server.js               # Node.js / Express Web Server & REST API
+├── package.json            # Scripts and Dependencies
+└── .env                    # Environment Config & Gemini API Key
+```
 
-## Installation
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- **Node.js**: v18+ (tested on Node v24)
+- **Java**: Java 17+ or Java 25 LTS (`javac` and `java`)
+
+### 2. Installation
 ```bash
-# Clone the repository
-git clone https://github.com/harsh-pr/ai-splitwise.git
-cd ai-splitwise
-
-# Install dependencies
 npm install
 ```
 
-## Configuration
-Create a `.env` file in the project root (it is already ignored by `.gitignore`). Example:
-```dotenv
-PORT=3000
-JWT_SECRET=your‑very‑strong‑jwt‑secret
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-```
-> **Important** – never commit the `.env` file. The repository contains a `.gitignore` that excludes it.
-
-## Running the Server
+### 3. Run Java Debt Engine Demo
 ```bash
-# Development mode (auto‑restart on changes)
-npm run dev   # if a dev script is defined, otherwise:
-node server.js
-```
-The server will start at `http://localhost:3000` (or the port you set).
-
-## API Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Register a new user (email, password, name). |
-| `POST` | `/api/auth/login` | Login and receive an HTTP‑only session cookie. |
-| `POST` | `/api/auth/logout` | Clear the session cookie. |
-| `GET`  | `/api/auth/me` | Get the current authenticated user. |
-| `POST` | `/api/analyze-bill` | Upload a receipt image (`multipart/form-data`). Returns structured JSON. |
-| `GET`  | `/api/history` | Get the latest 10 bill entries for the logged‑in user. |
-| `POST` | `/api/history` | Save a new bill entry (or edit an existing one). |
-| `DELETE` | `/api/history/:id` | Delete a bill entry by its ID. |
-
-All protected routes require the `session_token` cookie set by the login endpoint.
-
-## Project Structure
-```
-ai-splitwise/
-├─ data/                # JSON “database” files (ignored by Git)
-│   ├─ users.json
-│   ├─ history.json
-│   └─ config.json
-├─ public/              # Front‑end assets (HTML/CSS/JS)
-├─ server.js            # Express server and API implementation
-├─ package.json
-├─ .gitignore
-└─ README.md            # <-- you are here
+npm run compile-java
+npm run run-java-demo
 ```
 
-## Contributing
-Contributions are welcome! Please follow these steps:
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/awesome-feature`).
-3. Make your changes, ensuring you add corresponding tests if applicable.
-4. Run `npm test` (if tests are defined) and lint the code.
-5. Submit a pull request describing your changes.
+### 4. Start Local Web Server
+```bash
+npm start
+```
+Open **`http://localhost:3000`** in your browser to view the landing page and test the interactive simulator.
 
-Remember to keep all secrets out of the code base; add any new files that should be ignored to `.gitignore`.
+---
+
+## 🧠 Java Debt Simplification Algorithm
+
+The debt minimization algorithm runs in $O(V \log V)$ where $V$ is the number of participants:
+1. Calculates the net balance for each participant ($Net = Received - Paid$).
+2. Separates participants into two priority queues: **Debtors** (negative balance) and **Creditors** (positive balance).
+3. Greedily matches the maximum debtor with the maximum creditor, settling the minimum of both balances and updating the queues until all balances reach zero.

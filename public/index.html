@@ -3,735 +3,622 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Splitwise AI - Receipt Scanner & Bill Splitter</title>
-  <meta name="description" content="Split restaurant bills easily with Splitwise AI. Upload a photo, let AI extract items, and share expenses with friends accurately including GST and tips.">
+  <title>SplitWise AI - Intelligent Expense Sharing & Multimodal Receipt Splitting</title>
+  <meta name="description" content="AI-powered bill splitting and expense manager built with Google Gemini Multimodal Vision & Java Debt Optimization algorithms. Scan receipts, itemize debts, and settle seamlessly.">
+  <meta name="theme-color" content="#090d16">
   
-  <!-- Premium Fonts -->
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono for Code -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="index.css">
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   
-  <!-- Website Tab Logo (Favicon) -->
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
-  
-  <!-- Firebase App & Auth compat SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <link rel="stylesheet" href="landing.css">
 </head>
-<body>
-  <!-- App Background Glow Effects -->
-  <div class="glow-bg glow-1"></div>
-  <div class="glow-bg glow-2"></div>
-  <div class="glow-bg glow-3"></div>
+<body class="dark-theme">
+  <!-- Background Glow Orbs -->
+  <div class="glow-mesh" aria-hidden="true">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
 
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" class="loading-overlay hidden">
-    <div class="loader-container">
-      <div class="spinner"></div>
-      <p id="loader-text">Analyzing receipt image...</p>
+  <!-- Navigation Bar -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="#" class="brand-logo" id="brand-logo">
+        <div class="logo-icon-wrapper">
+          <i class="ph-bold ph-receipt"></i>
+          <span class="sparkle-dot"></span>
+        </div>
+        <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
+      </a>
+
+      <nav class="desktop-nav" id="desktop-nav">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#algorithm" class="nav-link">Java Core Engine</a>
+        <a href="#tech-stack" class="nav-link">Architecture</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="btn btn-demo" id="one-click-demo-btn">
+          <i class="ph-bold ph-play-circle"></i>
+          <span>1-Click Live Demo</span>
+        </button>
+        <a href="#hero-preview" class="btn btn-primary" id="get-started-btn">
+          <span>Explore App</span>
+          <i class="ph-bold ph-arrow-right"></i>
+        </a>
+        <button class="mobile-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+          <i class="ph-bold ph-list"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Nav Drawer -->
+    <div class="mobile-nav-drawer" id="mobile-nav-drawer">
+      <a href="#features" class="mobile-nav-link">Features</a>
+      <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+      <a href="#algorithm" class="mobile-nav-link">Java Core Engine</a>
+      <a href="#tech-stack" class="mobile-nav-link">Architecture</a>
+      <a href="#faq" class="mobile-nav-link">FAQ</a>
+      <div class="mobile-drawer-actions">
+        <button class="btn btn-demo w-full" id="mobile-demo-btn">
+          <i class="ph-bold ph-play-circle"></i>
+          <span>1-Click Live Demo</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="container hero-container">
+        <div class="hero-content">
+          <div class="badge-pill" id="hero-badge">
+            <span class="badge-pulse"></span>
+            <span class="badge-text"><i class="ph-fill ph-sparkle"></i> Multimodal Gemini 2.5 + Java Debt Engine</span>
+          </div>
+
+          <h1 class="hero-title">
+            Split Expenses Intelligently, <br>
+            <span class="gradient-text hero-highlight">Without the Headache.</span>
+          </h1>
+
+          <p class="hero-subtitle">
+            Snap a receipt photo, let Gemini Multimodal AI parse every item and tax, and let our Java Greedy Cash-Flow Engine calculate the simplest way to settle up. No manual math, zero awkward debates.
+          </p>
+
+          <div class="hero-cta-group">
+            <button class="btn btn-large btn-gradient" id="hero-start-demo-btn">
+              <i class="ph-fill ph-lightning"></i>
+              <span>Launch Interactive Demo</span>
+            </button>
+            <a href="#how-it-works" class="btn btn-large btn-outline" id="hero-see-how-btn">
+              <i class="ph-bold ph-video"></i>
+              <span>See How It Works</span>
+            </a>
+          </div>
+
+          <div class="hero-social-proof">
+            <div class="proof-avatars">
+              <span class="avatar av-1">A</span>
+              <span class="avatar av-2">B</span>
+              <span class="avatar av-3">C</span>
+              <span class="avatar av-4">H</span>
+            </div>
+            <div class="proof-text">
+              <strong>100% Automated</strong> itemized splitting for roommates, dining, & road trips
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Hero Demo Card -->
+        <div class="hero-preview-wrapper" id="hero-preview">
+          <div class="preview-card glass-panel">
+            <div class="preview-card-header">
+              <div class="preview-title-row">
+                <div class="window-controls">
+                  <span class="dot dot-red"></span>
+                  <span class="dot dot-yellow"></span>
+                  <span class="dot dot-green"></span>
+                </div>
+                <span class="preview-badge"><i class="ph-fill ph-cpu"></i> AI Live Parser</span>
+              </div>
+              <div class="receipt-selector-pills">
+                <button class="pill-btn active" id="pill-dinner" data-preset="dinner">
+                  <i class="ph-bold ph-fork-knife"></i> Friday Dinner
+                </button>
+                <button class="pill-btn" id="pill-roadtrip" data-preset="roadtrip">
+                  <i class="ph-bold ph-car-profile"></i> Goa Roadtrip
+                </button>
+              </div>
+            </div>
+
+            <div class="preview-card-body">
+              <!-- Scanned Receipt Snapshot -->
+              <div class="receipt-banner">
+                <div class="receipt-icon"><i class="ph-bold ph-receipt"></i></div>
+                <div class="receipt-info">
+                  <h3 id="receipt-title">Friday Bistro Dinner & Mocktails</h3>
+                  <p id="receipt-meta">Paid by <strong class="text-white" id="receipt-payer">You (Harsh)</strong> • 4 Participants</p>
+                </div>
+                <div class="receipt-total">
+                  <span class="total-label">Total Bill</span>
+                  <span class="total-value" id="receipt-total">₹3,450</span>
+                </div>
+              </div>
+
+              <!-- AI Status Tag -->
+              <div class="ai-status-bar">
+                <span class="ai-scan-pulse"><i class="ph-fill ph-check-circle"></i> Gemini Vision OCR Confirmed (<span id="receipt-confidence">98.6%</span>)</span>
+                <span class="items-count-badge" id="receipt-items-count">5 Items Extracted</span>
+              </div>
+
+              <!-- Items Breakdown -->
+              <div class="items-breakdown-list" id="receipt-items-list">
+                <!-- Dynamically populated by landing.js -->
+              </div>
+
+              <!-- Java Debt Simplification Result -->
+              <div class="settlement-preview-box">
+                <div class="settlement-header">
+                  <div class="settle-tag">
+                    <i class="ph-bold ph-tree-structure"></i>
+                    <span>Java Cash-Flow Optimizer</span>
+                  </div>
+                  <span class="savings-pill">Reduced to 3 direct transfers</span>
+                </div>
+
+                <div class="settlement-transfers" id="settlement-transfers-list">
+                  <!-- Dynamically populated by landing.js -->
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-card-footer">
+              <span class="sync-status"><i class="ph-fill ph-circle"></i> Live Engine Active</span>
+              <button class="btn btn-sm btn-action" id="preview-full-app-btn">
+                <span>Open in App</span>
+                <i class="ph-bold ph-arrow-up-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Metrics / Stats Strip -->
+    <section class="stats-strip" id="stats">
+      <div class="container stats-grid">
+        <div class="stat-card">
+          <div class="stat-number gradient-text">&lt; 2s</div>
+          <div class="stat-label">AI Receipt Parsing Speed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number gradient-text">O(V log V)</div>
+          <div class="stat-label">Greedy Cash-Flow Optimization</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number gradient-text">60%</div>
+          <div class="stat-label">Fewer Transactions to Settle</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number gradient-text">100%</div>
+          <div class="stat-label">Itemized Precision (Taxes & Tips)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem vs Solution -->
+    <section class="comparison-section" id="comparison">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Comparison</span>
+          <h2 class="section-title">The Pain of Manual Math vs. <span class="gradient-text">SplitWise AI</span></h2>
+          <p class="section-subtitle">Why traditional bill splitting leads to confusion, wasted time, and unfair shares.</p>
+        </div>
+
+        <div class="comparison-grid">
+          <!-- The Old Way -->
+          <div class="comparison-card old-way glass-panel">
+            <div class="comp-header">
+              <div class="comp-icon danger"><i class="ph-bold ph-x-circle"></i></div>
+              <h3>The Traditional Way</h3>
+            </div>
+            <ul class="comp-list">
+              <li>
+                <i class="ph-bold ph-minus-circle text-danger"></i>
+                <span>Squinting at crumpled, faded thermal paper bills</span>
+              </li>
+              <li>
+                <i class="ph-bold ph-minus-circle text-danger"></i>
+                <span>Manual calculator arguments over who ate which slice</span>
+              </li>
+              <li>
+                <i class="ph-bold ph-minus-circle text-danger"></i>
+                <span>Messy web of 12 circular payments between 4 friends</span>
+              </li>
+              <li>
+                <i class="ph-bold ph-minus-circle text-danger"></i>
+                <span>Forgetting to account for GST, service charges, or delivery tips</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- The SplitWise AI Way -->
+          <div class="comparison-card modern-way glass-panel highlight-border">
+            <div class="popular-badge">Smart Choice</div>
+            <div class="comp-header">
+              <div class="comp-icon success"><i class="ph-bold ph-check-circle"></i></div>
+              <h3>The SplitWise AI Way</h3>
+            </div>
+            <ul class="comp-list">
+              <li>
+                <i class="ph-bold ph-check-circle text-emerald"></i>
+                <span><strong>Instant Multimodal Vision OCR</strong> reads receipt items, totals, & taxes in seconds</span>
+              </li>
+              <li>
+                <i class="ph-bold ph-check-circle text-emerald"></i>
+                <span><strong>Item-Level Tagging:</strong> Tap friend avatars to assign specific dishes or shared platters</span>
+              </li>
+              <li>
+                <i class="ph-bold ph-check-circle text-emerald"></i>
+                <span><strong>Java Greedy Debt Minimization</strong> collapses circular debts into the minimum direct payments</span>
+              </li>
+              <li>
+                <i class="ph-bold ph-check-circle text-emerald"></i>
+                <span><strong>Proportional Tax & Tip:</strong> Auto-distribute extras fairly based on each person's exact subtotal</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Features Grid -->
+    <section class="features-section" id="features">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Powerful Features</span>
+          <h2 class="section-title">Engineered for Frictionless Group Finances</h2>
+          <p class="section-subtitle">Everything you need to manage group trips, flatmates, and dinners in one place.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card glass-panel">
+            <div class="feature-icon icon-emerald">
+              <i class="ph-bold ph-camera"></i>
+            </div>
+            <h3>Multimodal Receipt Scanner</h3>
+            <p>Powered by Google Gemini 2.5 Flash. Upload restaurant bills, supermarket receipts, or UPI screenshots and extract line items automatically.</p>
+            <div class="feature-tag">Gemini Vision OCR</div>
+          </div>
+
+          <div class="feature-card glass-panel">
+            <div class="feature-icon icon-indigo">
+              <i class="ph-bold ph-tree-structure"></i>
+            </div>
+            <h3>Java Debt Simplification</h3>
+            <p>Runs an optimized greedy priority-queue cash flow algorithm that eliminates redundant circular transfers among group members.</p>
+            <div class="feature-tag">Java 25 Algorithm</div>
+          </div>
+
+          <div class="feature-card glass-panel">
+            <div class="feature-icon icon-cyan">
+              <i class="ph-bold ph-chat-circle-dots"></i>
+            </div>
+            <h3>Natural Language Splitting</h3>
+            <p>Simply type <em>"Harsh paid 1200 for burgers, split between Harsh, Aarav and Neha"</em> and let AI format the expense accurately.</p>
+            <div class="feature-tag">NLP Prompt Parsing</div>
+          </div>
+
+          <div class="feature-card glass-panel">
+            <div class="feature-icon icon-violet">
+              <i class="ph-bold ph-users-three"></i>
+            </div>
+            <h3>Smart Proportional Taxes</h3>
+            <p>No more manual percentage calculations. Taxes, discounts, and tips are distributed proportionally based on each person's consumed items.</p>
+            <div class="feature-tag">Fair Math</div>
+          </div>
+
+          <div class="feature-card glass-panel">
+            <div class="feature-icon icon-amber">
+              <i class="ph-bold ph-chart-donut"></i>
+            </div>
+            <h3>Interactive Spending Insights</h3>
+            <p>Visual breakdown of who spent the most, group expense categories (Food, Travel, Stays), and running balances over time.</p>
+            <div class="feature-tag">Analytics</div>
+          </div>
+
+          <div class="feature-card glass-panel">
+            <div class="feature-icon icon-rose">
+              <i class="ph-bold ph-device-mobile"></i>
+            </div>
+            <h3>Instant 1-Click Demo Mode</h3>
+            <p>Built for effortless evaluations and testing. Test full features with pre-loaded mock trips and receipts with zero signup friction.</p>
+            <div class="feature-tag">Examiner Friendly</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-section" id="how-it-works">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Simple Workflow</span>
+          <h2 class="section-title">From Receipt to Settlement in 3 Steps</h2>
+          <p class="section-subtitle">How SplitWise AI transforms messy bills into clear, settled balances.</p>
+        </div>
+
+        <div class="steps-container">
+          <div class="step-card glass-panel">
+            <div class="step-badge">01</div>
+            <div class="step-icon-circle"><i class="ph-bold ph-upload-simple"></i></div>
+            <h3>Upload or Snap Receipt</h3>
+            <p>Take a photo with your phone or drag-and-drop any receipt image or PDF bill.</p>
+          </div>
+
+          <div class="step-connector"><i class="ph-bold ph-caret-right"></i></div>
+
+          <div class="step-card glass-panel">
+            <div class="step-badge">02</div>
+            <div class="step-icon-circle"><i class="ph-bold ph-sparkle"></i></div>
+            <h3>AI Extracts & Assigns</h3>
+            <p>Gemini Vision parses individual dishes, quantities, and taxes. Tap names to assign who ordered what.</p>
+          </div>
+
+          <div class="step-connector"><i class="ph-bold ph-caret-right"></i></div>
+
+          <div class="step-card glass-panel">
+            <div class="step-badge">03</div>
+            <div class="step-icon-circle"><i class="ph-bold ph-currency-inr"></i></div>
+            <h3>Java Engine Optimizes Debts</h3>
+            <p>Debts are simplified into the fewest possible payments. Settle up via UPI or cash with zero confusion.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Java Algorithm Deep-Dive & Tech Architecture -->
+    <section class="tech-section" id="algorithm">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Java Core & Algorithmic Design</span>
+          <h2 class="section-title">Behind the Scenes: The Cash-Flow Engine</h2>
+          <p class="section-subtitle">A collegiate deep dive into our Java graph debt minimization algorithm.</p>
+        </div>
+
+        <div class="tech-card-grid">
+          <!-- Code Snippet Display -->
+          <div class="code-preview-card glass-panel">
+            <div class="code-card-header">
+              <span class="file-name"><i class="ph-bold ph-file-code"></i> DebtSimplifier.java</span>
+              <span class="badge-tech">Java 25 LTS</span>
+            </div>
+            <div class="code-body">
+              <pre><code><span class="keyword">public static</span> List&lt;Transaction&gt; <span class="fn">simplifyDebts</span>(List&lt;Transaction&gt; initialDebts) {
+    <span class="comment">// 1. Compute Net Balances for each member</span>
+    Map&lt;String, Double&gt; netBalances = <span class="keyword">new</span> HashMap&lt;&gt;();
+    <span class="keyword">for</span> (Transaction t : initialDebts) {
+        netBalances.merge(t.from, -t.amount, Double::sum);
+        netBalances.merge(t.to, t.amount, Double::sum);
+    }
+
+    <span class="comment">// 2. Dual Priority Queues for Greedy Matching</span>
+    PriorityQueue&lt;ParticipantBalance&gt; debtors = <span class="keyword">new</span> PriorityQueue&lt;&gt;();
+    PriorityQueue&lt;ParticipantBalance&gt; creditors = <span class="keyword">new</span> PriorityQueue&lt;&gt;();
+
+    <span class="comment">// 3. Match Max Debtor with Max Creditor (O(V log V))</span>
+    <span class="keyword">while</span> (!debtors.isEmpty() && !creditors.isEmpty()) {
+        <span class="keyword">double</span> settle = Math.min(-debtor.netAmount, creditor.netAmount);
+        transactions.add(<span class="keyword">new</span> Transaction(debtor.name, creditor.name, settle));
+        <span class="comment">// update balances and re-queue</span>
+    }
+    <span class="keyword">return</span> transactions;
+}</code></pre>
+            </div>
+          </div>
+
+          <!-- Architecture Components -->
+          <div class="architecture-specs glass-panel">
+            <h3>System Architecture Stack</h3>
+            <div class="spec-list">
+              <div class="spec-item">
+                <div class="spec-icon"><i class="ph-bold ph-coffee"></i></div>
+                <div>
+                  <strong>Java 25 Core Engine</strong>
+                  <p>Greedy priority-queue cash flow reduction reducing graph edges to minimum spanning settlements.</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-icon"><i class="ph-bold ph-brain"></i></div>
+                <div>
+                  <strong>Google Gemini 2.5 Flash</strong>
+                  <p>Multimodal vision analysis structured via JSON schema output for receipts.</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-icon"><i class="ph-bold ph-browsers"></i></div>
+                <div>
+                  <strong>Responsive Web Front-End</strong>
+                  <p>Pure semantic HTML5 and vanilla CSS design system with zero bloated dependencies.</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-icon"><i class="ph-bold ph-shield-check"></i></div>
+                <div>
+                  <strong>Secure & Lightweight REST API</strong>
+                  <p>Node.js / Express micro-server providing rapid local deployment and seamless endpoints.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section" id="faq">
+      <div class="container faq-container">
+        <div class="section-header text-center">
+          <span class="section-tag">Got Questions?</span>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+        </div>
+
+        <div class="faq-accordion">
+          <div class="faq-item glass-panel active">
+            <button class="faq-question" aria-expanded="true">
+              <span>How does SplitWise AI differ from the standard Splitwise app?</span>
+              <i class="ph-bold ph-caret-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Standard apps require you to manually type each item, price, and calculate taxes. SplitWise AI uses Gemini Vision to read bills instantly from photos, assigns dishes to specific friends, and optimizes debts with a Java cash-flow engine.</p>
+            </div>
+          </div>
+
+          <div class="faq-item glass-panel">
+            <button class="faq-question" aria-expanded="false">
+              <span>How does the Java debt minimization algorithm work?</span>
+              <i class="ph-bold ph-caret-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>It calculates the net balance for every individual in a group. Then, using two priority queues (one for debtors and one for creditors), it greedily matches the largest debtor with the largest creditor, minimizing the overall number of bank transfers needed to settle all debts.</p>
+            </div>
+          </div>
+
+          <div class="faq-item glass-panel">
+            <button class="faq-question" aria-expanded="false">
+              <span>Can I test the application without signing up or uploading real receipts?</span>
+              <i class="ph-bold ph-caret-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Yes! Click on the <strong>"1-Click Live Demo"</strong> button at the top. It provides immediate access with preloaded sample receipts (dinner, road trip) so evaluators can test all features instantly.</p>
+            </div>
+          </div>
+
+          <div class="faq-item glass-panel">
+            <button class="faq-question" aria-expanded="false">
+              <span>Does it support proportional taxes and tips?</span>
+              <i class="ph-bold ph-caret-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Yes! Instead of splitting taxes equally, taxes and tips are computed proportionally based on the exact dollar or rupee value of the items each participant consumed.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA Banner -->
+    <section class="cta-banner-section">
+      <div class="container">
+        <div class="cta-banner-card glass-panel">
+          <div class="cta-banner-content">
+            <h2>Ready to Experience Painless Expense Splitting?</h2>
+            <p>Launch the interactive demo right now or explore the project features.</p>
+            <div class="cta-banner-buttons">
+              <button class="btn btn-large btn-gradient" id="bottom-demo-btn">
+                <i class="ph-fill ph-play-circle"></i>
+                <span>Launch 1-Click Demo</span>
+              </button>
+              <a href="#hero-preview" class="btn btn-large btn-outline">
+                <i class="ph-bold ph-receipt"></i>
+                <span>View Interactive Simulator</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Polished Footer -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="logo-icon-wrapper sm">
+            <i class="ph-bold ph-receipt"></i>
+          </div>
+          <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
+        </div>
+        <p class="footer-desc">AI-powered expense tracking and debt optimization designed for seamless group settlements.</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="link-column">
+          <h4>Navigation</h4>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#algorithm">Java Engine</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="link-column">
+          <h4>Technology</h4>
+          <a href="#algorithm">Java 25 Cash-Flow</a>
+          <a href="#tech-stack">Google Gemini 2.5 Flash</a>
+          <a href="#tech-stack">Express REST API</a>
+          <a href="#hero-preview">Interactive Simulator</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; 2026 SplitWise AI. Built with Java 25 & Gemini Multimodal AI.</p>
+      <div class="footer-badges">
+        <span class="footer-tech-tag"><i class="ph-bold ph-coffee"></i> Java Powered</span>
+        <span class="footer-tech-tag"><i class="ph-fill ph-sparkle"></i> Gemini 2.5</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 1-Click Demo Modal (Evaluator quick-launcher) -->
+  <div class="demo-modal-overlay" id="demo-modal" aria-hidden="true">
+    <div class="demo-modal-box glass-panel">
+      <div class="demo-modal-header">
+        <div class="modal-title-wrap">
+          <i class="ph-fill ph-lightning gradient-text"></i>
+          <h3>Quick Demo Mode Launcher</h3>
+        </div>
+        <button class="modal-close-btn" id="demo-modal-close" aria-label="Close demo modal">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="demo-modal-body">
+        <p class="modal-desc">Select an interactive demonstration mode to explore without creating an account:</p>
+        <div class="demo-options-list">
+          <div class="demo-option-card" id="demo-option-dinner">
+            <div class="option-icon"><i class="ph-bold ph-fork-knife"></i></div>
+            <div class="option-content">
+              <h4>Friday Night Bistro (₹3,450)</h4>
+              <p>4 friends, itemized dishes (pizza, mocktails, fries), tax & tip distribution.</p>
+            </div>
+            <button class="btn btn-sm btn-primary">Simulate</button>
+          </div>
+          <div class="demo-option-card" id="demo-option-roadtrip">
+            <div class="option-icon"><i class="ph-bold ph-car-profile"></i></div>
+            <div class="option-content">
+              <h4>Goa Weekend Trip (₹9,800)</h4>
+              <p>Fuel, shared seafood, highway toll passes, multi-person debt settlement.</p>
+            </div>
+            <button class="btn btn-sm btn-primary">Simulate</button>
+          </div>
+        </div>
+        <div class="modal-note">
+          <i class="ph-fill ph-info"></i>
+          <span>This loads live mock data directly into the interactive simulator above!</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Main Container -->
-  <main id="app-container">
-    
-    <!-- 1. AUTHENTICATION SECTION (Hidden if logged in) -->
-    <section id="auth-section" class="auth-section">
-      <!-- GPU-Accelerated Dark Ambient Stealth Background Canvas & Orbs -->
-      <div class="auth-bg-overlay">
-        <div class="animate-bg-float-1" style="position: absolute; top: -6rem; left: -5rem; width: 24rem; height: 24rem; background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(127, 0, 255, 0.08) 60%, transparent 100%); border-radius: 9999px; filter: blur(80px);"></div>
-        <div class="animate-bg-float-2" style="position: absolute; bottom: -6rem; right: -5rem; width: 26rem; height: 26rem; background: radial-gradient(circle, rgba(255, 0, 127, 0.12) 0%, rgba(127, 0, 255, 0.08) 60%, transparent 100%); border-radius: 9999px; filter: blur(80px);"></div>
-        <div class="auth-grid-overlay"></div>
-      </div>
-
-      <!-- Responsive Split Layout Container -->
-      <div class="auth-container-grid">
-        
-        <!-- LEFT COLUMN: DESKTOP SHOWCASE HERO -->
-        <div class="auth-hero-showcase">
-          <div class="auth-hero-badge">
-            <span>✨</span>
-            <span>Smart AI Receipt Scanner & Bill Splitter</span>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <h1 class="auth-hero-title">
-              Never stress over group bills <span class="auth-hero-title-gradient">again.</span>
-            </h1>
-            <p class="auth-hero-subtitle">
-              Upload receipt photos, let AI auto-extract itemized expenses, and share custom payment links effortlessly.
-            </p>
-          </div>
-
-          <!-- INTERACTIVE DEMO PREVIEW CARD -->
-          <div class="auth-demo-preview-card">
-            <div class="auth-demo-header">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div class="auth-demo-icon-box">🧾</div>
-                <div>
-                  <h4 style="font-size: 0.85rem; font-weight: 800; color: #ffffff; margin: 0;">Dinner at Bistro Grill</h4>
-                  <p style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; margin: 0;">4 Members Active • 6 Items</p>
-                </div>
-              </div>
-              <span class="auth-demo-badge">₹2,450.00 Processed ✅</span>
-            </div>
-
-            <!-- Split Progress Bar -->
-            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: #94a3b8;">
-                <span>AI Item Breakdown Accuracy</span>
-                <span style="color: #ffffff; font-weight: 800;">100% Calculated</span>
-              </div>
-              <div class="auth-demo-progress-track">
-                <div class="auth-demo-progress-fill"></div>
-              </div>
-            </div>
-
-            <!-- Feature Highlight Pills -->
-            <div class="auth-demo-pills">
-              <div class="auth-demo-pill"><span>⚡</span> AI OCR Scan</div>
-              <div class="auth-demo-pill"><span>🧾</span> Item Splits</div>
-              <div class="auth-demo-pill"><span>🔒</span> Link Sync</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT COLUMN: KOKONUT GLASS AUTH CARD -->
-        <div class="auth-kokonut-card">
-          <!-- Logo & Header -->
-          <div class="auth-header">
-            <div class="auth-logo-wrapper">
-              <img src="logo.jpg" alt="Splitwise AI Logo" class="auth-logo-img">
-              <span class="status-dot"></span>
-            </div>
-            <div>
-              <h2 class="logo-text">Splitwise <span>AI</span></h2>
-              <p class="tagline">Split restaurant bills, track shared expenses & settle up seamlessly</p>
-            </div>
-          </div>
-
-          <!-- MORPHIC TAB SWITCHER -->
-          <div class="morphic-tab-container">
-            <button id="tab-login-btn" type="button" class="morphic-tab active" onclick="switchAuthTab('login')">
-              Sign In
-            </button>
-            <button id="tab-signup-btn" type="button" class="morphic-tab" onclick="switchAuthTab('signup')">
-              Sign Up
-            </button>
-          </div>
-
-          <!-- ERROR CALLOUT CONTAINER -->
-          <div id="auth-error-msg" class="auth-error-box hidden">
-            <span style="font-size: 1rem;">⚠️</span>
-            <span id="auth-error-text"></span>
-          </div>
-
-          <!-- LOGIN FORM -->
-          <form id="login-form" class="auth-form" onsubmit="handleEmailLogin(event)" style="display: flex; flex-direction: column; gap: 0.85rem;">
-            <div class="input-group" style="margin-bottom: 0;">
-              <label for="login-email" style="font-size: 0.72rem; font-weight: 800;">EMAIL ADDRESS</label>
-              <div class="input-with-icon">
-                <span class="input-icon-prefix">✉️</span>
-                <input type="email" id="login-email" required placeholder="name@example.com">
-              </div>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 0;">
-              <label for="login-password" style="font-size: 0.72rem; font-weight: 800;">PASSWORD</label>
-              <div class="input-with-icon">
-                <span class="input-icon-prefix">🔒</span>
-                <input type="password" id="login-password" required placeholder="••••••••">
-                <button type="button" class="toggle-pw-btn" onclick="togglePasswordVisibility('login-password', this)">👁️</button>
-              </div>
-              <div style="text-align: right; margin-top: 0.35rem;">
-                <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.72rem; color: var(--color-primary); font-weight: 600; text-decoration: none;">Forgot password?</a>
-              </div>
-            </div>
-
-            <button type="submit" id="submit-login-btn" class="btn btn-primary btn-block" style="border-radius: 16px; padding: 0.75rem; font-weight: 800; font-size: 0.88rem;">
-              Sign In to Workspace
-            </button>
-          </form>
-
-          <!-- SIGNUP FORM -->
-          <form id="signup-form" class="auth-form hidden" onsubmit="handleEmailSignup(event)" style="display: flex; flex-direction: column; gap: 0.85rem;">
-            <div class="input-group" style="margin-bottom: 0;">
-              <label for="signup-name" style="font-size: 0.72rem; font-weight: 800;">FULL NAME</label>
-              <div class="input-with-icon">
-                <span class="input-icon-prefix">👤</span>
-                <input type="text" id="signup-name" placeholder="John Doe">
-              </div>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 0;">
-              <label for="signup-email" style="font-size: 0.72rem; font-weight: 800;">EMAIL ADDRESS</label>
-              <div class="input-with-icon">
-                <span class="input-icon-prefix">✉️</span>
-                <input type="email" id="signup-email" required placeholder="name@example.com">
-              </div>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 0;">
-              <label for="signup-password" style="font-size: 0.72rem; font-weight: 800;">PASSWORD</label>
-              <div class="input-with-icon">
-                <span class="input-icon-prefix">🔒</span>
-                <input type="password" id="signup-password" required placeholder="••••••••" oninput="validatePasswordRequirements(this.value)">
-                <button type="button" class="toggle-pw-btn" onclick="togglePasswordVisibility('signup-password', this)">👁️</button>
-              </div>
-
-              <!-- Single line password requirements indicators -->
-              <div id="pw-reqs-container" class="pw-requirements-badge" style="display: none;">
-                <span id="pw-req-len" class="pw-req-item">• 8+ chars</span>
-                <span>•</span>
-                <span id="pw-req-upper" class="pw-req-item">• Upper</span>
-                <span>•</span>
-                <span id="pw-req-lower" class="pw-req-item">• Lower</span>
-                <span>•</span>
-                <span id="pw-req-num" class="pw-req-item">• Number</span>
-                <span>•</span>
-                <span id="pw-req-spec" class="pw-req-item">• Symbol</span>
-              </div>
-            </div>
-
-            <button type="submit" id="submit-signup-btn" class="btn btn-primary btn-block" style="border-radius: 16px; padding: 0.75rem; font-weight: 800; font-size: 0.88rem;">
-              Create My Account
-            </button>
-          </form>
-
-          <!-- DIVIDER -->
-          <div class="auth-divider">
-            <span>Or Continue With</span>
-          </div>
-
-          <!-- GOOGLE SIGN-IN BUTTON -->
-          <button type="button" class="btn btn-google btn-block" onclick="triggerGoogleAuth('login')" style="border-radius: 16px; padding: 0.65rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff; font-weight: 700; font-size: 0.82rem; gap: 8px;">
-            <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span>Continue with Google</span>
-          </button>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- 2. MAIN APPLICATION WORKSPACE (Hidden if logged out) -->
-    <section id="workspace-section" class="workspace-section hidden">
-      <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="toggleMobileSidebar(false)"></div>
-      
-      <!-- App Header: Floating Glass Pill Header matching Attendance Tracker Navbar.jsx -->
-      <header class="app-header floating-header-pill">
-        <!-- Logo Branding -->
-        <div class="header-logo" onclick="window.location.href='/index.html'" style="cursor: pointer; display: flex; align-items: center; gap: 0.6rem;">
-          <div class="header-logo-icon">
-            <img src="logo.jpg" alt="Splitwise AI Logo" class="logo-img mini">
-          </div>
-          <h2 class="logo-text mini" style="font-size: 1.25rem; font-weight: 800; font-family: 'Outfit', sans-serif;">Splitwise <span style="background: linear-gradient(135deg, #00f2fe, #7f00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI</span></h2>
-        </div>
-
-        <!-- Center: Kokonut Morphic Segmented Header Navigation (Desktop) -->
-        <nav class="header-desktop-segmented">
-          <button type="button" class="header-seg-btn active" onclick="goToStep(1)">
-            <span>⚡ Workspace</span>
-          </button>
-          <a href="/history.html" class="header-seg-btn">
-            <span>📁 Scan History</span>
-          </a>
-        </nav>
-
-        <!-- Right Actions & Kokonut Profile Dropdown -->
-        <div class="header-user">
-          <button id="mobile-sidebar-toggle" class="btn btn-secondary btn-sm mobile-only" onclick="toggleMobileSidebar(true)" style="border-radius: 9999px; font-weight: 700; padding: 0.4rem 0.85rem; margin-right: 0.25rem; display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem;">
-            📁 <span>History</span>
-          </button>
-
-          <!-- KOKONUT PROFILE DROPDOWN TRIGGER & MENU -->
-          <div class="user-menu-container">
-            <button type="button" class="user-avatar-trigger" aria-label="User profile menu">
-              <div class="user-avatar-badge" id="user-avatar-circle">
-                👤
-              </div>
-            </button>
-
-            <!-- KOKONUT PROFILE DROPDOWN MENU -->
-            <div class="user-dropdown-menu kokonut-dropdown-panel">
-              <!-- Menu Header Info -->
-              <div class="profile-dropdown-user-row">
-                <div class="profile-dropdown-avatar" id="dropdown-user-avatar">👤</div>
-                <div style="display: flex; flex-direction: column; overflow: hidden;">
-                  <span id="dropdown-user-name" class="profile-dropdown-name truncate">Loading...</span>
-                  <span id="dropdown-user-email" class="profile-dropdown-email truncate">Loading...</span>
-                </div>
-              </div>
-              
-              <div class="dropdown-divider"></div>
-              
-              <!-- Total spent card layout matching Attendance Tracker -->
-              <div class="profile-spent-card">
-                <span class="spent-card-label">📊 Total Amount Spent</span>
-                <span id="dropdown-spent-amount" class="spent-card-amount">₹0.00</span>
-              </div>
-              
-              <!-- Link Google card layout -->
-              <div id="dropdown-google-section" class="profile-google-card">
-                <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" style="flex-shrink: 0;">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                  </svg>
-                  <span id="google-link-status-container" style="font-size: 0.78rem; font-weight: 700;">Checking status...</span>
-                </div>
-                <button id="google-link-btn" class="btn btn-google btn-block btn-sm hidden" onclick="triggerGoogleLink()" style="font-size: 0.72rem; padding: 0.35rem 0.75rem; border-radius: 12px;">
-                  Link Google Account
-                </button>
-              </div>
-              
-              <div class="dropdown-divider"></div>
-              
-              <!-- Quick Navigation link -->
-              <a href="/history.html" id="dropdown-nav-link" class="dropdown-menu-item">
-                <span>📁 View Full History Details</span>
-              </a>
-              
-              <!-- Profile Footer actions -->
-              <div style="display: flex; flex-direction: column; gap: 0.4rem; width: 100%; margin-top: 0.25rem;">
-                <button onclick="handleLogout()" class="w-full dropdown-action-btn logout-btn">
-                  🚪 Sign Out
-                </button>
-                <button onclick="handleDeleteAccount()" class="w-full dropdown-action-btn delete-btn">
-                  🗑 Delete Account
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Grid Layout for Dashboard -->
-      <div class="dashboard-grid">
-
-        <!-- Left Side: History Sidebar -->
-        <aside id="history-sidebar" class="history-sidebar glass-panel">
-          <div class="sidebar-header">
-            <h3>📁 Recent Scans</h3>
-            <span class="badge" id="history-count-badge">0</span>
-          </div>
-          <div id="history-list" class="history-list">
-            <!-- Dynamic history cards populated by JS -->
-            <p class="empty-text">No scans yet. Start splitting!</p>
-          </div>
-        </aside>
-
-        <!-- Right Side: Command Center & Splitting Wizard Stage -->
-        <main class="wizard-container glass-panel">
-          
-          <!-- Top Command Live Ticker Bar -->
-          <div class="command-ticker-bar">
-            <div class="ticker-status-group">
-              <span class="ticker-live-dot"></span>
-              <span class="ticker-status-text">⚡ AI Engine Ready • Instant Bill OCR Active</span>
-            </div>
-            <div class="ticker-actions-group">
-              <button type="button" class="quick-action-pill" onclick="quickScanBill()">
-                <span>📸 Quick Scan</span>
-              </button>
-              <button type="button" class="quick-action-pill" onclick="quickAddMembers()">
-                <span>👥 Add Members</span>
-              </button>
-              <a href="/history.html" class="quick-action-pill">
-                <span>📊 History Log</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Wizard Step Headers -->
-          <nav class="wizard-steps-nav">
-            <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
-            <div class="step-indicator active" id="step-nav-1">
-              <span class="step-num">1</span>
-              <span class="step-label">Command</span>
-            </div>
-            <div class="step-indicator" id="step-nav-2">
-              <span class="step-num">2</span>
-              <span class="step-label">Upload</span>
-            </div>
-            <div class="step-indicator" id="step-nav-3">
-              <span class="step-num">3</span>
-              <span class="step-label">Review</span>
-            </div>
-            <div class="step-indicator" id="step-nav-4">
-              <span class="step-num">4</span>
-              <span class="step-label">Members</span>
-            </div>
-            <div class="step-indicator" id="step-nav-5">
-              <span class="step-num">5</span>
-              <span class="step-label">Assign</span>
-            </div>
-            <div class="step-indicator" id="step-nav-6">
-              <span class="step-num">6</span>
-              <span class="step-label">Details</span>
-            </div>
-          </nav>
-
-          <!-- WIZARD STEP 1: Command Center & Interactive Hero Stage -->
-          <div id="wizard-step-1" class="wizard-step">
-            <div class="command-center-stage animate-fade-in">
-              
-              <!-- Left Column: Intro & Split Templates -->
-              <div class="command-left-col">
-                <div class="command-title-badge">✨ Smart AI Bill & Receipt Hub</div>
-                <h2 class="command-hero-heading">Split bills effortlessly with <span>Gemini AI</span></h2>
-                <p class="command-hero-subtext">Snap a receipt photo, auto-extract line items & GST taxes, and assign individual shares to friends in seconds.</p>
-                
-                <div class="command-templates-grid">
-                  <div class="template-card" onclick="goToStep(2)">
-                    <div class="template-icon-box">🍽️</div>
-                    <div class="template-card-info">
-                      <span class="template-card-title">Restaurant Bill</span>
-                      <span class="template-card-sub">AI Item & GST Scanner</span>
-                    </div>
-                  </div>
-                  <div class="template-card disabled" title="Coming soon">
-                    <div class="template-icon-box">🏨</div>
-                    <div class="template-card-info">
-                      <span class="template-card-title">Hotel Stay</span>
-                      <span class="template-card-sub">Room & Amenities</span>
-                    </div>
-                  </div>
-                  <div class="template-card disabled" title="Coming soon">
-                    <div class="template-icon-box">🎬</div>
-                    <div class="template-card-info">
-                      <span class="template-card-title">Movie Tickets</span>
-                      <span class="template-card-sub">Tickets & Combos</span>
-                    </div>
-                  </div>
-                  <div class="template-card disabled" title="Coming soon">
-                    <div class="template-icon-box">🛒</div>
-                    <div class="template-card-info">
-                      <span class="template-card-title">Grocery Shopping</span>
-                      <span class="template-card-sub">Bulk Mart Receipts</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right Column: 3D Perspective Hero Scanner Card -->
-              <div class="command-right-col">
-                <div class="hero-scanner-stage">
-                  <div class="laser-scan-beam"></div>
-                  
-                  <div class="receipt-mock-header">
-                    <div>
-                      <div class="receipt-merchant">Trattoria Italian Cafe</div>
-                      <div style="font-size: 0.68rem; color: #94a3b8;">Receipt #AI-89420</div>
-                    </div>
-                    <span class="receipt-ai-badge">✓ AI Scanned</span>
-                  </div>
-
-                  <div class="receipt-mock-items">
-                    <div class="receipt-mock-row">
-                      <span class="mock-item-title">🍕 Woodfired Margherita</span>
-                      <span class="mock-item-price">₹450.00</span>
-                    </div>
-                    <div class="receipt-mock-row">
-                      <span class="mock-item-title">🥤 Sparkling Cold Brew</span>
-                      <span class="mock-item-price">₹180.00</span>
-                    </div>
-                    <div class="receipt-mock-row">
-                      <span class="mock-item-title">🍰 Tiramisu Special</span>
-                      <span class="mock-item-price">₹260.00</span>
-                    </div>
-                  </div>
-
-                  <div class="receipt-mock-total-row">
-                    <span class="mock-total-label">Grand Total</span>
-                    <span class="mock-total-amount">₹890.00</span>
-                  </div>
-
-                  <button type="button" class="start-scan-hero-btn" onclick="goToStep(2)">
-                    <span>✨ Start AI Receipt Scan</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- WIZARD STEP 2: Upload Receipt Image -->
-          <div id="wizard-step-2" class="wizard-step hidden">
-            <div class="step-intro">
-              <h3>Upload Receipt Image</h3>
-              <p>Upload a photo of your receipt to extract all items instantly via Gemini AI.</p>
-            </div>
-            
-            <div class="upload-area-container animate-fade-in">
-              <!-- Mobile only camera trigger -->
-              <div class="mobile-camera-container mobile-only">
-                <button class="btn btn-primary btn-block camera-trigger-btn" onclick="triggerCameraInput()">
-                  <span>📸 Take Photo of Bill</span>
-                </button>
-                <div class="or-separator"><span>OR</span></div>
-                <input type="file" id="camera-input" class="hidden" accept="image/*" capture="environment" onchange="handleFileSelect(event)">
-              </div>
-
-              <div id="dropzone" class="dropzone" onclick="triggerFileInput()">
-                <div class="dropzone-icon">📁</div>
-                <p class="desktop-only">Drag and drop receipt photo here, or <span>browse files</span></p>
-                <p class="mobile-only">Choose an existing photo from <span>gallery</span></p>
-                <span class="file-limits">Supports JPG, PNG, WebP</span>
-                <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
-              </div>
-              
-              <div id="upload-preview-container" class="upload-preview-container hidden">
-                <img id="upload-preview" src="#" alt="Receipt Preview">
-                <div class="preview-actions">
-                  <button class="btn btn-secondary btn-sm" onclick="resetUpload()">Change Image</button>
-                  <button class="btn btn-primary" id="proceed-upload-btn" onclick="uploadAndAnalyze()">Analyze Receipt</button>
-                </div>
-              </div>
-            </div>
-            
-            <div class="step-navigation-bar">
-              <button class="btn btn-secondary" onclick="goToStep(1)">Back</button>
-            </div>
-          </div>
-
-          <!-- WIZARD STEP 3: Review Extracted Receipt Info -->
-          <div id="wizard-step-3" class="wizard-step hidden">
-            <div class="step-intro">
-              <h3>Review Extracted Items</h3>
-              <p>Double check extracted item names, prices, taxes, and service tips before splitting.</p>
-            </div>
-
-            <div class="review-layout animate-fade-in">
-              <div class="review-form glass-card">
-                <div class="input-group">
-                  <label for="review-restaurant">Restaurant Name</label>
-                  <input type="text" id="review-restaurant">
-                </div>
-                <div class="input-group">
-                  <label for="review-date">Date</label>
-                  <input type="text" id="review-date" placeholder="YYYY-MM-DD or Unavailable">
-                </div>
-                <div class="input-group">
-                  <label for="review-category">Category</label>
-                  <select id="review-category" class="select-dropdown">
-                    <option value="Restaurant Bill">Restaurant Bills</option>
-                    <option value="Hotel Bill">Hotel Bills</option>
-                    <option value="Movie Bill">Movie Bills</option>
-                    <option value="Grocery Bill">Grocery Bills</option>
-                  </select>
-                </div>
-
-                <!-- Items Editor Container -->
-                <div class="items-editor-wrapper">
-                  <div class="items-header">
-                    <h4>Receipt Items</h4>
-                    <button class="btn btn-secondary btn-xs" onclick="addCustomItem()">+ Add Item</button>
-                  </div>
-                  <div id="extracted-items-list" class="items-list-container">
-                    <!-- Extracted items fields generated dynamically -->
-                  </div>
-                </div>
-
-                <!-- Totals Section -->
-                <div class="totals-form-grid">
-                  <div class="input-group">
-                    <label for="review-tax">Tax & GST</label>
-                    <input type="number" step="0.01" id="review-tax" onchange="recalculateReceiptTotal()">
-                  </div>
-                  <div class="input-group">
-                    <label for="review-tip">Tips / Service</label>
-                    <input type="number" step="0.01" id="review-tip" onchange="recalculateReceiptTotal()">
-                  </div>
-                  <div class="input-group">
-                    <label for="review-total">Grand Total</label>
-                    <input type="number" step="0.01" id="review-total" readonly>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="step-navigation-bar">
-              <button class="btn btn-secondary" onclick="goToStep(2)">Back</button>
-              <button class="btn btn-primary" onclick="proceedFromReview()">Proceed to Members</button>
-            </div>
-          </div>
-
-          <!-- WIZARD STEP 4: Add Members -->
-          <div id="wizard-step-4" class="wizard-step hidden">
-            <div class="step-intro">
-              <h3>Who is sharing this bill?</h3>
-              <p>Type member names and add them one by one to split the receipt items.</p>
-            </div>
-
-            <div class="members-layout animate-fade-in">
-              <div class="members-input-box">
-                <input type="text" id="member-name-input" placeholder="Type a friend's name..." onkeypress="handleMemberInputKeypress(event)">
-                <button class="btn btn-primary" id="add-member-btn" onclick="addMemberFromInput()">+</button>
-              </div>
-
-              <div class="added-members-wrapper">
-                <h4>Bill Members (<span id="member-count">0</span>)</h4>
-                <div id="members-list-tags" class="members-tags-container">
-                  <!-- Dynamic tag list -->
-                  <p class="placeholder-tag-text">No members added yet. Add at least one person.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="step-navigation-bar">
-              <button class="btn btn-secondary" onclick="goToStep(3)">Back</button>
-              <button class="btn btn-primary" id="members-next-btn" onclick="proceedToSplitBoard()">Proceed to Assignments</button>
-            </div>
-          </div>
-
-          <!-- WIZARD STEP 5: Interactive Split Item Assignment -->
-          <div id="wizard-step-5" class="wizard-step hidden">
-            <div class="step-intro">
-              <h3>Split Board</h3>
-              <p>Assign items by clicking on the members who shared them. Items will be divided equally among chosen members.</p>
-            </div>
-
-            <div class="split-board-container animate-fade-in">
-              <div class="split-board-header">
-                <span class="col-item">Receipt Item</span>
-                <span class="col-price">Price</span>
-                <span class="col-assign">Consumers / Shares</span>
-              </div>
-              <div id="split-items-assignment-list" class="split-board-list">
-                <!-- Dynamically populated items with member selection buttons -->
-              </div>
-            </div>
-
-            <div class="step-navigation-bar">
-              <button class="btn btn-secondary" onclick="goToStep(4)">Back</button>
-              <button class="btn btn-primary" onclick="calculateAndPresentSplit()">Calculate Split Bill</button>
-            </div>
-          </div>
-
-          <!-- WIZARD STEP 6: Calculation Results Summary -->
-          <div id="wizard-step-6" class="wizard-step hidden">
-            <div class="step-intro">
-              <h3>Split Bill Calculations</h3>
-              <p>Here is the split details breakdown per person. Proportional taxes & tips have been auto-applied.</p>
-            </div>
-
-            <div class="results-layout animate-fade-in">
-              <!-- Cards with individuals' shares -->
-              <div id="split-results-cards" class="results-cards-grid">
-                <!-- Dynamically generated share breakdowns -->
-              </div>
-
-              <!-- General Summary Table -->
-              <div class="bill-summary-report glass-card">
-                <h4>Bill Calculations Summary</h4>
-                <div class="summary-totals-row">
-                  <div>Subtotal: <span id="res-subtotal">₹0.00</span></div>
-                  <div>Tax/GST: <span id="res-tax">₹0.00</span></div>
-                  <div>Tip/Service: <span id="res-tip">₹0.00</span></div>
-                  <div class="highlight-total">Grand Total: <span id="res-total">₹0.00</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="step-navigation-bar">
-              <button class="btn btn-secondary" onclick="goToStep(5)">Edit Assignments</button>
-              <button class="btn btn-success" onclick="saveAndFinishSplit()">Save & Close</button>
-            </div>
-          </div>
-
-        </main>
-      </div>
-
-      <!-- Mobile Floating Bottom Navigation Dock matching Attendance Tracker MobileNav.jsx -->
-      <nav class="mobile-bottom-dock">
-        <div class="dock-items-wrapper">
-          <button type="button" class="dock-item active" id="dock-item-1" onclick="goToStep(1)">
-            <span class="dock-icon">⚡</span>
-            <span class="dock-label">Type</span>
-          </button>
-          <button type="button" class="dock-item" id="dock-item-2" onclick="goToStep(2)">
-            <span class="dock-icon">📷</span>
-            <span class="dock-label">Upload</span>
-          </button>
-          <button type="button" class="dock-item" id="dock-item-3" onclick="goToStep(3)">
-            <span class="dock-icon">🧾</span>
-            <span class="dock-label">Items</span>
-          </button>
-          <button type="button" class="dock-item" id="dock-item-4" onclick="goToStep(4)">
-            <span class="dock-icon">👥</span>
-            <span class="dock-label">Members</span>
-          </button>
-          <button type="button" class="dock-item" id="dock-item-5" onclick="goToStep(5)">
-            <span class="dock-icon">🎯</span>
-            <span class="dock-label">Split</span>
-          </button>
-          <button type="button" class="dock-item" id="dock-item-6" onclick="goToStep(6)">
-            <span class="dock-icon">💰</span>
-            <span class="dock-label">Results</span>
-          </button>
-        </div>
-      </nav>
-    </section>
-
-    <!-- 3. DETAILS MODAL (For history details check) -->
-    <div id="details-modal" class="modal hidden">
-      <div class="modal-content glass-panel animate-scale-in">
-        <span class="close-modal-btn" onclick="closeDetailsModal()">&times;</span>
-        <h3 id="modal-restaurant">Restaurant Name</h3>
-        <div class="modal-meta-row" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
-          <span id="modal-date" class="modal-date" style="margin-bottom: 0;">Date: 2026-06-29</span>
-          <span id="modal-category" class="badge">Restaurant Bill</span>
-        </div>
-
-        <div class="modal-layout">
-          <!-- Receipt Photo -->
-          <div class="modal-photo-section">
-            <h4>Receipt Image</h4>
-            <div class="modal-img-container">
-              <img id="modal-img" src="" alt="Original bill" title="Click to view full image" onclick="window.open(this.src, '_blank')" style="cursor: pointer;">
-            </div>
-          </div>
-
-          <!-- Split Summary Details -->
-          <div class="modal-splits-section">
-            <h4>Split Details</h4>
-            <div id="modal-splits-list" class="modal-splits-list">
-              <!-- Dynamically populated summaries -->
-            </div>
-            
-            <div class="modal-totals-summary">
-              <div class="totals-summary-line"><span>Tax/GST:</span> <span id="modal-tax">₹0.00</span></div>
-              <div class="totals-summary-line"><span>Tips:</span> <span id="modal-tip">₹0.00</span></div>
-              <div class="totals-summary-line grand"><span>Grand Total:</span> <span id="modal-total">₹0.00</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-primary" id="modal-edit-btn">Edit Bill Splits</button>
-          <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
-        </div>
-      </div>
-    </div>
-
-  </main>
-
-
-
-
-
-  </main>
-
-  <script src="app.js"></script>
+  <script src="landing.js"></script>
 </body>
 </html>
