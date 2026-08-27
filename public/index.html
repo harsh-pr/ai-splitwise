@@ -57,17 +57,11 @@
       </nav>
 
       <div class="header-actions">
-        <!-- Install PWA Button (Visible if supported) -->
-        <button class="btn btn-pwa-install hidden" id="header-install-btn" title="Add SplitWise AI to Home Screen">
-          <i class="ph-bold ph-download-simple"></i>
-          <span>Install App</span>
-        </button>
-
-        <button class="btn btn-demo" id="one-click-demo-btn">
+        <button class="btn btn-demo desktop-only" id="one-click-demo-btn">
           <i class="ph-bold ph-play-circle"></i>
           <span>1-Click Live Demo</span>
         </button>
-        <a href="#hero-preview" class="btn btn-primary" id="get-started-btn">
+        <a href="#hero-preview" class="btn btn-primary desktop-only" id="get-started-btn">
           <span>Explore App</span>
           <i class="ph-bold ph-arrow-right"></i>
         </a>
@@ -85,10 +79,6 @@
       <a href="#tech-stack" class="mobile-nav-link">Architecture</a>
       <a href="#faq" class="mobile-nav-link">FAQ</a>
       <div class="mobile-drawer-actions">
-        <button class="btn btn-pwa-install w-full" id="mobile-drawer-install-btn">
-          <i class="ph-bold ph-download-simple"></i>
-          <span>Add to Home Screen (Install App)</span>
-        </button>
         <button class="btn btn-demo w-full" id="mobile-demo-btn">
           <i class="ph-bold ph-play-circle"></i>
           <span>1-Click Live Demo</span>
@@ -104,7 +94,7 @@
         <div class="hero-content">
           <div class="badge-pill" id="hero-badge">
             <span class="badge-pulse"></span>
-            <span class="badge-text"><i class="ph-fill ph-sparkle"></i> Multimodal Gemini 2.5 + Java Debt Engine</span>
+            <span class="badge-text"><i class="ph-fill ph-sparkle"></i> Gemini 2.5 + Java Debt Engine</span>
           </div>
 
           <h1 class="hero-title">
@@ -363,8 +353,8 @@
               <i class="ph-bold ph-device-mobile"></i>
             </div>
             <h3>PWA & Mobile First</h3>
-            <p>Install straight to your smartphone home screen. Works fast, caches offline, and offers a smooth native-app feel on Android and iOS.</p>
-            <div class="feature-tag">Add to Home Screen</div>
+            <p>Optimized for smartphones with offline caching and seamless Add-to-Home-Screen app capabilities.</p>
+            <div class="feature-tag">Home Screen App</div>
           </div>
         </div>
       </div>
@@ -501,7 +491,7 @@
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>On Android / Chrome, tap the <strong>"Install App"</strong> button or prompt on your screen. On iPhone / iPad (Safari), tap the <strong>Share</strong> icon and tap <strong>"Add to Home Screen"</strong>. It installs without going through app stores!</p>
+              <p>When opening on a mobile device, a quick notification prompt will appear at the bottom. Tap <strong>"Add"</strong> or follow the prompt to save SplitWise AI to your phone's home screen!</p>
             </div>
           </div>
 
@@ -554,16 +544,16 @@
         <div class="cta-banner-card glass-panel">
           <div class="cta-banner-content">
             <h2>Ready to Experience Painless Expense Splitting?</h2>
-            <p>Launch the interactive demo right now or install the app to your phone's home screen.</p>
+            <p>Launch the interactive demo right now or explore the simulator.</p>
             <div class="cta-banner-buttons">
               <button class="btn btn-large btn-gradient" id="bottom-demo-btn">
                 <i class="ph-fill ph-play-circle"></i>
                 <span>Launch 1-Click Demo</span>
               </button>
-              <button class="btn btn-large btn-outline" id="bottom-install-btn">
-                <i class="ph-bold ph-download-simple"></i>
-                <span>Install to Home Screen</span>
-              </button>
+              <a href="#hero-preview" class="btn btn-large btn-outline">
+                <i class="ph-bold ph-receipt"></i>
+                <span>View Interactive Simulator</span>
+              </a>
             </div>
           </div>
         </div>
@@ -605,44 +595,47 @@
     <div class="container footer-bottom">
       <p>&copy; 2026 SplitWise AI. Built with Java 25 & Gemini Multimodal AI.</p>
       <div class="footer-badges">
-        <span class="footer-tech-tag"><i class="ph-bold ph-device-mobile"></i> PWA Ready</span>
+        <span class="footer-tech-tag"><i class="ph-bold ph-device-mobile"></i> Mobile Ready</span>
         <span class="footer-tech-tag"><i class="ph-bold ph-coffee"></i> Java Powered</span>
         <span class="footer-tech-tag"><i class="ph-fill ph-sparkle"></i> Gemini 2.5</span>
       </div>
     </div>
   </footer>
 
-  <!-- Floating Mobile PWA Install Banner -->
-  <div class="pwa-install-banner" id="pwa-install-banner" aria-hidden="true">
-    <div class="pwa-banner-content">
-      <img src="/icons/icon-192.png" alt="SplitWise AI Icon" class="pwa-banner-icon">
-      <div class="pwa-banner-text">
-        <strong>Install SplitWise AI</strong>
-        <span>Add to home screen for 1-tap app access</span>
+  <!-- Mobile-Only Add-to-Home-Screen Notification Toast (Shown only on Mobile) -->
+  <aside class="mobile-pwa-toast" id="mobile-pwa-toast" aria-label="Add to home screen notification" aria-hidden="true">
+    <div class="toast-content">
+      <div class="toast-icon-wrap">
+        <img src="/icons/icon-192.png" alt="App Icon" class="toast-app-icon">
+        <span class="toast-sparkle"></span>
+      </div>
+      <div class="toast-text">
+        <strong>Add SplitWise AI</strong>
+        <span>Add to home screen for fast 1-tap access</span>
       </div>
     </div>
-    <div class="pwa-banner-actions">
-      <button class="btn btn-sm btn-gradient" id="pwa-banner-install-btn">Install</button>
-      <button class="pwa-banner-close" id="pwa-banner-close-btn" aria-label="Dismiss banner">
+    <div class="toast-actions">
+      <button class="btn btn-sm btn-gradient toast-add-btn" id="toast-add-btn">Add</button>
+      <button class="toast-close-btn" id="toast-close-btn" aria-label="Dismiss notification">
         <i class="ph-bold ph-x"></i>
       </button>
     </div>
-  </div>
+  </aside>
 
-  <!-- iOS Add-to-Home-Screen Instructions Modal -->
+  <!-- iOS Add-to-Home-Screen Instructions Modal (Mobile iOS only) -->
   <div class="demo-modal-overlay" id="ios-install-modal" aria-hidden="true">
     <div class="demo-modal-box glass-panel ios-modal-box">
       <div class="demo-modal-header">
         <div class="modal-title-wrap">
           <i class="ph-fill ph-device-mobile gradient-text"></i>
-          <h3>Add to Home Screen (iOS)</h3>
+          <h3>Add to Home Screen</h3>
         </div>
         <button class="modal-close-btn" id="ios-modal-close" aria-label="Close iOS guide">
           <i class="ph-bold ph-x"></i>
         </button>
       </div>
       <div class="demo-modal-body">
-        <p class="modal-desc">Install SplitWise AI on your iPhone or iPad in 3 simple steps:</p>
+        <p class="modal-desc">Add SplitWise AI to your iPhone/iPad home screen in 3 steps:</p>
         <div class="ios-steps-list">
           <div class="ios-step-row">
             <div class="ios-step-num">1</div>
@@ -661,13 +654,13 @@
           <div class="ios-step-row">
             <div class="ios-step-num">3</div>
             <div class="ios-step-text">
-              Tap <strong>Add</strong> in the top-right corner to launch SplitWise AI like a native app.
+              Tap <strong>Add</strong> in the top-right corner to open SplitWise AI like a native app.
             </div>
           </div>
         </div>
         <div class="modal-note">
           <i class="ph-fill ph-check-circle"></i>
-          <span>Enjoy full-screen standalone view and offline receipt access!</span>
+          <span>Full-screen standalone view and offline receipt access!</span>
         </div>
       </div>
     </div>

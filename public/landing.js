@@ -1,7 +1,7 @@
 /**
- * SplitWise AI - Landing Page & PWA Logic
- * Handles receipt presets simulator, demo modal, FAQ accordion,
- * Service Worker registration, and mobile "Add to Home Screen" installation.
+ * SplitWise AI - Landing Page Logic
+ * Handles interactive receipt presets, FAQ accordion, demo modal,
+ * and mobile-only "Add to Home Screen" notification toast.
  */
 
 // Receipt Demonstration Presets
@@ -219,76 +219,64 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===================================================================
-  // PWA ("Add to Home Screen") Installation Handling
+  // Mobile-Only Add-to-Home-Screen Notification Toast
+  // (Strictly for mobile devices; ignored on PC)
   // ===================================================================
-  const headerInstallBtn = document.getElementById("header-install-btn");
-  const mobileDrawerInstallBtn = document.getElementById("mobile-drawer-install-btn");
-  const bottomInstallBtn = document.getElementById("bottom-install-btn");
-  const pwaInstallBanner = document.getElementById("pwa-install-banner");
-  const pwaBannerInstallBtn = document.getElementById("pwa-banner-install-btn");
-  const pwaBannerCloseBtn = document.getElementById("pwa-banner-close-btn");
-  const iosInstallModal = document.getElementById("ios-install-modal");
-  const iosModalClose = document.getElementById("ios-modal-close");
-
+  const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-  // Show install triggers if not already installed as standalone
-  if (!isStandalone) {
-    // Reveal buttons on header & drawer
-    headerInstallBtn?.classList.remove("hidden");
-    
-    // Display banner after 2.5 seconds on mobile if not dismissed
-    const bannerDismissed = sessionStorage.getItem("splitwise_pwa_dismissed");
-    if (!bannerDismissed && window.innerWidth <= 768) {
-      setTimeout(() => {
-        pwaInstallBanner?.classList.add("visible");
-      }, 2500);
-    }
-  }
+  const mobilePwaToast = document.getElementById("mobile-pwa-toast");
+  const toastAddBtn = document.getElementById("toast-add-btn");
+  const toastCloseBtn = document.getElementById("toast-close-btn");
+  const iosInstallModal = document.getElementById("ios-install-modal");
+  const iosModalClose = document.getElementById("ios-modal-close");
 
-  // Intercept beforeinstallprompt for Android Chrome / Chromium
+  // Intercept beforeinstallprompt for Android Chrome
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    console.log("[SplitWise PWA] beforeinstallprompt captured");
-    headerInstallBtn?.classList.remove("hidden");
-    if (!sessionStorage.getItem("splitwise_pwa_dismissed")) {
-      pwaInstallBanner?.classList.add("visible");
+    console.log("[SplitWise PWA] beforeinstallprompt captured on mobile");
+
+    // Only show toast on mobile if not already standalone or dismissed
+    if (isMobile && !isStandalone && !sessionStorage.getItem("splitwise_toast_dismissed")) {
+      setTimeout(() => {
+        mobilePwaToast?.classList.add("active");
+      }, 2000);
     }
   });
 
-  // Trigger installation flow
-  async function triggerPwaInstall() {
+  // If on mobile (e.g. iOS or mobile browsers), show toast after delay
+  if (isMobile && !isStandalone && !sessionStorage.getItem("splitwise_toast_dismissed")) {
+    setTimeout(() => {
+      mobilePwaToast?.classList.add("active");
+    }, 2500);
+  }
+
+  // Toast "Add" button handler
+  toastAddBtn?.addEventListener("click", async (e) => {
+    e.preventDefault();
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       console.log(`[SplitWise PWA] User install choice: ${outcome}`);
       deferredPrompt = null;
-      pwaInstallBanner?.classList.remove("visible");
-      headerInstallBtn?.classList.add("hidden");
+      mobilePwaToast?.classList.remove("active");
     } else if (isIos) {
-      // iOS doesn't support programmatic install, show step-by-step visual modal
+      // Show iOS step-by-step modal
+      mobilePwaToast?.classList.remove("active");
       iosInstallModal?.classList.add("open");
-      mobileDrawer?.classList.remove("open");
     } else {
-      // General fallback or instructions
-      alert("To install SplitWise AI, tap your browser's menu (⋮ or Share) and select 'Install app' or 'Add to Home screen'.");
+      // General mobile fallback
+      mobilePwaToast?.classList.remove("active");
+      alert("Tap your mobile browser menu (⋮) and tap 'Add to Home screen'.");
     }
-  }
-
-  // Attach install event to all install buttons
-  [headerInstallBtn, mobileDrawerInstallBtn, bottomInstallBtn, pwaBannerInstallBtn].forEach(btn => {
-    btn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      triggerPwaInstall();
-    });
   });
 
-  // Dismiss PWA Banner
-  pwaBannerCloseBtn?.addEventListener("click", () => {
-    pwaInstallBanner?.classList.remove("visible");
-    sessionStorage.setItem("splitwise_pwa_dismissed", "true");
+  // Dismiss Toast
+  toastCloseBtn?.addEventListener("click", () => {
+    mobilePwaToast?.classList.remove("active");
+    sessionStorage.setItem("splitwise_toast_dismissed", "true");
   });
 
   // Close iOS Guide Modal
@@ -301,11 +289,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Listen for successful installation
   window.addEventListener("appinstalled", () => {
-    console.log("[SplitWise PWA] App was successfully installed!");
-    pwaInstallBanner?.classList.remove("visible");
-    headerInstallBtn?.classList.add("hidden");
+    console.log("[SplitWise PWA] Installed to home screen!");
+    mobilePwaToast?.classList.remove("active");
     deferredPrompt = null;
   });
 });
