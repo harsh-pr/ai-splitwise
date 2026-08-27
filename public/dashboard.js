@@ -143,11 +143,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user.isGuest) {
       if (userStatusLabel) userStatusLabel.textContent = "Demo Mode";
       if (menuStatusBadge) menuStatusBadge.textContent = "Guest Mode";
-      menuGuestBox?.classList.remove("hidden");
+      if (menuGuestBox) menuGuestBox.style.display = "block";
     } else {
       if (userStatusLabel) userStatusLabel.textContent = "Online";
       if (menuStatusBadge) menuStatusBadge.textContent = "Active User";
-      menuGuestBox?.classList.add("hidden");
+      if (menuGuestBox) menuGuestBox.style.display = "none";
     }
   } else {
     // If no session exists, start as Guest Demo for instant testing
@@ -177,6 +177,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       // Close split dropdown if open
       splitDropdownWrapper?.classList.remove("open");
+      navTabSplit?.setAttribute("aria-expanded", "false");
+
       profileDropdownWrapper?.classList.add("open");
       profileDropdownPanel?.classList.remove("hidden");
       profilePillTrigger?.setAttribute("aria-expanded", "true");
@@ -234,6 +236,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // Close profile dropdown if open
       profileDropdownWrapper?.classList.remove("open");
       profileDropdownPanel?.classList.add("hidden");
+      profilePillTrigger?.setAttribute("aria-expanded", "false");
+
       splitDropdownWrapper?.classList.add("open");
       navTabSplit?.setAttribute("aria-expanded", "true");
     }

@@ -162,6 +162,10 @@ body::before {
   width: 100%;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* Glassmorphism Panel */
 .glass-panel {
   background: var(--surface-glass);
