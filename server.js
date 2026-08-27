@@ -59,7 +59,58 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// Multimodal Gemini 2.5 Flash Bill Analysis API
+// High-Availability Multi-Model Gemini Waterfall
+// Automatically fails over between active models if any model hits a rate limit or 429 quota
+const GEMINI_MODELS = [
+  'gemini-flash-latest',
+  'gemini-3.5-flash',
+  'gemini-flash-lite-latest',
+  'gemini-2.5-flash'
+];
+
+async function callGeminiAPI(contents, generationConfig = { responseMimeType: 'application/json', temperature: 0.1 }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  let lastError = null;
+  for (const model of GEMINI_MODELS) {
+    try {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents, generationConfig })
+      });
+
+      if (res.status === 429 || res.status === 404 || res.status === 503) {
+        const errTxt = await res.text();
+        console.warn(`[Gemini Failover] Model ${model} status ${res.status}, falling over to next model in cascade...`);
+        lastError = new Error(`Model ${model} status ${res.status}: ${errTxt}`);
+        continue;
+      }
+
+      if (!res.ok) {
+        const errTxt = await res.text();
+        console.warn(`[Gemini Failover] Model ${model} returned ${res.status}: ${errTxt}`);
+        lastError = new Error(`Model ${model} status ${res.status}`);
+        continue;
+      }
+
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (rawText) {
+        console.log(`[Gemini Success] Successfully processed request with model: ${model}`);
+        return { text: rawText, modelUsed: model };
+      }
+    } catch (modelErr) {
+      console.warn(`[Gemini Failover] Error calling ${model}:`, modelErr.message);
+      lastError = modelErr;
+    }
+  }
+  throw lastError || new Error("All Gemini models in cascade failed");
+}
+
+// Multimodal Gemini Bill Analysis API
 app.post('/api/analyze-bill', async (req, res) => {
   try {
     const { imageBase64, mimeType = 'image/jpeg', category = 'restaurant' } = req.body;
@@ -122,28 +173,12 @@ Respond STRICTLY with valid raw JSON without any markdown backticks or commentar
       });
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.1
-        }
-      })
+    const { text } = await callGeminiAPI(contents, {
+      responseMimeType: 'application/json',
+      temperature: 0.1
     });
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text();
-      console.error('Gemini OCR API call failed with status:', geminiRes.status, errBody);
-      throw new Error(`Gemini status ${geminiRes.status}: ${errBody}`);
-    }
-
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    const cleanedText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const cleanedText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanedText);
 
     // Clean and validate items
@@ -220,36 +255,19 @@ Respond STRICTLY with raw JSON:
 }`;
 
     const cleanBase64 = screenshotBase64.replace(/^data:[^;]+;base64,/, '');
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: cleanBase64 } }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.1
-        }
-      })
+    const { text } = await callGeminiAPI([
+      {
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType, data: cleanBase64 } }
+        ]
+      }
+    ], {
+      responseMimeType: 'application/json',
+      temperature: 0.1
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error("Gemini screenshot verify failed:", geminiRes.status, errText);
-      throw new Error(`Gemini status ${geminiRes.status}`);
-    }
-
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
     const finalAmount = parseFloat(parsed.amount) || expectedAmount;
@@ -324,23 +342,12 @@ Respond STRICTLY with raw JSON matching this schema:
   ]
 }`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: sysPrompt }] }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
+    const { text } = await callGeminiAPI([{ parts: [{ text: sysPrompt }] }], {
+      responseMimeType: 'application/json',
+      temperature: 0.2
     });
 
-    if (!geminiRes.ok) {
-      throw new Error(`Gemini status ${geminiRes.status}`);
-    }
-
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
     // SAFETY GUARANTEE 1: Merge participants so no names are lost

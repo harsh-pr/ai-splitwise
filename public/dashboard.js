@@ -460,14 +460,32 @@ document.addEventListener("DOMContentLoaded", () => {
     receiptFileInput?.click();
   });
 
-  receiptFileInput?.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  uploadDropzone?.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadDropzone.style.borderColor = "var(--indigo-400)";
+  });
 
+  uploadDropzone?.addEventListener("dragleave", () => {
+    uploadDropzone.style.borderColor = "";
+  });
+
+  uploadDropzone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadDropzone.style.borderColor = "";
+    const file = e.dataTransfer?.files?.[0];
+    if (file) processReceiptFile(file);
+  });
+
+  receiptFileInput?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (file) processReceiptFile(file);
+  });
+
+  async function processReceiptFile(file) {
     dropzoneIdle?.classList.add("hidden");
     scannerStage?.classList.remove("hidden");
     const scanStatusH4 = scannerStage?.querySelector("h4");
-    if (scanStatusH4) scanStatusH4.textContent = "Gemini 2.5 Flash Reading Bill Items...";
+    if (scanStatusH4) scanStatusH4.textContent = "Gemini AI Reading Bill Items & Prices...";
 
     try {
       const reader = new FileReader();
@@ -527,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (step2NextBtn) step2NextBtn.disabled = false;
           renderParticipantsChips();
           recalculateSettlements();
+          saveCurrentBillToHistory();
           goToStep(3);
         }
       };
@@ -537,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
       scannerStage?.classList.add("hidden");
       goToStep(3);
     }
-  });
+  }
 
   function simulateReceiptScan() {
     dropzoneIdle?.classList.add("hidden");
