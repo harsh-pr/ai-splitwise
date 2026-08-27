@@ -30,51 +30,326 @@ const wizardState = {
   ]
 };
 
+// Saved Bill History Data
+const savedHistoryBills = [
+  {
+    id: 'dinner-01',
+    title: 'Friday Bistro Dinner & Mocktails',
+    category: 'restaurant',
+    categoryName: 'Restaurant & Dining',
+    date: '2026-08-26',
+    total: 3450,
+    tax: 400,
+    payer: 'You (Harsh)',
+    participants: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'],
+    status: 'Settled',
+    statusClass: 'badge-paid',
+    items: [
+      { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['You (Harsh)', 'Aarav'] },
+      { id: 2, name: 'Creamy Pesto Penne', price: 650, assigned: ['Neha'] },
+      { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'] },
+      { id: 4, name: 'Sizzling Brownie Sundae', price: 380, assigned: ['Rohan', 'Neha'] },
+      { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['You (Harsh)', 'Aarav', 'Rohan'] }
+    ],
+    settlements: [
+      { from: 'Aarav', to: 'You (Harsh)', amount: 1005, paid: true },
+      { from: 'Neha', to: 'You (Harsh)', amount: 1105, paid: true },
+      { from: 'Rohan', to: 'You (Harsh)', amount: 940, paid: true }
+    ]
+  },
+  {
+    id: 'roadtrip-02',
+    title: 'Goa Coastal Road Trip Expenses',
+    category: 'trip',
+    categoryName: 'Trip Mode (Vacation)',
+    date: '2026-08-24',
+    total: 9800,
+    tax: 600,
+    payer: 'Siddharth',
+    participants: ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'],
+    status: 'Pending',
+    statusClass: 'badge-pending',
+    items: [
+      { id: 1, name: 'Highway Tolls & Fuel', price: 4200, assigned: ['All 4'] },
+      { id: 2, name: 'Beachside Seafood Platter', price: 3200, assigned: ['Harsh', 'Siddharth', 'Pooja'] },
+      { id: 3, name: 'Snacks & Cold Drinks', price: 1800, assigned: ['All 4'] },
+      { id: 4, name: 'Beach Resort Parking', price: 600, assigned: ['All 4'] }
+    ],
+    settlements: [
+      { from: 'You (Harsh)', to: 'Siddharth', amount: 2550, paid: false },
+      { from: 'Pooja', to: 'Siddharth', amount: 2550, paid: false },
+      { from: 'Ananya', to: 'Siddharth', amount: 1500, paid: false }
+    ]
+  },
+  {
+    id: 'grocery-03',
+    title: 'Apartment Grocery & Supplies',
+    category: 'grocery',
+    categoryName: 'Groceries & Mart',
+    date: '2026-08-20',
+    total: 1850,
+    tax: 150,
+    payer: 'You (Harsh)',
+    participants: ['You (Harsh)', 'Rohan', 'Aarav'],
+    status: 'Settled',
+    statusClass: 'badge-paid',
+    items: [
+      { id: 1, name: 'Dairy, Bread & Eggs', price: 450, assigned: ['All 3'] },
+      { id: 2, name: 'Cleaning & Detergent', price: 600, assigned: ['All 3'] },
+      { id: 3, name: 'Coffee Beans & Snacks', price: 800, assigned: ['All 3'] }
+    ],
+    settlements: [
+      { from: 'Rohan', to: 'You (Harsh)', amount: 616, paid: true },
+      { from: 'Aarav', to: 'You (Harsh)', amount: 616, paid: true }
+    ]
+  }
+];
+
+const categoryIconMap = {
+  restaurant: { icon: 'ph-fork-knife', colorClass: 'cat-emerald' },
+  hotel: { icon: 'ph-bed', colorClass: 'cat-indigo' },
+  grocery: { icon: 'ph-shopping-cart', colorClass: 'cat-cyan' },
+  travel: { icon: 'ph-taxi', colorClass: 'cat-amber' },
+  entertainment: { icon: 'ph-ticket', colorClass: 'cat-rose' },
+  trip: { icon: 'ph-airplane-tilt', colorClass: 'cat-violet' }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Auth Guard
+  // ===================================================================
+  // 1. Auth Guard & User Profile Setup (attendance-tracker style)
+  // ===================================================================
   const user = getCurrentUser();
-  const userNameEl = document.getElementById("user-name");
-  const userAvatarEl = document.getElementById("user-avatar");
-  const userStatusTag = document.getElementById("user-status-tag");
+  const userAvatarInner = document.getElementById("user-avatar-inner");
+  const userDisplayName = document.getElementById("user-display-name");
+  const userStatusLabel = document.getElementById("user-status-label");
+  const menuAvatarLg = document.getElementById("menu-avatar-lg");
+  const menuUserName = document.getElementById("menu-user-name");
+  const menuUserEmail = document.getElementById("menu-user-email");
+  const menuStatusBadge = document.getElementById("menu-status-badge");
+  const menuGuestBox = document.getElementById("menu-guest-box");
   const logoutBtn = document.getElementById("logout-btn");
 
   if (user) {
-    if (userNameEl) userNameEl.textContent = user.displayName || "User";
-    if (userAvatarEl) {
-      userAvatarEl.textContent = (user.displayName || "U").charAt(0).toUpperCase();
-    }
-    if (userStatusTag) {
-      userStatusTag.textContent = user.isGuest ? "Demo Mode" : "Online";
+    const name = user.displayName || "Harsh Prasad";
+    const initial = name.charAt(0).toUpperCase();
+    const email = user.email || (user.isGuest ? "guest@splitwise.demo" : "harsh@splitwise.ai");
+
+    if (userAvatarInner) userAvatarInner.textContent = initial;
+    if (userDisplayName) userDisplayName.textContent = name;
+    if (menuAvatarLg) menuAvatarLg.textContent = initial;
+    if (menuUserName) menuUserName.textContent = name;
+    if (menuUserEmail) menuUserEmail.textContent = email;
+
+    if (user.isGuest) {
+      if (userStatusLabel) userStatusLabel.textContent = "Demo Mode";
+      if (menuStatusBadge) menuStatusBadge.textContent = "Guest Mode";
+      menuGuestBox?.classList.remove("hidden");
+    } else {
+      if (userStatusLabel) userStatusLabel.textContent = "Online";
+      if (menuStatusBadge) menuStatusBadge.textContent = "Active User";
+      menuGuestBox?.classList.add("hidden");
     }
   } else {
-    // If no user found, initialize as Guest Demo automatically for seamless evaluation
-    loginAsGuest("College Evaluator");
+    // If no session exists, start as Guest Demo for instant testing
+    loginAsGuest("Harsh Prasad");
     return;
   }
 
+  // Sign Out Handler (Only in profile dropdown)
   logoutBtn?.addEventListener("click", () => {
     logoutUser();
   });
 
-  // 2. Navigation Tabs
-  const dashTabs = document.querySelectorAll(".dash-tab");
-  dashTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      dashTabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      const view = tab.dataset.view;
-      if (view === "trips") {
-        selectCategory('trip', 'Trip Mode (Vacation)');
-        goToStep(1);
-      } else if (view === "settlements") {
-        goToStep(4);
-      } else if (view === "wizard") {
-        goToStep(wizardState.step);
-      } else if (view === "engine") {
-        goToStep(5);
-      }
+  // ===================================================================
+  // 2. Profile Dropdown Menu (Kokonut style from attendance-tracker)
+  // ===================================================================
+  const profileDropdownWrapper = document.getElementById("profile-dropdown-wrapper");
+  const profilePillTrigger = document.getElementById("profile-pill-trigger");
+  const profileDropdownPanel = document.getElementById("profile-dropdown-panel");
+
+  profilePillTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = profileDropdownWrapper?.classList.contains("open");
+    if (isOpen) {
+      profileDropdownWrapper?.classList.remove("open");
+      profileDropdownPanel?.classList.add("hidden");
+      profilePillTrigger?.setAttribute("aria-expanded", "false");
+    } else {
+      // Close split dropdown if open
+      splitDropdownWrapper?.classList.remove("open");
+      profileDropdownWrapper?.classList.add("open");
+      profileDropdownPanel?.classList.remove("hidden");
+      profilePillTrigger?.setAttribute("aria-expanded", "true");
+    }
+  });
+
+  // Profile Action Buttons
+  document.getElementById("menu-open-history-btn")?.addEventListener("click", () => {
+    profileDropdownWrapper?.classList.remove("open");
+    profileDropdownPanel?.classList.add("hidden");
+    openHistoryModal();
+  });
+
+  document.getElementById("menu-open-trip-btn")?.addEventListener("click", () => {
+    profileDropdownWrapper?.classList.remove("open");
+    profileDropdownPanel?.classList.add("hidden");
+    selectCategory('trip', 'Trip Mode (Vacation)');
+    goToStep(2);
+  });
+
+  document.getElementById("menu-reset-split-btn")?.addEventListener("click", () => {
+    profileDropdownWrapper?.classList.remove("open");
+    profileDropdownPanel?.classList.add("hidden");
+    wizardState.settlements.forEach(s => s.paid = false);
+    goToStep(1);
+  });
+
+  // ===================================================================
+  // 3. Navbar Navigation: Home, Split Dropdown, and History
+  // ===================================================================
+  const navTabHome = document.getElementById("nav-tab-home");
+  const navTabSplit = document.getElementById("nav-tab-split");
+  const splitDropdownWrapper = document.getElementById("split-dropdown-wrapper");
+  const navTabHistory = document.getElementById("nav-tab-history");
+
+  // Home: Takes user back to selecting category (Step 1)
+  navTabHome?.addEventListener("click", () => {
+    navTabHome.classList.add("active");
+    navTabSplit?.classList.remove("active");
+    navTabHistory?.classList.remove("active");
+    splitDropdownWrapper?.classList.remove("open");
+    profileDropdownWrapper?.classList.remove("open");
+    profileDropdownPanel?.classList.add("hidden");
+    goToStep(1);
+  });
+
+  // Split Dropdown Toggle
+  navTabSplit?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = splitDropdownWrapper?.classList.contains("open");
+    if (isOpen) {
+      splitDropdownWrapper?.classList.remove("open");
+      navTabSplit?.setAttribute("aria-expanded", "false");
+    } else {
+      // Close profile dropdown if open
+      profileDropdownWrapper?.classList.remove("open");
+      profileDropdownPanel?.classList.add("hidden");
+      splitDropdownWrapper?.classList.add("open");
+      navTabSplit?.setAttribute("aria-expanded", "true");
+    }
+  });
+
+  // Category Selection inside Split Dropdown -> Directs to Step 2 (Upload Bill)
+  document.querySelectorAll(".split-drop-item").forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const catKey = item.dataset.category;
+      const catName = item.dataset.catname || item.querySelector("strong")?.textContent;
+
+      splitDropdownWrapper?.classList.remove("open");
+      navTabSplit?.setAttribute("aria-expanded", "false");
+
+      navTabHome?.classList.remove("active");
+      navTabSplit?.classList.add("active");
+      navTabHistory?.classList.remove("active");
+
+      // Set category and immediately direct to Step 2 (asking to upload bill)!
+      selectCategory(catKey, catName);
+      goToStep(2);
     });
   });
+
+  // History Tab: Opens previous bills modal
+  navTabHistory?.addEventListener("click", () => {
+    navTabHome?.classList.remove("active");
+    navTabSplit?.classList.remove("active");
+    navTabHistory.classList.add("active");
+    splitDropdownWrapper?.classList.remove("open");
+    profileDropdownWrapper?.classList.remove("open");
+    profileDropdownPanel?.classList.add("hidden");
+    openHistoryModal();
+  });
+
+  // Global Click Outside Handler to Close Dropdowns
+  document.addEventListener("click", (e) => {
+    if (!profileDropdownWrapper?.contains(e.target)) {
+      profileDropdownWrapper?.classList.remove("open");
+      profileDropdownPanel?.classList.add("hidden");
+      profilePillTrigger?.setAttribute("aria-expanded", "false");
+    }
+    if (!splitDropdownWrapper?.contains(e.target)) {
+      splitDropdownWrapper?.classList.remove("open");
+      navTabSplit?.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  // ===================================================================
+  // 4. Bill History Modal Controller
+  // ===================================================================
+  const historyModal = document.getElementById("history-modal");
+  const historyModalClose = document.getElementById("history-modal-close");
+  const historyList = document.getElementById("history-list");
+
+  function openHistoryModal() {
+    renderHistoryList();
+    historyModal?.classList.remove("hidden");
+  }
+
+  function closeHistoryModal() {
+    historyModal?.classList.add("hidden");
+  }
+
+  historyModalClose?.addEventListener("click", closeHistoryModal);
+  historyModal?.addEventListener("click", (e) => {
+    if (e.target === historyModal) closeHistoryModal();
+  });
+
+  function renderHistoryList() {
+    if (!historyList) return;
+    historyList.innerHTML = savedHistoryBills.map(bill => {
+      const catConfig = categoryIconMap[bill.category] || { icon: 'ph-receipt', colorClass: 'cat-emerald' };
+
+      return `
+        <div class="history-card">
+          <div class="history-card-left">
+            <div class="history-cat-icon ${catConfig.colorClass}">
+              <i class="ph-bold ${catConfig.icon}"></i>
+            </div>
+            <div class="history-card-details">
+              <strong>${bill.title}</strong>
+              <span>${bill.categoryName} • ${bill.date} • Paid by ${bill.payer}</span>
+              <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 2px;">
+                ${bill.participants.join(", ")}
+              </div>
+            </div>
+          </div>
+          <div class="history-card-right">
+            <span class="history-total-amt">₹${bill.total.toLocaleString()}</span>
+            <span class="history-status-pill ${bill.statusClass}">${bill.status}</span>
+            <button class="btn-load-history" onclick="loadHistoryBill('${bill.id}')">
+              Load Bill
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  window.loadHistoryBill = function(billId) {
+    const found = savedHistoryBills.find(b => b.id === billId);
+    if (!found) return;
+
+    wizardState.totalAmount = found.total;
+    wizardState.taxAmount = found.tax || 0;
+    wizardState.payer = found.payer;
+    wizardState.participants = found.participants;
+    wizardState.items = found.items;
+    wizardState.settlements = found.settlements;
+    selectCategory(found.category, found.categoryName);
+
+    closeHistoryModal();
+    goToStep(5); // View loaded settlement status
+  };
 
   // 3. Wizard Step Panels
   const stepPanels = {

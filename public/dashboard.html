@@ -44,40 +44,168 @@
         <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
       </a>
 
-      <!-- Important Navigation Tabs -->
+      <!-- Center Nav Tabs: Home, Split Dropdown, and History -->
       <nav class="dash-tabs" id="dash-tabs">
-        <button class="dash-tab active" id="tab-wizard" data-view="wizard">
-          <i class="ph-bold ph-magic-wand"></i>
-          <span>New Split Wizard</span>
+        <!-- Home: Back to selecting category (Step 1) -->
+        <button class="dash-tab active" id="nav-tab-home" title="Back to selecting category">
+          <i class="ph-bold ph-house"></i>
+          <span>Home</span>
         </button>
-        <button class="dash-tab" id="tab-trips" data-view="trips">
-          <i class="ph-bold ph-airplane-tilt"></i>
-          <span>Trip Mode</span>
-          <span class="tab-pill-badge">New</span>
-        </button>
-        <button class="dash-tab" id="tab-settlements" data-view="settlements">
-          <i class="ph-bold ph-qr-code"></i>
-          <span>UPI Settlements</span>
-        </button>
-        <button class="dash-tab" id="tab-engine" data-view="engine">
-          <i class="ph-bold ph-tree-structure"></i>
-          <span>Java Cash-Flow</span>
+
+        <!-- Split: Dropdown menu with category options -> Directs to Step 2 (Upload Bill) -->
+        <div class="split-dropdown-wrapper" id="split-dropdown-wrapper">
+          <button class="dash-tab split-dropdown-trigger" id="nav-tab-split" aria-haspopup="true" aria-expanded="false">
+            <i class="ph-bold ph-receipt"></i>
+            <span>Split</span>
+            <i class="ph-bold ph-caret-down dropdown-caret"></i>
+          </button>
+          <div class="split-dropdown-menu glass-panel" id="split-dropdown-menu">
+            <div class="dropdown-header">
+              <span>Choose Category to Split (Direct to Upload)</span>
+            </div>
+            <button class="split-drop-item" data-category="restaurant" data-catname="Restaurant & Dining">
+              <span class="drop-icon cat-emerald"><i class="ph-bold ph-fork-knife"></i></span>
+              <div class="drop-item-info">
+                <strong>Restaurant & Dining</strong>
+                <span>Itemized dishes, GST & tips</span>
+              </div>
+            </button>
+            <button class="split-drop-item" data-category="hotel" data-catname="Hotel & Stays">
+              <span class="drop-icon cat-indigo"><i class="ph-bold ph-bed"></i></span>
+              <div class="drop-item-info">
+                <strong>Hotel & Stays</strong>
+                <span>Room charges & occupancy</span>
+              </div>
+            </button>
+            <button class="split-drop-item" data-category="grocery" data-catname="Groceries & Mart">
+              <span class="drop-icon cat-cyan"><i class="ph-bold ph-shopping-cart"></i></span>
+              <div class="drop-item-info">
+                <strong>Groceries & Mart</strong>
+                <span>Supermarket bills & supplies</span>
+              </div>
+            </button>
+            <button class="split-drop-item" data-category="travel" data-catname="Travel & Fuel">
+              <span class="drop-icon cat-amber"><i class="ph-bold ph-taxi"></i></span>
+              <div class="drop-item-info">
+                <strong>Travel & Fuel</strong>
+                <span>Cab fares, highway tolls & fuel</span>
+              </div>
+            </button>
+            <button class="split-drop-item" data-category="entertainment" data-catname="Entertainment">
+              <span class="drop-icon cat-rose"><i class="ph-bold ph-ticket"></i></span>
+              <div class="drop-item-info">
+                <strong>Entertainment</strong>
+                <span>Movies, events & passes</span>
+              </div>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="split-drop-item drop-trip-mode" data-category="trip" data-catname="Trip Mode (Vacation)">
+              <span class="drop-icon cat-violet"><i class="ph-bold ph-airplane-tilt"></i></span>
+              <div class="drop-item-info">
+                <div class="flex-align-center">
+                  <strong>Trip Mode</strong>
+                  <span class="trip-tag-sm">Multi-Day</span>
+                </div>
+                <span>Group balances & vacation expenses</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- History: View all previous bills info saved -->
+        <button class="dash-tab" id="nav-tab-history" title="View previous bills history">
+          <i class="ph-bold ph-clock-counter-clockwise"></i>
+          <span>History</span>
         </button>
       </nav>
 
-      <!-- User Profile & Action Controls -->
+      <!-- User Profile Dropdown Menu (Patterned after attendance-tracker Kokonut UI) -->
       <div class="dash-user-actions">
-        <div class="user-profile-badge" id="user-profile-badge">
-          <div class="user-avatar" id="user-avatar">G</div>
-          <div class="user-details">
-            <span class="user-name" id="user-name">Guest User</span>
-            <span class="user-status-tag" id="user-status-tag">Demo Mode</span>
+        <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
+          <button class="profile-pill-trigger" id="profile-pill-trigger" aria-label="User profile menu" aria-haspopup="true" aria-expanded="false">
+            <div class="profile-avatar-ring">
+              <div class="profile-avatar-inner" id="user-avatar-initial">H</div>
+            </div>
+            <div class="profile-text-block desktop-only">
+              <span class="profile-display-name" id="user-display-name">Harsh Prasad</span>
+              <span class="profile-status-indicator">
+                <span class="status-dot-pulse"></span>
+                <span id="user-status-label">Online</span>
+              </span>
+            </div>
+            <i class="ph-bold ph-caret-down profile-caret desktop-only"></i>
+          </button>
+
+          <!-- Floating Profile Dropdown Panel -->
+          <div class="profile-dropdown-panel glass-panel hidden" id="profile-dropdown-panel">
+            <div class="profile-menu-header">
+              <div class="profile-menu-logo-row">
+                <div class="logo-icon-wrapper sm">
+                  <i class="ph-bold ph-receipt"></i>
+                  <span class="sparkle-dot"></span>
+                </div>
+                <span class="brand-name sm">SplitWise<span class="gradient-text">.AI</span></span>
+              </div>
+              <div class="profile-user-summary">
+                <div class="user-avatar-lg" id="menu-avatar-lg">H</div>
+                <div class="user-summary-text">
+                  <strong id="menu-user-name">Harsh Prasad</strong>
+                  <span id="menu-user-email">harsh@splitwise.ai</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-menu-list">
+              <div class="menu-item-row">
+                <span class="menu-item-label"><i class="ph-bold ph-user"></i> Profile Status</span>
+                <span class="menu-item-badge" id="menu-status-badge">Active</span>
+              </div>
+              <div class="menu-item-row">
+                <span class="menu-item-label"><i class="ph-bold ph-wallet"></i> Default UPI</span>
+                <span class="menu-item-val font-mono" id="menu-upi-val">harsh@okhdfcbank</span>
+              </div>
+              <div class="menu-item-row">
+                <span class="menu-item-label"><i class="ph-bold ph-chart-line-up"></i> Total Settled</span>
+                <span class="menu-item-badge badge-emerald" id="menu-total-settled">₹13,250</span>
+              </div>
+
+              <!-- Demo Mode Notice Box (Matching attendance-tracker) -->
+              <div class="guest-mode-box hidden" id="menu-guest-box">
+                <div class="guest-box-header">
+                  <span>🎭 Demo Mode Active</span>
+                </div>
+                <p>Data is stored locally in temporary session and cleared upon tab close.</p>
+              </div>
+
+              <div class="menu-divider"></div>
+
+              <!-- Menu Actions -->
+              <button class="profile-action-btn" id="menu-open-history-btn">
+                <i class="ph-bold ph-clock-counter-clockwise"></i>
+                <span>View Bill History</span>
+              </button>
+              <button class="profile-action-btn" id="menu-open-trip-btn">
+                <i class="ph-bold ph-airplane-tilt"></i>
+                <span>Launch Trip Mode</span>
+              </button>
+              <button class="profile-action-btn" id="menu-reset-split-btn">
+                <i class="ph-bold ph-arrows-counter-clockwise"></i>
+                <span>Reset Current Split</span>
+              </button>
+
+              <div class="menu-divider"></div>
+
+              <!-- Sign Out (Moved strictly to profile dropdown) -->
+              <button class="profile-action-btn btn-sign-out" id="logout-btn">
+                <div class="flex-align-center gap-2">
+                  <i class="ph-bold ph-sign-out"></i>
+                  <span>Sign Out</span>
+                </div>
+                <span class="action-hint">Exit Session</span>
+              </button>
+            </div>
           </div>
         </div>
-        <button class="btn btn-sm btn-outline logout-btn" id="logout-btn" title="Sign Out">
-          <i class="ph-bold ph-sign-out"></i>
-          <span class="desktop-only">Sign Out</span>
-        </button>
       </div>
     </div>
   </header>
@@ -535,6 +663,33 @@
     </aside>
   </div>
 
-  <script src="/dashboard.js?v=1.3"></script>
+  <!-- Bill History Modal -->
+  <div class="history-modal-overlay hidden" id="history-modal" aria-hidden="true">
+    <div class="history-modal-box glass-panel">
+      <div class="history-modal-header">
+        <div class="flex-align-center gap-2">
+          <div class="logo-icon-wrapper sm">
+            <i class="ph-bold ph-receipt"></i>
+            <span class="sparkle-dot"></span>
+          </div>
+          <div>
+            <h3>Saved Bills & Split History</h3>
+            <span class="history-subtitle">View details, settlements, and balances</span>
+          </div>
+        </div>
+        <button class="history-close-btn" id="history-modal-close" aria-label="Close history modal">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="history-modal-body">
+        <div class="history-list" id="history-list">
+          <!-- Dynamically populated by dashboard.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dashboard.js?v=1.4"></script>
 </body>
 </html>
