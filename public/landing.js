@@ -1,6 +1,7 @@
 /**
- * SplitWise AI - Landing Page Interactive Logic
- * Handles receipt presets simulator, demo modal, FAQ accordion, and navigation.
+ * SplitWise AI - Landing Page & PWA Logic
+ * Handles receipt presets simulator, demo modal, FAQ accordion,
+ * Service Worker registration, and mobile "Add to Home Screen" installation.
  */
 
 // Receipt Demonstration Presets
@@ -51,6 +52,22 @@ const PRESET_RECEIPTS = {
   }
 };
 
+// Global PWA prompt variable
+let deferredPrompt = null;
+
+// Service Worker Registration for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        console.log('[SplitWise PWA] ServiceWorker registered with scope:', reg.scope);
+      })
+      .catch(err => {
+        console.warn('[SplitWise PWA] ServiceWorker registration failed:', err);
+      });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements for Hero Simulator
   const receiptTitle = document.getElementById("receipt-title");
@@ -68,14 +85,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = PRESET_RECEIPTS[presetKey];
     if (!data) return;
 
-    // Update Banner
     if (receiptTitle) receiptTitle.textContent = data.title;
     if (receiptPayer) receiptPayer.textContent = data.payer;
     if (receiptTotal) receiptTotal.textContent = data.total;
     if (receiptConfidence) receiptConfidence.textContent = data.confidence;
     if (receiptItemsCount) receiptItemsCount.textContent = data.itemCountText;
 
-    // Render Items
     if (receiptItemsList) {
       receiptItemsList.innerHTML = data.items
         .map(
@@ -94,7 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
     }
 
-    // Render Settlements
     if (settlementTransfersList) {
       settlementTransfersList.innerHTML = data.transfers
         .map(
@@ -112,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
     }
 
-    // Toggle active pill button styling
     if (presetKey === "dinner") {
       pillDinner?.classList.add("active");
       pillRoadtrip?.classList.remove("active");
@@ -156,7 +169,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Modal Option selection triggers preset & scrolls to preview
   document.getElementById("demo-option-dinner")?.addEventListener("click", () => {
     demoModal?.classList.remove("open");
     renderPreset("dinner");
@@ -180,13 +192,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const item = btn.parentElement;
       const isActive = item.classList.contains("active");
 
-      // Close all first
       document.querySelectorAll(".faq-item").forEach(el => {
         el.classList.remove("active");
         el.querySelector(".faq-question")?.setAttribute("aria-expanded", "false");
       });
 
-      // Toggle current
       if (!isActive) {
         item.classList.add("active");
         btn.setAttribute("aria-expanded", "true");
@@ -202,10 +212,100 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileDrawer?.classList.toggle("open");
   });
 
-  // Close mobile drawer when clicking nav links
   document.querySelectorAll(".mobile-nav-link").forEach(link => {
     link.addEventListener("click", () => {
       mobileDrawer?.classList.remove("open");
     });
+  });
+
+  // ===================================================================
+  // PWA ("Add to Home Screen") Installation Handling
+  // ===================================================================
+  const headerInstallBtn = document.getElementById("header-install-btn");
+  const mobileDrawerInstallBtn = document.getElementById("mobile-drawer-install-btn");
+  const bottomInstallBtn = document.getElementById("bottom-install-btn");
+  const pwaInstallBanner = document.getElementById("pwa-install-banner");
+  const pwaBannerInstallBtn = document.getElementById("pwa-banner-install-btn");
+  const pwaBannerCloseBtn = document.getElementById("pwa-banner-close-btn");
+  const iosInstallModal = document.getElementById("ios-install-modal");
+  const iosModalClose = document.getElementById("ios-modal-close");
+
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+  // Show install triggers if not already installed as standalone
+  if (!isStandalone) {
+    // Reveal buttons on header & drawer
+    headerInstallBtn?.classList.remove("hidden");
+    
+    // Display banner after 2.5 seconds on mobile if not dismissed
+    const bannerDismissed = sessionStorage.getItem("splitwise_pwa_dismissed");
+    if (!bannerDismissed && window.innerWidth <= 768) {
+      setTimeout(() => {
+        pwaInstallBanner?.classList.add("visible");
+      }, 2500);
+    }
+  }
+
+  // Intercept beforeinstallprompt for Android Chrome / Chromium
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log("[SplitWise PWA] beforeinstallprompt captured");
+    headerInstallBtn?.classList.remove("hidden");
+    if (!sessionStorage.getItem("splitwise_pwa_dismissed")) {
+      pwaInstallBanner?.classList.add("visible");
+    }
+  });
+
+  // Trigger installation flow
+  async function triggerPwaInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`[SplitWise PWA] User install choice: ${outcome}`);
+      deferredPrompt = null;
+      pwaInstallBanner?.classList.remove("visible");
+      headerInstallBtn?.classList.add("hidden");
+    } else if (isIos) {
+      // iOS doesn't support programmatic install, show step-by-step visual modal
+      iosInstallModal?.classList.add("open");
+      mobileDrawer?.classList.remove("open");
+    } else {
+      // General fallback or instructions
+      alert("To install SplitWise AI, tap your browser's menu (⋮ or Share) and select 'Install app' or 'Add to Home screen'.");
+    }
+  }
+
+  // Attach install event to all install buttons
+  [headerInstallBtn, mobileDrawerInstallBtn, bottomInstallBtn, pwaBannerInstallBtn].forEach(btn => {
+    btn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      triggerPwaInstall();
+    });
+  });
+
+  // Dismiss PWA Banner
+  pwaBannerCloseBtn?.addEventListener("click", () => {
+    pwaInstallBanner?.classList.remove("visible");
+    sessionStorage.setItem("splitwise_pwa_dismissed", "true");
+  });
+
+  // Close iOS Guide Modal
+  iosModalClose?.addEventListener("click", () => {
+    iosInstallModal?.classList.remove("open");
+  });
+  iosInstallModal?.addEventListener("click", (e) => {
+    if (e.target === iosInstallModal) {
+      iosInstallModal.classList.remove("open");
+    }
+  });
+
+  // Listen for successful installation
+  window.addEventListener("appinstalled", () => {
+    console.log("[SplitWise PWA] App was successfully installed!");
+    pwaInstallBanner?.classList.remove("visible");
+    headerInstallBtn?.classList.add("hidden");
+    deferredPrompt = null;
   });
 });

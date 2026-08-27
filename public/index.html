@@ -2,10 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>SplitWise AI - Intelligent Expense Sharing & Multimodal Receipt Splitting</title>
   <meta name="description" content="AI-powered bill splitting and expense manager built with Google Gemini Multimodal Vision & Java Debt Optimization algorithms. Scan receipts, itemize debts, and settle seamlessly.">
-  <meta name="theme-color" content="#090d16">
+  
+  <!-- PWA & Mobile Capabilities -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SplitWise AI">
+  
+  <!-- Favicons & App Icons -->
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   
   <!-- Fonts: Plus Jakarta Sans & JetBrains Mono for Code -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,6 +57,12 @@
       </nav>
 
       <div class="header-actions">
+        <!-- Install PWA Button (Visible if supported) -->
+        <button class="btn btn-pwa-install hidden" id="header-install-btn" title="Add SplitWise AI to Home Screen">
+          <i class="ph-bold ph-download-simple"></i>
+          <span>Install App</span>
+        </button>
+
         <button class="btn btn-demo" id="one-click-demo-btn">
           <i class="ph-bold ph-play-circle"></i>
           <span>1-Click Live Demo</span>
@@ -67,6 +85,10 @@
       <a href="#tech-stack" class="mobile-nav-link">Architecture</a>
       <a href="#faq" class="mobile-nav-link">FAQ</a>
       <div class="mobile-drawer-actions">
+        <button class="btn btn-pwa-install w-full" id="mobile-drawer-install-btn">
+          <i class="ph-bold ph-download-simple"></i>
+          <span>Add to Home Screen (Install App)</span>
+        </button>
         <button class="btn btn-demo w-full" id="mobile-demo-btn">
           <i class="ph-bold ph-play-circle"></i>
           <span>1-Click Live Demo</span>
@@ -340,9 +362,9 @@
             <div class="feature-icon icon-rose">
               <i class="ph-bold ph-device-mobile"></i>
             </div>
-            <h3>Instant 1-Click Demo Mode</h3>
-            <p>Built for effortless evaluations and testing. Test full features with pre-loaded mock trips and receipts with zero signup friction.</p>
-            <div class="feature-tag">Examiner Friendly</div>
+            <h3>PWA & Mobile First</h3>
+            <p>Install straight to your smartphone home screen. Works fast, caches offline, and offers a smooth native-app feel on Android and iOS.</p>
+            <div class="feature-tag">Add to Home Screen</div>
           </div>
         </div>
       </div>
@@ -427,7 +449,7 @@
           </div>
 
           <!-- Architecture Components -->
-          <div class="architecture-specs glass-panel">
+          <div class="architecture-specs glass-panel" id="tech-stack">
             <h3>System Architecture Stack</h3>
             <div class="spec-list">
               <div class="spec-item">
@@ -445,10 +467,10 @@
                 </div>
               </div>
               <div class="spec-item">
-                <div class="spec-icon"><i class="ph-bold ph-browsers"></i></div>
+                <div class="spec-icon"><i class="ph-bold ph-device-mobile"></i></div>
                 <div>
-                  <strong>Responsive Web Front-End</strong>
-                  <p>Pure semantic HTML5 and vanilla CSS design system with zero bloated dependencies.</p>
+                  <strong>Progressive Web App (PWA)</strong>
+                  <p>Installable standalone experience with Service Worker offline caching and mobile home-screen integration.</p>
                 </div>
               </div>
               <div class="spec-item">
@@ -475,6 +497,16 @@
         <div class="faq-accordion">
           <div class="faq-item glass-panel active">
             <button class="faq-question" aria-expanded="true">
+              <span>How do I add SplitWise AI to my mobile home screen?</span>
+              <i class="ph-bold ph-caret-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>On Android / Chrome, tap the <strong>"Install App"</strong> button or prompt on your screen. On iPhone / iPad (Safari), tap the <strong>Share</strong> icon and tap <strong>"Add to Home Screen"</strong>. It installs without going through app stores!</p>
+            </div>
+          </div>
+
+          <div class="faq-item glass-panel">
+            <button class="faq-question" aria-expanded="false">
               <span>How does SplitWise AI differ from the standard Splitwise app?</span>
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
@@ -522,16 +554,16 @@
         <div class="cta-banner-card glass-panel">
           <div class="cta-banner-content">
             <h2>Ready to Experience Painless Expense Splitting?</h2>
-            <p>Launch the interactive demo right now or explore the project features.</p>
+            <p>Launch the interactive demo right now or install the app to your phone's home screen.</p>
             <div class="cta-banner-buttons">
               <button class="btn btn-large btn-gradient" id="bottom-demo-btn">
                 <i class="ph-fill ph-play-circle"></i>
                 <span>Launch 1-Click Demo</span>
               </button>
-              <a href="#hero-preview" class="btn btn-large btn-outline">
-                <i class="ph-bold ph-receipt"></i>
-                <span>View Interactive Simulator</span>
-              </a>
+              <button class="btn btn-large btn-outline" id="bottom-install-btn">
+                <i class="ph-bold ph-download-simple"></i>
+                <span>Install to Home Screen</span>
+              </button>
             </div>
           </div>
         </div>
@@ -549,7 +581,7 @@
           </div>
           <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
         </div>
-        <p class="footer-desc">AI-powered expense tracking and debt optimization designed for seamless group settlements.</p>
+        <p class="footer-desc">AI-powered expense tracking, multimodal receipt scanning, and debt optimization designed for seamless settlements.</p>
       </div>
 
       <div class="footer-links">
@@ -564,7 +596,7 @@
           <h4>Technology</h4>
           <a href="#algorithm">Java 25 Cash-Flow</a>
           <a href="#tech-stack">Google Gemini 2.5 Flash</a>
-          <a href="#tech-stack">Express REST API</a>
+          <a href="#tech-stack">Progressive Web App</a>
           <a href="#hero-preview">Interactive Simulator</a>
         </div>
       </div>
@@ -573,11 +605,73 @@
     <div class="container footer-bottom">
       <p>&copy; 2026 SplitWise AI. Built with Java 25 & Gemini Multimodal AI.</p>
       <div class="footer-badges">
+        <span class="footer-tech-tag"><i class="ph-bold ph-device-mobile"></i> PWA Ready</span>
         <span class="footer-tech-tag"><i class="ph-bold ph-coffee"></i> Java Powered</span>
         <span class="footer-tech-tag"><i class="ph-fill ph-sparkle"></i> Gemini 2.5</span>
       </div>
     </div>
   </footer>
+
+  <!-- Floating Mobile PWA Install Banner -->
+  <div class="pwa-install-banner" id="pwa-install-banner" aria-hidden="true">
+    <div class="pwa-banner-content">
+      <img src="/icons/icon-192.png" alt="SplitWise AI Icon" class="pwa-banner-icon">
+      <div class="pwa-banner-text">
+        <strong>Install SplitWise AI</strong>
+        <span>Add to home screen for 1-tap app access</span>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="btn btn-sm btn-gradient" id="pwa-banner-install-btn">Install</button>
+      <button class="pwa-banner-close" id="pwa-banner-close-btn" aria-label="Dismiss banner">
+        <i class="ph-bold ph-x"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- iOS Add-to-Home-Screen Instructions Modal -->
+  <div class="demo-modal-overlay" id="ios-install-modal" aria-hidden="true">
+    <div class="demo-modal-box glass-panel ios-modal-box">
+      <div class="demo-modal-header">
+        <div class="modal-title-wrap">
+          <i class="ph-fill ph-device-mobile gradient-text"></i>
+          <h3>Add to Home Screen (iOS)</h3>
+        </div>
+        <button class="modal-close-btn" id="ios-modal-close" aria-label="Close iOS guide">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="demo-modal-body">
+        <p class="modal-desc">Install SplitWise AI on your iPhone or iPad in 3 simple steps:</p>
+        <div class="ios-steps-list">
+          <div class="ios-step-row">
+            <div class="ios-step-num">1</div>
+            <div class="ios-step-text">
+              Tap the <strong>Share</strong> button in Safari toolbar:
+              <span class="ios-icon-inline"><i class="ph-bold ph-export"></i> Share</span>
+            </div>
+          </div>
+          <div class="ios-step-row">
+            <div class="ios-step-num">2</div>
+            <div class="ios-step-text">
+              Scroll down and tap <strong>Add to Home Screen</strong>:
+              <span class="ios-icon-inline"><i class="ph-bold ph-plus-square"></i> Add to Home Screen</span>
+            </div>
+          </div>
+          <div class="ios-step-row">
+            <div class="ios-step-num">3</div>
+            <div class="ios-step-text">
+              Tap <strong>Add</strong> in the top-right corner to launch SplitWise AI like a native app.
+            </div>
+          </div>
+        </div>
+        <div class="modal-note">
+          <i class="ph-fill ph-check-circle"></i>
+          <span>Enjoy full-screen standalone view and offline receipt access!</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 1-Click Demo Modal (Evaluator quick-launcher) -->
   <div class="demo-modal-overlay" id="demo-modal" aria-hidden="true">
