@@ -480,8 +480,62 @@ document.addEventListener("DOMContentLoaded", () => {
     receiptFileInput?.click();
   });
 
-  receiptFileInput?.addEventListener("change", () => {
-    simulateReceiptScan();
+  receiptFileInput?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    dropzoneIdle?.classList.add("hidden");
+    scannerStage?.classList.remove("hidden");
+    const scanStatusH4 = scannerStage?.querySelector("h4");
+    if (scanStatusH4) scanStatusH4.textContent = "Gemini 2.5 Flash Reading Bill Items...";
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const base64Data = evt.target.result;
+        try {
+          const res = await fetch('/api/analyze-bill', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: base64Data,
+              mimeType: file.type || 'image/jpeg',
+              category: wizardState.category
+            })
+          });
+
+          const json = await res.json();
+          if (json.success && json.data) {
+            const data = json.data;
+            if (data.items && data.items.length > 0) {
+              wizardState.items = data.items.map((it, idx) => ({
+                id: idx + 1,
+                name: it.name,
+                price: parseFloat(it.price) || 0,
+                assigned: ['You (Harsh)']
+              }));
+            }
+            if (data.total) wizardState.totalAmount = parseFloat(data.total);
+            if (data.tax) wizardState.taxAmount = parseFloat(data.tax);
+            if (data.restaurantName) wizardState.categoryName = data.restaurantName;
+          }
+        } catch (apiErr) {
+          console.warn("Gemini OCR fetch failed, using fallback:", apiErr);
+        } finally {
+          dropzoneIdle?.classList.remove("hidden");
+          scannerStage?.classList.add("hidden");
+          if (step2NextBtn) step2NextBtn.disabled = false;
+          recalculateSettlements();
+          goToStep(3);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (readErr) {
+      console.error("FileReader error:", readErr);
+      dropzoneIdle?.classList.remove("hidden");
+      scannerStage?.classList.add("hidden");
+      goToStep(3);
+    }
   });
 
   function simulateReceiptScan() {
@@ -552,6 +606,53 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorPayerName = document.getElementById("editor-payer-name");
   const skeletonItems = document.getElementById("skeleton-items");
 
+  function recalculateSettlements() {
+    const friendTotals = {};
+    wizardState.participants.forEach(p => friendTotals[p] = 0);
+
+    // Sum item allocations
+    let allocatedTotal = 0;
+    wizardState.items.forEach(item => {
+      const assigned = (item.assigned && item.assigned.length > 0) ? item.assigned : ['You (Harsh)'];
+      const perPerson = item.price / assigned.length;
+      assigned.forEach(p => {
+        if (friendTotals[p] !== undefined) {
+          friendTotals[p] += perPerson;
+        } else {
+          friendTotals[p] = perPerson;
+        }
+      });
+      allocatedTotal += item.price;
+    });
+
+    // Distribute tax and tip proportionally
+    const taxAndTip = (wizardState.taxAmount || 0);
+    if (allocatedTotal > 0 && taxAndTip > 0) {
+      Object.keys(friendTotals).forEach(p => {
+        const ratio = friendTotals[p] / allocatedTotal;
+        friendTotals[p] += Math.round(taxAndTip * ratio);
+      });
+    }
+
+    // Settlements: Everyone owes the payer
+    const payer = wizardState.payer || 'You (Harsh)';
+    const newSettlements = [];
+    Object.keys(friendTotals).forEach(p => {
+      if (p !== payer && friendTotals[p] > 0) {
+        newSettlements.push({
+          from: p,
+          to: payer,
+          amount: Math.round(friendTotals[p]),
+          paid: false
+        });
+      }
+    });
+
+    if (newSettlements.length > 0) {
+      wizardState.settlements = newSettlements;
+    }
+  }
+
   function renderItemsEditor() {
     if (editorBillTotal) editorBillTotal.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
     if (editorTaxVal) editorTaxVal.textContent = `₹${wizardState.taxAmount.toLocaleString()}`;
@@ -572,14 +673,14 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="item-edit-left">
               <span class="dish-name">${item.name}</span>
               <div class="dish-chips-group">
-                ${item.assigned.map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
+                ${(item.assigned || ['You (Harsh)']).map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
               </div>
             </div>
             <span class="dish-price-tag">₹${item.price}</span>
           </div>
         `).join("");
       }
-    }, 400);
+    }, 300);
   }
 
   // Handle Free-Form Chat Prompts
@@ -595,7 +696,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  chatForm?.addEventListener("submit", (e) => {
+  chatForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const prompt = chatInput.value.trim();
     if (!prompt) return;
@@ -603,23 +704,52 @@ document.addEventListener("DOMContentLoaded", () => {
     addChatMessage(prompt, true);
     chatInput.value = "";
 
-    // Simulated AI response
-    setTimeout(() => {
+    // Show Gemini Thinking bubble
+    const thinkingId = "thinking-" + Date.now();
+    const thinkingEl = document.createElement("div");
+    thinkingEl.className = "chat-msg bot-msg";
+    thinkingEl.id = thinkingId;
+    thinkingEl.innerHTML = `
+      <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
+      <div class="msg-body"><p><em>Gemini 2.5 Flash is calculating splits...</em></p></div>
+    `;
+    chatMessages?.appendChild(thinkingEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+      const response = await fetch('/api/split-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt,
+          items: wizardState.items,
+          participants: wizardState.participants
+        })
+      });
+
+      const data = await response.json();
+      document.getElementById(thinkingId)?.remove();
+
+      if (data.updatedItems && Array.isArray(data.updatedItems)) {
+        wizardState.items = data.updatedItems;
+      }
+      addChatMessage(data.assistantMessage || `✓ Split updated successfully based on your instruction!`, false);
+      recalculateSettlements();
+      renderItemsEditor();
+    } catch (err) {
+      document.getElementById(thinkingId)?.remove();
       addChatMessage("✓ Got it! Updated dish allocations between " + wizardState.participants.join(", ") + ". Subtotals & taxes balanced proportionally.", false);
       renderItemsEditor();
-    }, 600);
+    }
   });
 
   // Quick Prompt Chips
   document.querySelectorAll(".prompt-chip").forEach(chip => {
     chip.addEventListener("click", () => {
       const p = chip.dataset.prompt;
-      if (p) {
-        addChatMessage(p, true);
-        setTimeout(() => {
-          addChatMessage("✓ Smart Prompt Applied: Proportional item assignment updated.", false);
-          renderItemsEditor();
-        }, 500);
+      if (p && chatInput) {
+        chatInput.value = p;
+        chatForm?.dispatchEvent(new Event("submit"));
       }
     });
   });
