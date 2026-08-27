@@ -204,17 +204,64 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Mobile Menu Toggle
+  // ===================================================================
+  // Animated Mobile Menu Controller
+  // ===================================================================
   const mobileToggle = document.getElementById("mobile-menu-toggle");
   const mobileDrawer = document.getElementById("mobile-nav-drawer");
 
-  mobileToggle?.addEventListener("click", () => {
-    mobileDrawer?.classList.toggle("open");
+  function setMobileMenu(isOpen) {
+    if (isOpen) {
+      mobileDrawer?.classList.add("open");
+      mobileToggle?.classList.add("active");
+      const icon = mobileToggle?.querySelector("i");
+      if (icon) icon.className = "ph-bold ph-x";
+    } else {
+      mobileDrawer?.classList.remove("open");
+      mobileToggle?.classList.remove("active");
+      const icon = mobileToggle?.querySelector("i");
+      if (icon) icon.className = "ph-bold ph-list";
+    }
+  }
+
+  mobileToggle?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isCurrentlyOpen = mobileDrawer?.classList.contains("open");
+    setMobileMenu(!isCurrentlyOpen);
   });
 
-  document.querySelectorAll(".mobile-nav-link").forEach(link => {
+  // Close mobile drawer when tapping links or outside
+  document.querySelectorAll(".mobile-nav-link, #mobile-demo-btn").forEach(link => {
     link.addEventListener("click", () => {
-      mobileDrawer?.classList.remove("open");
+      setMobileMenu(false);
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (mobileDrawer?.classList.contains("open")) {
+      if (!mobileDrawer.contains(e.target) && !mobileToggle?.contains(e.target)) {
+        setMobileMenu(false);
+      }
+    }
+  });
+
+  // ===================================================================
+  // Floating Back to Top Button (Mobile & Desktop)
+  // ===================================================================
+  const backToTopBtn = document.getElementById("back-to-top-btn");
+
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 280) {
+      backToTopBtn?.classList.add("visible");
+    } else {
+      backToTopBtn?.classList.remove("visible");
+    }
+  }, { passive: true });
+
+  backToTopBtn?.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
     });
   });
 

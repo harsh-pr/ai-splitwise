@@ -357,35 +357,101 @@ body::before {
   height: 42px;
   align-items: center;
   justify-content: center;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  touch-action: manipulation;
 }
 
-/* Mobile Nav Drawer */
+.mobile-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-white);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobile-toggle:active {
+  transform: scale(0.92);
+}
+
+.mobile-toggle.active {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--indigo-400);
+  color: var(--cyan-400);
+  transform: rotate(90deg);
+}
+
+/* Mobile Nav Drawer with Smooth Slide & Fade */
 .mobile-nav-drawer {
-  display: none;
+  display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--surface-glass-border);
+  gap: 6px;
+  padding: 0 20px;
+  background: rgba(11, 15, 25, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--surface-glass-border);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
+  pointer-events: none;
+  width: 100%;
 }
 
 .mobile-nav-drawer.open {
-  display: flex;
+  max-height: 440px;
+  opacity: 1;
+  transform: translateY(0);
+  padding: 14px 20px 20px;
+  pointer-events: auto;
 }
 
 .mobile-nav-link {
   color: var(--text-heading);
   text-decoration: none;
   font-size: 1.05rem;
-  font-weight: 500;
-  padding: 6px 0;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: background var(--transition-fast), color var(--transition-fast), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-nav-drawer.open .mobile-nav-link {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background var(--transition-fast);
+}
+
+.mobile-nav-drawer.open .mobile-nav-link:nth-child(1) { transition-delay: 0.04s; }
+.mobile-nav-drawer.open .mobile-nav-link:nth-child(2) { transition-delay: 0.08s; }
+.mobile-nav-drawer.open .mobile-nav-link:nth-child(3) { transition-delay: 0.12s; }
+.mobile-nav-drawer.open .mobile-nav-link:nth-child(4) { transition-delay: 0.16s; }
+.mobile-nav-drawer.open .mobile-nav-link:nth-child(5) { transition-delay: 0.20s; }
+
+.mobile-nav-link:hover, .mobile-nav-link:active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--emerald-400);
+  transform: translateX(4px);
 }
 
 .mobile-drawer-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease 0.22s, transform 0.25s ease 0.22s;
+}
+
+.mobile-nav-drawer.open .mobile-drawer-actions {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Hero Section */
@@ -1889,5 +1955,79 @@ body::before {
   }
   .cta-banner-buttons .btn {
     width: 100%;
+  }
+}
+
+/* ===================================================================
+   Floating Back to Top Button & Tactile Micro-Interactions
+   =================================================================== */
+.back-to-top-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(17, 24, 39, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text-white);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.25);
+  z-index: 950;
+  opacity: 0;
+  transform: translateY(20px) scale(0.85);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  touch-action: manipulation;
+  outline: none;
+}
+
+.back-to-top-btn.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.back-to-top-btn:hover {
+  background: linear-gradient(135deg, var(--indigo-500), var(--emerald-500));
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 35px var(--indigo-glow);
+  transform: translateY(-4px) scale(1.06);
+}
+
+.back-to-top-btn:active {
+  transform: translateY(0) scale(0.92);
+}
+
+/* Tactile Tap Micro-Interactions on Mobile */
+.btn:active {
+  transform: scale(0.96);
+}
+
+.pill-btn:active {
+  transform: scale(0.94);
+}
+
+.faq-question:active {
+  opacity: 0.82;
+}
+
+.demo-option-card:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .back-to-top-btn {
+    bottom: 20px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.15rem;
   }
 }
