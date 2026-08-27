@@ -11,100 +11,18 @@ const wizardState = {
   category: 'restaurant',
   categoryName: 'Restaurant & Dining',
   isTripMode: false,
-  totalAmount: 3450,
-  taxAmount: 400,
+  totalAmount: 0,
+  taxAmount: 0,
   payer: 'Harsh',
-  payerShare: 1000,
-  participants: ['Harsh', 'Aarav', 'Neha', 'Rohan'],
-  items: [
-    { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['Harsh', 'Aarav'] },
-    { id: 2, name: 'Creamy Pesto Penne', price: 650, assigned: ['Neha'] },
-    { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['Harsh', 'Aarav', 'Neha', 'Rohan'] },
-    { id: 4, name: 'Sizzling Brownie Sundae', price: 380, assigned: ['Rohan', 'Neha'] },
-    { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['Harsh', 'Aarav', 'Rohan'] }
-  ],
+  payerShare: 0,
+  participants: ['Harsh'],
+  items: [],
   upiId: 'harsh@okhdfcbank',
-  settlements: [
-    { from: 'Aarav', to: 'Harsh', amount: 800, paid: false, utr: null, verifiedAt: null },
-    { from: 'Neha', to: 'Harsh', amount: 850, paid: false, utr: null, verifiedAt: null },
-    { from: 'Rohan', to: 'Harsh', amount: 800, paid: false, utr: null, verifiedAt: null }
-  ]
+  settlements: []
 };
 
-// Saved Bill History Data
-const savedHistoryBills = [
-  {
-    id: 'dinner-01',
-    title: 'Friday Bistro Dinner & Mocktails',
-    category: 'restaurant',
-    categoryName: 'Restaurant & Dining',
-    date: '2026-08-26',
-    total: 3450,
-    tax: 400,
-    payer: 'You (Harsh)',
-    participants: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'],
-    status: 'Settled',
-    statusClass: 'badge-paid',
-    items: [
-      { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['You (Harsh)', 'Aarav'] },
-      { id: 2, name: 'Creamy Pesto Penne', price: 650, assigned: ['Neha'] },
-      { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'] },
-      { id: 4, name: 'Sizzling Brownie Sundae', price: 380, assigned: ['Rohan', 'Neha'] },
-      { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['You (Harsh)', 'Aarav', 'Rohan'] }
-    ],
-    settlements: [
-      { from: 'Aarav', to: 'You (Harsh)', amount: 1005, paid: true },
-      { from: 'Neha', to: 'You (Harsh)', amount: 1105, paid: true },
-      { from: 'Rohan', to: 'You (Harsh)', amount: 940, paid: true }
-    ]
-  },
-  {
-    id: 'roadtrip-02',
-    title: 'Goa Coastal Road Trip Expenses',
-    category: 'trip',
-    categoryName: 'Trip Mode (Vacation)',
-    date: '2026-08-24',
-    total: 9800,
-    tax: 600,
-    payer: 'Siddharth',
-    participants: ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'],
-    status: 'Pending',
-    statusClass: 'badge-pending',
-    items: [
-      { id: 1, name: 'Highway Tolls & Fuel', price: 4200, assigned: ['All 4'] },
-      { id: 2, name: 'Beachside Seafood Platter', price: 3200, assigned: ['Harsh', 'Siddharth', 'Pooja'] },
-      { id: 3, name: 'Snacks & Cold Drinks', price: 1800, assigned: ['All 4'] },
-      { id: 4, name: 'Beach Resort Parking', price: 600, assigned: ['All 4'] }
-    ],
-    settlements: [
-      { from: 'You (Harsh)', to: 'Siddharth', amount: 2550, paid: false },
-      { from: 'Pooja', to: 'Siddharth', amount: 2550, paid: false },
-      { from: 'Ananya', to: 'Siddharth', amount: 1500, paid: false }
-    ]
-  },
-  {
-    id: 'grocery-03',
-    title: 'Apartment Grocery & Supplies',
-    category: 'grocery',
-    categoryName: 'Groceries & Mart',
-    date: '2026-08-20',
-    total: 1850,
-    tax: 150,
-    payer: 'You (Harsh)',
-    participants: ['You (Harsh)', 'Rohan', 'Aarav'],
-    status: 'Settled',
-    statusClass: 'badge-paid',
-    items: [
-      { id: 1, name: 'Dairy, Bread & Eggs', price: 450, assigned: ['All 3'] },
-      { id: 2, name: 'Cleaning & Detergent', price: 600, assigned: ['All 3'] },
-      { id: 3, name: 'Coffee Beans & Snacks', price: 800, assigned: ['All 3'] }
-    ],
-    settlements: [
-      { from: 'Rohan', to: 'You (Harsh)', amount: 616, paid: true },
-      { from: 'Aarav', to: 'You (Harsh)', amount: 616, paid: true }
-    ]
-  }
-];
+// Saved Bill History Data (Pure real user bills only)
+const savedHistoryBills = [];
 
 const categoryIconMap = {
   restaurant: { icon: 'ph-fork-knife', colorClass: 'cat-emerald' },
@@ -271,13 +189,18 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const raw = localStorage.getItem("splitwise_bills_history");
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        let parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const DUMMY_IDS = ['dinner-01', 'roadtrip-02', 'grocery-03'];
+          parsed = parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-'));
+          localStorage.setItem("splitwise_bills_history", JSON.stringify(parsed));
+          return parsed;
+        }
       }
     } catch (e) {
       console.error("Error reading saved bills:", e);
     }
-    return savedHistoryBills;
+    return [];
   }
 
   function saveCurrentBillToHistory() {
@@ -570,46 +493,6 @@ document.addEventListener("DOMContentLoaded", () => {
       goToStep(3);
     }, 1300);
   }
-
-  // Quick Preset Sample Bills
-  document.getElementById("load-sample-dinner")?.addEventListener("click", () => {
-    wizardState.totalAmount = 3450;
-    wizardState.taxAmount = 400;
-    wizardState.participants = ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'];
-    wizardState.payer = 'You (Harsh)';
-    wizardState.items = [
-      { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['You (Harsh)', 'Aarav'] },
-      { id: 2, name: 'Creamy Pesto Penne', price: 650, assigned: ['Neha'] },
-      { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'] },
-      { id: 4, name: 'Sizzling Brownie Sundae', price: 380, assigned: ['Rohan', 'Neha'] },
-      { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['You (Harsh)', 'Aarav', 'Rohan'] }
-    ];
-    wizardState.settlements = [
-      { from: 'Aarav', to: 'You (Harsh)', amount: 1005, paid: false },
-      { from: 'Neha', to: 'You (Harsh)', amount: 1105, paid: false },
-      { from: 'Rohan', to: 'You (Harsh)', amount: 940, paid: false }
-    ];
-    simulateReceiptScan();
-  });
-
-  document.getElementById("load-sample-roadtrip")?.addEventListener("click", () => {
-    wizardState.totalAmount = 9800;
-    wizardState.taxAmount = 600;
-    wizardState.participants = ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'];
-    wizardState.payer = 'Siddharth';
-    wizardState.items = [
-      { id: 1, name: 'Highway Tolls & Fuel', price: 4200, assigned: ['All 4'] },
-      { id: 2, name: 'Beachside Seafood Platter', price: 3200, assigned: ['Harsh', 'Siddharth', 'Pooja'] },
-      { id: 3, name: 'Snacks & Cold Drinks', price: 1800, assigned: ['All 4'] },
-      { id: 4, name: 'Beach Resort Parking', price: 600, assigned: ['All 4'] }
-    ];
-    wizardState.settlements = [
-      { from: 'You (Harsh)', to: 'Siddharth', amount: 2550, paid: false },
-      { from: 'Pooja', to: 'Siddharth', amount: 2550, paid: false },
-      { from: 'Ananya', to: 'Siddharth', amount: 1500, paid: false }
-    ];
-    simulateReceiptScan();
-  });
 
   step2BackBtn?.addEventListener("click", () => goToStep(1));
   step2NextBtn?.addEventListener("click", () => goToStep(3));
@@ -1247,15 +1130,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSettlementTracker();
   };
 
-  // Instant Simulate Button (Manual user-triggered only)
-  document.getElementById("simulate-auto-pay-btn")?.addEventListener("click", () => {
-    const unpaid = wizardState.settlements.find(s => !s.paid);
-    if (unpaid) {
-      verifyPaymentAutomatically(unpaid.from, "manual-demo");
-    } else {
-      alert("All friends have already settled their payments!");
-    }
-  });
 
   document.getElementById("restart-wizard-btn")?.addEventListener("click", () => {
     wizardState.settlements.forEach(s => s.paid = false);

@@ -15,60 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
     trip: { icon: 'ph-airplane-tilt', colorClass: 'cat-violet' }
   };
 
-  // Default Sample Bills if no history exists yet
-  const defaultSampleBills = [
-    {
-      id: 'dinner-01',
-      title: 'Friday Bistro Dinner & Mocktails',
-      category: 'restaurant',
-      categoryName: 'Restaurant & Dining',
-      date: '2026-08-26',
-      total: 3450,
-      tax: 400,
-      payer: 'Harsh',
-      payerShare: 1000,
-      participants: ['Harsh', 'Aarav', 'Neha', 'Rohan'],
-      status: 'Settled',
-      statusClass: 'badge-paid',
-      items: [
-        { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['Harsh', 'Aarav'] },
-        { id: 2, name: 'Creamy Pesto Penne', price: 650, assigned: ['Neha'] },
-        { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['Harsh', 'Aarav', 'Neha', 'Rohan'] },
-        { id: 4, name: 'Sizzling Brownie Sundae', price: 380, assigned: ['Rohan', 'Neha'] },
-        { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['Harsh', 'Aarav', 'Rohan'] }
-      ],
-      settlements: [
-        { from: 'Aarav', to: 'Harsh', amount: 800, paid: true, utr: '428190283910' },
-        { from: 'Neha', to: 'Harsh', amount: 850, paid: true, utr: '491029381029' },
-        { from: 'Rohan', to: 'Harsh', amount: 800, paid: true, utr: '419203918204' }
-      ]
-    },
-    {
-      id: 'roadtrip-02',
-      title: 'Goa Coastal Road Trip Expenses',
-      category: 'trip',
-      categoryName: 'Trip Mode (Vacation)',
-      date: '2026-08-24',
-      total: 9800,
-      tax: 600,
-      payer: 'Harsh',
-      payerShare: 3250,
-      participants: ['Harsh', 'Siddharth', 'Pooja', 'Ananya'],
-      status: 'Pending',
-      statusClass: 'badge-pending',
-      items: [
-        { id: 1, name: 'Highway Tolls & Fuel', price: 4200, assigned: ['Harsh', 'Siddharth', 'Pooja', 'Ananya'] },
-        { id: 2, name: 'Beachside Seafood Platter', price: 3200, assigned: ['Harsh', 'Siddharth', 'Pooja'] },
-        { id: 3, name: 'Snacks & Cold Drinks', price: 1800, assigned: ['Harsh', 'Siddharth', 'Pooja', 'Ananya'] },
-        { id: 4, name: 'Beach Resort Parking', price: 600, assigned: ['Harsh', 'Siddharth', 'Pooja', 'Ananya'] }
-      ],
-      settlements: [
-        { from: 'Siddharth', to: 'Harsh', amount: 2550, paid: true, utr: '419283019284' },
-        { from: 'Pooja', to: 'Harsh', amount: 2550, paid: false },
-        { from: 'Ananya', to: 'Harsh', amount: 1450, paid: false }
-      ]
-    }
-  ];
+  // Pure real user bills only - no hardcoded dummy data
+  const defaultSampleBills = [];
 
   // DOM Elements
   const statTotalBills = document.getElementById("stat-total-bills");
@@ -88,20 +36,24 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeStatus = "all";
   let activeSearchTerm = "";
 
-  // 1. Data Retrieval
+  // 1. Data Retrieval (Pure real user bills only)
   function getAllBills() {
     try {
       const raw = localStorage.getItem("splitwise_bills_history");
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        let parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          // Strict purge: remove any old dummy/sample test bills
+          const DUMMY_IDS = ['dinner-01', 'roadtrip-02', 'grocery-03'];
+          parsed = parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-'));
+          localStorage.setItem("splitwise_bills_history", JSON.stringify(parsed));
+          return parsed;
+        }
       }
     } catch (e) {
       console.error("Error reading saved bills:", e);
     }
-    // Seed default sample bills into localStorage
-    localStorage.setItem("splitwise_bills_history", JSON.stringify(defaultSampleBills));
-    return defaultSampleBills;
+    return [];
   }
 
   function saveBills(bills) {

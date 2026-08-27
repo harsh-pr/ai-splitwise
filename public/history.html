@@ -23,66 +23,79 @@
   <script src="/firebase-config.js"></script>
 
   <link rel="stylesheet" href="/landing.css?v=1.3">
-  <link rel="stylesheet" href="/dashboard.css?v=1.7">
-  <link rel="stylesheet" href="/history.css?v=1.0">
+  <link rel="stylesheet" href="/dashboard.css?v=1.9">
+  <link rel="stylesheet" href="/history.css?v=1.1">
 </head>
 <body class="dark-theme dashboard-body">
   <!-- Background Glow Orbs -->
   <div class="mesh-glow mesh-1"></div>
   <div class="mesh-glow mesh-2"></div>
 
-  <!-- TOP NAVIGATION BAR -->
-  <header class="dash-navbar glass-panel">
+  <!-- Dashboard Top Navigation Bar -->
+  <header class="dash-header">
     <div class="dash-nav-container">
-      <!-- Logo -->
-      <a href="/dashboard.html" class="dash-logo" aria-label="SplitWise AI Home">
-        <div class="logo-icon-wrapper">
+      <a href="/dashboard.html" class="brand-logo" title="SplitWise AI Home">
+        <div class="logo-icon-wrapper sm">
           <i class="ph-bold ph-receipt"></i>
           <span class="sparkle-dot"></span>
         </div>
-        <div class="logo-text-group">
-          <span class="brand-title">SplitWise<span class="brand-ai">.AI</span></span>
-          <span class="brand-badge">Smart Engine</span>
-        </div>
+        <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
       </a>
 
-      <!-- Center Nav Links -->
-      <nav class="dash-nav-links" id="main-nav-links">
+      <!-- Center Nav Tabs -->
+      <nav class="dash-tabs" id="dash-tabs">
         <a href="/dashboard.html" class="dash-tab" id="nav-tab-home" title="Go to Dashboard Home">
-          <i class="ph-bold ph-squares-four"></i>
+          <i class="ph-bold ph-house"></i>
           <span>Home</span>
         </a>
 
         <!-- Split Dropdown Menu -->
         <div class="split-dropdown-wrapper" id="split-dropdown-wrapper">
-          <button class="dash-tab split-tab-btn" id="nav-tab-split" aria-expanded="false" aria-haspopup="true">
-            <i class="ph-bold ph-plus-circle"></i>
+          <button class="dash-tab split-dropdown-trigger" id="nav-tab-split" aria-haspopup="true" aria-expanded="false">
+            <i class="ph-bold ph-receipt"></i>
             <span>Split</span>
-            <i class="ph-bold ph-caret-down split-caret"></i>
+            <i class="ph-bold ph-caret-down dropdown-caret"></i>
           </button>
           <div class="split-dropdown-menu" id="split-dropdown-menu">
-            <div class="dropdown-header">Choose Category to Split</div>
+            <div class="dropdown-header">
+              <span>Choose Category to Split</span>
+            </div>
             <a href="/dashboard.html?category=restaurant" class="split-drop-item">
               <span class="drop-icon cat-emerald"><i class="ph-bold ph-fork-knife"></i></span>
               <div class="drop-item-info">
                 <strong>Restaurant & Dining</strong>
-                <span>Food, dining & bar bills</span>
+                <span>Itemized dishes, GST & tips</span>
               </div>
             </a>
             <a href="/dashboard.html?category=hotel" class="split-drop-item">
               <span class="drop-icon cat-indigo"><i class="ph-bold ph-bed"></i></span>
               <div class="drop-item-info">
                 <strong>Hotels & Stays</strong>
-                <span>Resorts, Airbnb & room service</span>
+                <span>Room charges & occupancy</span>
               </div>
             </a>
             <a href="/dashboard.html?category=grocery" class="split-drop-item">
               <span class="drop-icon cat-cyan"><i class="ph-bold ph-shopping-cart"></i></span>
               <div class="drop-item-info">
                 <strong>Groceries & Mart</strong>
-                <span>Supermarket & household splits</span>
+                <span>Supermarket bills & supplies</span>
               </div>
             </a>
+            <a href="/dashboard.html?category=travel" class="split-drop-item">
+              <span class="drop-icon cat-amber"><i class="ph-bold ph-taxi"></i></span>
+              <div class="drop-item-info">
+                <strong>Travel & Fuel</strong>
+                <span>Cab fares, highway tolls & fuel</span>
+              </div>
+            </a>
+            <a href="/dashboard.html?category=entertainment" class="split-drop-item">
+              <span class="drop-icon cat-rose"><i class="ph-bold ph-ticket"></i></span>
+              <div class="drop-item-info">
+                <strong>Entertainment</strong>
+                <span>Movies, events & passes</span>
+              </div>
+            </a>
+            <div class="dropdown-divider"></div>
             <a href="/dashboard.html?category=trip" class="split-drop-item drop-trip-mode">
               <span class="drop-icon cat-violet"><i class="ph-bold ph-airplane-tilt"></i></span>
               <div class="drop-item-info">
@@ -106,7 +119,7 @@
       <!-- User Profile Dropdown Menu -->
       <div class="dash-user-actions">
         <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
-          <button class="profile-pill-trigger" id="profile-pill-trigger" aria-label="User profile menu">
+          <button class="profile-pill-trigger" id="profile-pill-trigger" aria-label="User profile menu" aria-haspopup="true" aria-expanded="false">
             <div class="profile-avatar-ring">
               <div class="profile-avatar-inner" id="user-avatar-initial">H</div>
             </div>
@@ -120,21 +133,33 @@
             <i class="ph-bold ph-caret-down profile-caret desktop-only"></i>
           </button>
 
+          <!-- Floating Profile Dropdown Panel -->
           <div class="profile-dropdown-panel hidden" id="profile-dropdown-panel">
-            <div class="profile-panel-header">
-              <div class="header-avatar-circle">H</div>
-              <div class="header-user-meta">
-                <strong id="menu-user-name">Harsh Prasad</strong>
-                <span id="menu-user-email">harsh@example.com</span>
+            <div class="profile-menu-header">
+              <div class="profile-menu-logo-row">
+                <div class="logo-icon-wrapper sm">
+                  <i class="ph-bold ph-receipt"></i>
+                  <span class="sparkle-dot"></span>
+                </div>
+                <span class="brand-name sm">SplitWise<span class="gradient-text">.AI</span></span>
+              </div>
+              <div class="profile-user-summary">
+                <div class="user-avatar-lg" id="menu-avatar-lg">H</div>
+                <div class="user-summary-text">
+                  <strong id="menu-user-name">Harsh Prasad</strong>
+                  <span id="menu-user-email">harsh@splitwise.ai</span>
+                </div>
               </div>
             </div>
-            <div class="profile-panel-body">
+
+            <div class="profile-menu-list">
               <div class="menu-item-row">
-                <div class="flex-align-center gap-2">
-                  <i class="ph-bold ph-qr-code text-emerald"></i>
-                  <span>Default UPI</span>
-                </div>
-                <span class="menu-sub-value" id="menu-upi-val">harsh@okhdfcbank</span>
+                <span class="menu-item-label"><i class="ph-bold ph-user"></i> Profile Status</span>
+                <span class="menu-item-badge" id="menu-status-badge">Active</span>
+              </div>
+              <div class="menu-item-row">
+                <span class="menu-item-label"><i class="ph-bold ph-wallet"></i> Default UPI</span>
+                <span class="menu-item-val font-mono" id="menu-upi-val">harsh@okhdfcbank</span>
               </div>
               <div class="dropdown-divider"></div>
               <button class="profile-menu-link text-rose" id="btn-sign-out">

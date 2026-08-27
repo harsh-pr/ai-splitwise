@@ -351,19 +351,6 @@
           </div>
         </div>
 
-        <!-- 1-Tap Sample Bill Presets (For instant testing without photos) -->
-        <div class="sample-bills-bar">
-          <span class="sample-label"><i class="ph-bold ph-lightning"></i> Or test with sample bills:</span>
-          <div class="sample-btn-group">
-            <button class="sample-chip" id="load-sample-dinner">
-              <i class="ph-bold ph-fork-knife"></i> Friday Bistro (₹3,450)
-            </button>
-            <button class="sample-chip" id="load-sample-roadtrip">
-              <i class="ph-bold ph-car-profile"></i> Goa Roadtrip (₹9,800)
-            </button>
-          </div>
-        </div>
-
         <div class="step-footer-actions">
           <button class="btn btn-outline" id="step-2-back-btn">
             <i class="ph-bold ph-arrow-left"></i>
@@ -423,21 +410,21 @@
               <div class="chat-msg bot-msg">
                 <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
                 <div class="msg-body">
-                  <p>I've extracted <strong>5 items</strong> totaling <strong class="text-white" id="chat-total-mention">₹3,450</strong> from your receipt!</p>
-                  <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"Aarav and Harsh shared the pizza, Neha had pasta"</em>).</p>
+                  <p>Ready to split! Upload or scan your bill to automatically extract items and amounts.</p>
+                  <p>Once scanned, tell me who ordered what (e.g. <em>"Harsh and Shreya shared pizza, Rohit had drinks"</em>) or add friends using the bar above.</p>
                 </div>
               </div>
             </div>
 
             <!-- Quick Prompt Suggestions -->
             <div class="quick-prompts-row" id="quick-prompts-row">
-              <button class="prompt-chip" data-prompt="Split fries and mocktails equally among all 4 of us">
-                🍟 Split fries & drinks equally
+              <button class="prompt-chip" data-prompt="Split all items equally among everyone">
+                👥 Split equally
               </button>
-              <button class="prompt-chip" data-prompt="Aarav and Harsh split truffle pizza, Neha had pasta">
-                🍕 Assign pizza & pasta
+              <button class="prompt-chip" data-prompt="Assign all items to Harsh">
+                🙋 Assign to me
               </button>
-              <button class="prompt-chip" data-prompt="Distribute GST & service tax proportionally to item subtotals">
+              <button class="prompt-chip" data-prompt="Distribute GST & tax proportionally to item subtotals">
                 🧾 Proportional taxes
               </button>
             </div>
@@ -455,7 +442,7 @@
           <div class="items-editor-box glass-panel">
             <div class="editor-header">
               <h3>Extracted Line Items</h3>
-              <span class="items-total-pill" id="editor-bill-total">₹3,450</span>
+              <span class="items-total-pill" id="editor-bill-total">₹0</span>
             </div>
 
             <!-- Shimmering Skeleton Loader (Shown during transition) -->
@@ -548,31 +535,13 @@
             <span class="step-sub">Payment Verification</span>
           </div>
           <h2>Settlement Status & Debt Balances</h2>
-        <!-- Live Automated Payment Verification Bar -->
-        <div class="autoverify-monitor-bar glass-panel" id="autoverify-monitor-bar">
-          <div class="autoverify-status-left">
-            <span class="live-pulse-dot"></span>
-            <div class="autoverify-text">
-              <div class="flex-align-center gap-2">
-                <strong>Instant UPI Verification Engine</strong>
-                <span class="autoverify-badge">Ready</span>
-              </div>
-              <span class="autoverify-sub">Tap 'Auto-Verify' on any friend or click below to simulate an incoming bank payment</span>
-            </div>
-          </div>
-          <div class="autoverify-controls">
-            <button class="btn btn-sm btn-gradient autoverify-btn" id="simulate-auto-pay-btn" title="Simulate an instant incoming friend payment">
-              <i class="ph-bold ph-lightning"></i>
-              <span>Simulate Auto-Detect</span>
-            </button>
-          </div>
         </div>
 
         <!-- Summary Metric Cards -->
         <div class="settlement-metrics-grid">
           <div class="metric-box glass-panel">
             <span class="metric-title">Total Bill</span>
-            <span class="metric-val text-white" id="tracker-total-bill">₹3,450</span>
+            <span class="metric-val text-white" id="tracker-total-bill">₹0</span>
           </div>
           <div class="metric-box glass-panel">
             <span class="metric-title">Amount Collected</span>
@@ -580,7 +549,7 @@
           </div>
           <div class="metric-box glass-panel">
             <span class="metric-title">Pending Balance</span>
-            <span class="metric-val text-rose" id="tracker-pending-amt">₹3,050</span>
+            <span class="metric-val text-rose" id="tracker-pending-amt">₹0</span>
           </div>
           <div class="metric-box glass-panel">
             <span class="metric-title">Settlement Progress</span>
@@ -592,7 +561,7 @@
         <div class="collection-progress-wrap glass-panel">
           <div class="prog-label-row">
             <span>Group Collection Progress</span>
-            <strong id="tracker-progress-label">₹0 of ₹3,050 settled</strong>
+            <strong id="tracker-progress-label">₹0 of ₹0 settled</strong>
           </div>
           <div class="prog-track">
             <div class="prog-fill" id="tracker-prog-fill" style="width: 0%;"></div>
