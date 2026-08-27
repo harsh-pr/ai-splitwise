@@ -3,7 +3,7 @@
  * Handles offline caching, asset pre-caching, and instant loading.
  */
 
-const CACHE_NAME = 'splitwise-ai-v1.0';
+const CACHE_NAME = 'splitwise-ai-v1.2';
 
 const PRECACHE_ASSETS = [
   '/',

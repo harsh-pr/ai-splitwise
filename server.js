@@ -89,3 +89,5 @@ app.listen(PORT, () => {
   console.log(`  Gemini Vision API: ${process.env.GEMINI_API_KEY ? 'Active' : 'Missing API Key'}`);
   console.log(`====================================================`);
 });
+
+module.exports = app;
