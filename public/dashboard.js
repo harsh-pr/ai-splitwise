@@ -991,9 +991,9 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="flex-align-center gap-2">
-          ${!s.paid ? `
-            <button class="btn-verify-utr" onclick="promptVerifyUtr(${idx})" title="Auto-verify incoming transaction via UTR">
-              <i class="ph-bold ph-lightning"></i> Auto-Verify
+          ${(wizardState.isTripMode || wizardState.category === 'trip') && !s.paid ? `
+            <button class="btn-upload-proof" onclick="openScreenshotVerifyModal(${idx})" title="Upload GPay / PhonePe payment screenshot proof">
+              <i class="ph-bold ph-file-arrow-up"></i> Upload Screenshot
             </button>
           ` : ''}
           <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
@@ -1013,10 +1013,138 @@ document.addEventListener("DOMContentLoaded", () => {
       if (s.paid && !s.utr) {
         s.utr = generateRandomUtr();
         s.verifiedAt = new Date().toLocaleTimeString();
+        playPaymentChime();
+        showPaymentToast(s.from, s.amount, s.utr);
       }
+      saveCurrentBillToHistory();
       renderSettlementTracker();
     }
   };
+
+  // ===================================================================
+  // Trip Mode: Payment Screenshot Auto-Verification Controller
+  // ===================================================================
+  const screenshotVerifyModal = document.getElementById("screenshot-verify-modal");
+  const screenshotModalClose = document.getElementById("screenshot-modal-close");
+  const btnCancelVerify = document.getElementById("btn-cancel-verify");
+  const screenshotDropzone = document.getElementById("screenshot-dropzone");
+  const screenshotFileInput = document.getElementById("screenshot-file-input");
+  const screenshotDropzonePrompt = document.getElementById("screenshot-dropzone-prompt");
+  const screenshotScannerStage = document.getElementById("screenshot-scanner-stage");
+  const screenshotPreviewImg = document.getElementById("screenshot-preview-img");
+  const verifyResultBox = document.getElementById("verify-result-box");
+  const verifyFriendName = document.getElementById("verify-friend-name");
+  const verifyExpectedAmount = document.getElementById("verify-expected-amount");
+  const btnConfirmVerified = document.getElementById("btn-confirm-verified");
+
+  let activeVerifyIndex = null;
+  let activeVerificationResult = null;
+
+  window.openScreenshotVerifyModal = function(idx) {
+    activeVerifyIndex = idx;
+    const s = wizardState.settlements[idx];
+    if (!s) return;
+
+    if (verifyFriendName) verifyFriendName.textContent = s.from;
+    if (verifyExpectedAmount) verifyExpectedAmount.textContent = `₹${s.amount.toLocaleString()}`;
+
+    // Reset modal UI
+    screenshotDropzonePrompt?.classList.remove("hidden");
+    screenshotScannerStage?.classList.add("hidden");
+    verifyResultBox?.classList.add("hidden");
+    btnConfirmVerified?.classList.add("hidden");
+    if (screenshotFileInput) screenshotFileInput.value = "";
+
+    screenshotVerifyModal?.classList.remove("hidden");
+  };
+
+  function closeScreenshotVerifyModal() {
+    screenshotVerifyModal?.classList.add("hidden");
+    activeVerifyIndex = null;
+    activeVerificationResult = null;
+  }
+
+  screenshotModalClose?.addEventListener("click", closeScreenshotVerifyModal);
+  btnCancelVerify?.addEventListener("click", closeScreenshotVerifyModal);
+  screenshotDropzone?.addEventListener("click", () => screenshotFileInput?.click());
+
+  screenshotFileInput?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file || activeVerifyIndex === null) return;
+
+    const s = wizardState.settlements[activeVerifyIndex];
+    if (!s) return;
+
+    screenshotDropzonePrompt?.classList.add("hidden");
+    screenshotScannerStage?.classList.remove("hidden");
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result;
+      if (screenshotPreviewImg) screenshotPreviewImg.src = base64;
+
+      try {
+        const res = await fetch('/api/verify-payment-screenshot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            screenshotBase64: base64,
+            mimeType: file.type || 'image/jpeg',
+            expectedAmount: s.amount,
+            friendName: s.from
+          })
+        });
+
+        const json = await res.json();
+        screenshotScannerStage?.classList.add("hidden");
+        verifyResultBox?.classList.remove("hidden");
+
+        if (json.success && json.verified) {
+          activeVerificationResult = json;
+          const banner = document.getElementById("verify-status-banner");
+          if (banner) banner.className = "verify-status-banner success";
+          const resText = document.getElementById("verify-result-text");
+          if (resText) resText.textContent = `Payment Verified via ${json.appName || 'UPI'}!`;
+          const detAmt = document.getElementById("res-detected-amount");
+          if (detAmt) detAmt.textContent = `₹${json.amount}`;
+          const detApp = document.getElementById("res-detected-app");
+          if (detApp) detApp.textContent = json.appName || 'UPI App';
+          const detUtr = document.getElementById("res-detected-utr");
+          if (detUtr) detUtr.textContent = `Ref #${json.utr}`;
+          btnConfirmVerified?.classList.remove("hidden");
+        } else {
+          const banner = document.getElementById("verify-status-banner");
+          if (banner) banner.className = "verify-status-banner";
+          const resText = document.getElementById("verify-result-text");
+          if (resText) resText.textContent = "Could not automatically verify payment proof";
+          btnConfirmVerified?.classList.remove("hidden");
+        }
+      } catch (err) {
+        console.error("Screenshot verify error:", err);
+        screenshotScannerStage?.classList.add("hidden");
+        verifyResultBox?.classList.remove("hidden");
+        btnConfirmVerified?.classList.remove("hidden");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  btnConfirmVerified?.addEventListener("click", () => {
+    if (activeVerifyIndex === null) return;
+    const s = wizardState.settlements[activeVerifyIndex];
+    if (!s) return;
+
+    const utr = activeVerificationResult?.utr || generateRandomUtr();
+    s.paid = true;
+    s.utr = utr;
+    s.verifiedAt = new Date().toLocaleTimeString();
+
+    playPaymentChime();
+    showPaymentToast(s.from, s.amount, utr);
+    saveCurrentBillToHistory();
+    renderSettlementTracker();
+    closeScreenshotVerifyModal();
+  });
 
   // Web Audio Synthesizer: Crisp Bank Success Chime (Zero external mp3 needed!)
   function playPaymentChime() {

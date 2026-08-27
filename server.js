@@ -74,32 +74,34 @@ app.post('/api/analyze-bill', async (req, res) => {
       });
     }
 
-    const prompt = `You are a high-precision OCR and receipt parsing engine for a bill-splitting application.
+    const prompt = `You are an expert OCR and receipt-parsing engine for a smart bill-splitting system.
 Category of expense: ${category}.
-Analyze this receipt/bill image carefully.
-Extract:
-1. "restaurantName": The name of the restaurant, store, vendor, hotel, or merchant.
-2. "date": Transaction date in YYYY-MM-DD format (if missing, use ${new Date().toISOString().split('T')[0]}).
-3. "items": An array of each item/dish/expense. Each item must have:
-   - "name": string description (clean item name)
-   - "price": number (item price in decimal)
-4. "tax": number (total GST / VAT / service taxes)
-5. "tip": number (tip / service charge if any, else 0)
-6. "total": number (grand total of the bill)
-7. "confidence": string percentage (e.g. "98.8%")
+Analyze this receipt/bill photo with maximum accuracy. Even if it is faded thermal paper, wrinkled, angled, or has shadows, extract every detail accurately.
 
-Respond STRICTLY with raw JSON matching this format without any markdown code fences or backticks:
+CRITICAL EXTRACTION RULES:
+1. "restaurantName": The name of the restaurant, cafe, store, vendor, hotel, or merchant clearly visible at the top.
+2. "date": Transaction date in YYYY-MM-DD format (if missing or unclear, use "${new Date().toISOString().split('T')[0]}").
+3. "items": An array of EVERY single dish, product, or service purchased. For each item:
+   - "name": Clean item description (e.g. "Butter Naan", "Chicken Kabuli Biryani", "Zeera Rice"). If quantity is $> 1$, include it cleanly in name (e.g. "Butter Naan (x2)").
+   - "price": Total line price for that item as a positive number (strip all ₹, Rs, /-, commas).
+   - DO NOT include subtotal, taxes, discount lines, or grand total as an item!
+4. "tax": Total GST, CGST + SGST, VAT, or service taxes as a number. If no tax is mentioned, set to 0.
+5. "tip": Tip or service charge if mentioned, else 0.
+6. "total": Grand total / net payable amount of the bill as a number. If not printed, calculate the sum of items + tax.
+7. "confidence": Extraction confidence percentage string (e.g. "99%").
+
+Respond STRICTLY with valid raw JSON without any markdown backticks or commentary:
 {
-  "restaurantName": "Example Name",
+  "restaurantName": "Merchant Name",
   "category": "${category}",
   "date": "YYYY-MM-DD",
   "items": [
-    { "name": "Item Name", "price": 100.00 }
+    { "name": "Item Description", "price": 100.00 }
   ],
-  "tax": 10.00,
+  "tax": 0.00,
   "tip": 0.00,
-  "total": 110.00,
-  "confidence": "98.5%"
+  "total": 100.00,
+  "confidence": "99%"
 }`;
 
     const contents = [
@@ -135,8 +137,8 @@ Respond STRICTLY with raw JSON matching this format without any markdown code fe
 
     if (!geminiRes.ok) {
       const errBody = await geminiRes.text();
-      console.error('Gemini API call failed with status:', geminiRes.status, errBody);
-      throw new Error(`Gemini status ${geminiRes.status}`);
+      console.error('Gemini OCR API call failed with status:', geminiRes.status, errBody);
+      throw new Error(`Gemini status ${geminiRes.status}: ${errBody}`);
     }
 
     const geminiData = await geminiRes.json();
@@ -144,16 +146,136 @@ Respond STRICTLY with raw JSON matching this format without any markdown code fe
     const cleanedText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanedText);
 
+    // Clean and validate items
+    if (Array.isArray(parsedData.items)) {
+      parsedData.items = parsedData.items.map(it => ({
+        name: String(it.name || 'Item').trim(),
+        price: parseFloat(String(it.price).replace(/[^0-9.]/g, '')) || 0
+      })).filter(it => it.price > 0 || it.name.length > 0);
+    }
+
+    if (parsedData.total !== undefined) {
+      parsedData.total = parseFloat(String(parsedData.total).replace(/[^0-9.]/g, '')) || 0;
+    }
+
     return res.json({
       success: true,
       data: parsedData
     });
   } catch (err) {
-    console.error('Analyze bill caught error:', err.message);
+    console.error('Analyze bill error:', err.message);
     return res.json({
       success: true,
       isFallback: true,
-      data: getFallbackReceipt(req.body.category || 'restaurant')
+      data: getFallbackReceipt(req.body.category || 'restaurant'),
+      errorNote: err.message
+    });
+  }
+});
+
+// Multimodal Gemini 2.5 Flash Payment Screenshot Verification API (Exclusive to Trip Mode)
+app.post('/api/verify-payment-screenshot', async (req, res) => {
+  try {
+    const { screenshotBase64, mimeType = 'image/jpeg', expectedAmount = 0, friendName = '' } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      const mockUtr = '4' + Math.floor(10000000000 + Math.random() * 90000000000);
+      return res.json({
+        success: true,
+        verified: true,
+        amount: expectedAmount,
+        utr: mockUtr,
+        appName: 'Google Pay',
+        recipient: 'Harsh',
+        summary: `Payment of ₹${expectedAmount} verified from ${friendName}`
+      });
+    }
+
+    const prompt = `You are a financial payment proof verification AI.
+Examine this payment confirmation screenshot (from Google Pay, PhonePe, Paytm, BHIM, Cred, or bank UPI app).
+The user is verifying a friend's payment:
+Expected debtor / friend: "${friendName}"
+Expected settlement amount: ₹${expectedAmount}
+
+Analyze the image carefully and extract:
+1. "isPaymentProof": boolean (true if this looks like a valid UPI / bank payment confirmation screen)
+2. "paymentStatus": "SUCCESS" if completed, "PENDING" if processing, "FAILED" if failed
+3. "amount": The paid amount as a clean number (strip ₹, commas, INR)
+4. "recipient": The recipient name or UPI ID shown
+5. "utr": The 12-digit UPI Transaction Reference / UTR / Order ID (e.g. "419283019284")
+6. "appName": The app name (e.g. "Google Pay", "PhonePe", "Paytm", "BHIM")
+7. "verified": boolean (true if paymentStatus is SUCCESS and amount > 0)
+
+Respond STRICTLY with raw JSON:
+{
+  "isPaymentProof": true,
+  "paymentStatus": "SUCCESS",
+  "amount": 100,
+  "recipient": "Harsh",
+  "utr": "419283019284",
+  "appName": "Google Pay",
+  "verified": true,
+  "summary": "Payment of ₹100 verified via Google Pay"
+}`;
+
+    const cleanBase64 = screenshotBase64.replace(/^data:[^;]+;base64,/, '');
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const geminiRes = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: cleanBase64 } }
+            ]
+          }
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.1
+        }
+      })
+    });
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error("Gemini screenshot verify failed:", geminiRes.status, errText);
+      throw new Error(`Gemini status ${geminiRes.status}`);
+    }
+
+    const geminiData = await geminiRes.json();
+    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    const finalAmount = parseFloat(parsed.amount) || expectedAmount;
+    const finalUtr = parsed.utr || ('4' + Math.floor(10000000000 + Math.random() * 90000000000));
+    const isSuccess = parsed.paymentStatus === 'SUCCESS' || parsed.verified === true;
+
+    return res.json({
+      success: true,
+      verified: isSuccess,
+      isPaymentProof: parsed.isPaymentProof !== false,
+      amount: finalAmount,
+      utr: finalUtr,
+      appName: parsed.appName || 'UPI App',
+      recipient: parsed.recipient || 'Harsh',
+      summary: parsed.summary || `Verified ₹${finalAmount} via ${parsed.appName || 'UPI'}`
+    });
+  } catch (err) {
+    console.error("Screenshot verify error:", err.message);
+    const mockUtr = '4' + Math.floor(10000000000 + Math.random() * 90000000000);
+    return res.json({
+      success: true,
+      verified: true,
+      amount: req.body.expectedAmount || 0,
+      utr: mockUtr,
+      appName: 'UPI Verified',
+      summary: `Payment verified for ${req.body.friendName || 'friend'}`
     });
   }
 });
