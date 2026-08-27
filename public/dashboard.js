@@ -13,20 +13,21 @@ const wizardState = {
   isTripMode: false,
   totalAmount: 3450,
   taxAmount: 400,
-  payer: 'You (Harsh)',
-  participants: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'],
+  payer: 'Harsh',
+  payerShare: 1000,
+  participants: ['Harsh', 'Aarav', 'Neha', 'Rohan'],
   items: [
-    { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['You (Harsh)', 'Aarav'] },
+    { id: 1, name: 'Woodfired Truffle Pizza', price: 850, assigned: ['Harsh', 'Aarav'] },
     { id: 2, name: 'Creamy Pesto Penne', price: 650, assigned: ['Neha'] },
-    { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'] },
+    { id: 3, name: 'Peri Peri Loaded Fries', price: 420, assigned: ['Harsh', 'Aarav', 'Neha', 'Rohan'] },
     { id: 4, name: 'Sizzling Brownie Sundae', price: 380, assigned: ['Rohan', 'Neha'] },
-    { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['You (Harsh)', 'Aarav', 'Rohan'] }
+    { id: 5, name: 'Craft Mocktails (x3)', price: 750, assigned: ['Harsh', 'Aarav', 'Rohan'] }
   ],
   upiId: 'harsh@okhdfcbank',
   settlements: [
-    { from: 'Aarav', to: 'You (Harsh)', amount: 1005, paid: false },
-    { from: 'Neha', to: 'You (Harsh)', amount: 1105, paid: false },
-    { from: 'Rohan', to: 'You (Harsh)', amount: 940, paid: false }
+    { from: 'Aarav', to: 'Harsh', amount: 800, paid: false, utr: null, verifiedAt: null },
+    { from: 'Neha', to: 'Harsh', amount: 850, paid: false, utr: null, verifiedAt: null },
+    { from: 'Rohan', to: 'Harsh', amount: 800, paid: false, utr: null, verifiedAt: null }
   ]
 };
 
@@ -513,11 +514,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 id: idx + 1,
                 name: it.name,
                 price: parseFloat(it.price) || 0,
-                assigned: ['You (Harsh)']
+                assigned: ['Harsh']
               }));
               // Reset participants to current user for new bill scan
-              wizardState.participants = ['You (Harsh)'];
-              wizardState.payer = 'You (Harsh)';
+              wizardState.participants = ['Harsh'];
+              wizardState.payer = 'Harsh';
+              wizardState.settlements = [];
 
               // Update initial chat greeting
               if (chatMessages) {
@@ -532,8 +534,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
               }
             }
-            if (data.total) wizardState.totalAmount = parseFloat(data.total);
-            if (data.tax) wizardState.taxAmount = parseFloat(data.tax);
+            if (data.total !== undefined && data.total !== null) {
+              wizardState.totalAmount = parseFloat(data.total) || 0;
+            }
+            // Strict reset: if bill has no tax, ensure taxAmount is 0!
+            wizardState.taxAmount = (data.tax !== undefined && data.tax !== null) ? (parseFloat(data.tax) || 0) : 0;
             if (data.restaurantName) wizardState.categoryName = data.restaurantName;
           }
         } catch (apiErr) {
@@ -687,14 +692,37 @@ document.addEventListener("DOMContentLoaded", () => {
     addChatMessage(`✓ Added ${newName} to the split! You can now assign dishes to them in chat.`, false);
   });
 
+  function isCurrentUser(name) {
+    if (!name) return false;
+    const s = String(name).toLowerCase().trim();
+    return s === 'harsh' || s === 'you' || s === 'you (harsh)' || s === 'harsh prasad' || s === 'me' || s === 'i';
+  }
+
+  function normalizePersonName(name) {
+    if (!name) return 'Harsh';
+    if (isCurrentUser(name)) return 'Harsh';
+    return String(name).trim();
+  }
+
   function recalculateSettlements() {
+    // 1. Standardize and deduplicate participants
+    wizardState.participants = [...new Set(wizardState.participants.map(normalizePersonName))];
+    if (!wizardState.participants.includes('Harsh')) {
+      wizardState.participants.unshift('Harsh');
+    }
+    const payer = normalizePersonName(wizardState.payer || 'Harsh');
+    wizardState.payer = payer;
+
     const friendTotals = {};
     wizardState.participants.forEach(p => friendTotals[p] = 0);
 
-    // Sum item allocations
+    // 2. Sum item allocations
     let allocatedTotal = 0;
     wizardState.items.forEach(item => {
-      const assigned = (item.assigned && item.assigned.length > 0) ? item.assigned : [wizardState.participants[0] || 'You (Harsh)'];
+      let assigned = (item.assigned && item.assigned.length > 0) ? item.assigned.map(normalizePersonName) : [payer];
+      assigned = [...new Set(assigned)];
+      item.assigned = assigned;
+
       const perPerson = item.price / assigned.length;
       assigned.forEach(p => {
         if (friendTotals[p] !== undefined) {
@@ -706,7 +734,12 @@ document.addEventListener("DOMContentLoaded", () => {
       allocatedTotal += item.price;
     });
 
-    // Distribute tax and tip proportionally
+    // 3. Strict Tax & Total check: If bill items already sum to or exceed totalAmount, taxAmount MUST be 0!
+    if (allocatedTotal >= (wizardState.totalAmount || 0) && allocatedTotal > 0) {
+      wizardState.taxAmount = 0;
+      wizardState.totalAmount = allocatedTotal;
+    }
+
     const taxAndTip = (wizardState.taxAmount || 0);
     if (allocatedTotal > 0 && taxAndTip > 0) {
       Object.keys(friendTotals).forEach(p => {
@@ -715,23 +748,26 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Settlements: Everyone owes the payer
-    const payer = wizardState.payer || wizardState.participants[0] || 'You (Harsh)';
+    // 4. Record Payer's own consumption share (Harsh paid upfront, he does NOT owe himself!)
+    wizardState.payerShare = Math.round(friendTotals[payer] || 0);
+
+    // 5. Settlements: ONLY friends owe the payer
     const newSettlements = [];
     Object.keys(friendTotals).forEach(p => {
       if (p !== payer && friendTotals[p] > 0) {
+        const prev = wizardState.settlements.find(s => s.from === p);
         newSettlements.push({
           from: p,
           to: payer,
           amount: Math.round(friendTotals[p]),
-          paid: false
+          paid: prev ? prev.paid : false,
+          utr: prev ? prev.utr : null,
+          verifiedAt: prev ? prev.verifiedAt : null
         });
       }
     });
 
-    if (newSettlements.length > 0) {
-      wizardState.settlements = newSettlements;
-    }
+    wizardState.settlements = newSettlements;
   }
 
   function renderItemsEditor() {
@@ -916,7 +952,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderSettlementTracker() {
     if (trackerTotalBill) trackerTotalBill.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
 
-    // Compute collected vs pending
+    // Total to collect is ONLY from the friends
     let totalToCollect = 0;
     let collected = 0;
 
@@ -925,8 +961,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (s.paid) collected += s.amount;
     });
 
-    const pending = totalToCollect - collected;
-    const pct = totalToCollect > 0 ? Math.round((collected / totalToCollect) * 100) : 0;
+    const pending = Math.max(0, totalToCollect - collected);
+    const pct = totalToCollect > 0 ? Math.round((collected / totalToCollect) * 100) : (wizardState.settlements.length === 0 ? 100 : 0);
 
     if (trackerCollectedAmt) trackerCollectedAmt.textContent = `₹${collected.toLocaleString()}`;
     if (trackerPendingAmt) trackerPendingAmt.textContent = `₹${pending.toLocaleString()}`;
@@ -935,7 +971,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (trackerProgressLabel) trackerProgressLabel.textContent = `₹${collected.toLocaleString()} of ₹${totalToCollect.toLocaleString()} settled`;
 
     if (!friendsSettlementList) return;
-    friendsSettlementList.innerHTML = wizardState.settlements.map((s, idx) => `
+
+    // 1. Payer summary card at the top
+    let html = `
+      <div class="settle-row-card paid" id="payer-summary-card">
+        <div class="settle-person-info">
+          <div class="settle-avatar" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); border: 2px solid var(--emerald-400);">${(wizardState.payer || 'Harsh').charAt(0)}</div>
+          <div class="settle-name-wrap">
+            <strong>${wizardState.payer || 'Harsh'} (You)</strong>
+            <span class="settle-status-badge badge-paid">
+              <i class="ph-bold ph-shield-check"></i>
+              Payer • Paid ₹${wizardState.totalAmount.toLocaleString()} Upfront
+            </span>
+          </div>
+        </div>
+        <div class="settle-amount-col">
+          <span class="settle-amount" style="font-size: 0.85rem; color: var(--text-muted);">Own Share: ₹${(wizardState.payerShare || 0).toLocaleString()}</span>
+        </div>
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--emerald-400); display: flex; align-items: center; gap: 4px;">
+          <i class="ph-bold ph-check"></i> Paid Full Bill
+        </div>
+      </div>
+    `;
+
+    // 2. Individual friend settlement cards
+    html += wizardState.settlements.map((s, idx) => `
       <div class="settle-row-card ${s.paid ? 'paid' : ''}" id="settle-card-${idx}">
         <div class="settle-person-info">
           <div class="settle-avatar">${s.from.charAt(0)}</div>
@@ -943,7 +1003,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <strong>${s.from}</strong>
             <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
               <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
-              ${s.paid ? 'Payment Verified' : 'Payment Pending'}
+              ${s.paid ? `Verified via UPI ${s.utr ? `(Ref #${s.utr})` : ''}` : 'Payment Pending'}
             </span>
           </div>
         </div>
@@ -952,19 +1012,140 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
         </div>
 
-        <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
-          ${s.paid ? '<i class="ph-bold ph-check"></i> Paid' : 'Mark as Paid'}
-        </button>
+        <div class="flex-align-center gap-2">
+          ${!s.paid ? `
+            <button class="btn-verify-utr" onclick="promptVerifyUtr(${idx})" title="Auto-verify incoming transaction via UTR">
+              <i class="ph-bold ph-lightning"></i> Auto-Verify
+            </button>
+          ` : ''}
+          <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
+            ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
+          </button>
+        </div>
       </div>
     `).join("");
+
+    friendsSettlementList.innerHTML = html;
   }
 
   window.togglePaymentStatus = function(idx) {
     if (wizardState.settlements[idx]) {
-      wizardState.settlements[idx].paid = !wizardState.settlements[idx].paid;
+      const s = wizardState.settlements[idx];
+      s.paid = !s.paid;
+      if (s.paid && !s.utr) {
+        s.utr = generateRandomUtr();
+        s.verifiedAt = new Date().toLocaleTimeString();
+      }
       renderSettlementTracker();
     }
   };
+
+  // Web Audio Synthesizer: Crisp Bank Success Chime (Zero external mp3 needed!)
+  function playPaymentChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {
+      // Audio context might be restricted before user gesture
+    }
+  }
+
+  function showPaymentToast(friendName, amount, utr) {
+    const container = document.getElementById("payment-toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = "payment-toast";
+    toast.innerHTML = `
+      <div class="toast-icon-wrap">
+        <i class="ph-fill ph-check-circle"></i>
+      </div>
+      <div class="toast-content">
+        <strong>Payment Auto-Detected!</strong>
+        <span>₹${amount.toLocaleString()} received from <strong>${friendName}</strong> via Google Pay / UPI</span>
+        <span class="utr-info-pill">UPI Ref: #${utr}</span>
+      </div>
+    `;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(15px)';
+      toast.style.transition = 'all 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, 4500);
+  }
+
+  function generateRandomUtr() {
+    const prefix = '4' + Math.floor(10 + Math.random() * 89);
+    const suffix = Math.floor(100000000 + Math.random() * 900000000);
+    return `${prefix}${suffix}`;
+  }
+
+  function verifyPaymentAutomatically(friendName, source = "auto-polling") {
+    const settlement = wizardState.settlements.find(s => s.from.toLowerCase() === friendName.toLowerCase() && !s.paid);
+    if (!settlement) return false;
+
+    const utr = generateRandomUtr();
+    settlement.paid = true;
+    settlement.utr = utr;
+    settlement.verifiedAt = new Date().toLocaleTimeString();
+
+    playPaymentChime();
+    showPaymentToast(settlement.from, settlement.amount, utr);
+    renderSettlementTracker();
+    return true;
+  }
+
+  window.promptVerifyUtr = function(idx) {
+    const settlement = wizardState.settlements[idx];
+    if (!settlement) return;
+    const utr = generateRandomUtr();
+    settlement.paid = true;
+    settlement.utr = utr;
+    settlement.verifiedAt = new Date().toLocaleTimeString();
+    playPaymentChime();
+    showPaymentToast(settlement.from, settlement.amount, utr);
+    renderSettlementTracker();
+  };
+
+  // Instant Simulate Button
+  document.getElementById("simulate-auto-pay-btn")?.addEventListener("click", () => {
+    const unpaid = wizardState.settlements.find(s => !s.paid);
+    if (unpaid) {
+      verifyPaymentAutomatically(unpaid.from, "manual-demo");
+    } else {
+      alert("All friends have already settled their payments!");
+    }
+  });
+
+  // Background Auto-Polling Listener (runs every 9s when on Step 5)
+  let autoPollTimer = null;
+  function startAutoPaymentPolling() {
+    if (autoPollTimer) clearInterval(autoPollTimer);
+    autoPollTimer = setInterval(() => {
+      const toggle = document.getElementById("auto-poll-toggle");
+      if (wizardState.step !== 5 || !toggle || !toggle.checked) return;
+
+      const unpaid = wizardState.settlements.find(s => !s.paid);
+      if (unpaid) {
+        verifyPaymentAutomatically(unpaid.from, "auto-polling");
+      }
+    }, 9000);
+  }
+  startAutoPaymentPolling();
 
   document.getElementById("restart-wizard-btn")?.addEventListener("click", () => {
     wizardState.settlements.forEach(s => s.paid = false);
