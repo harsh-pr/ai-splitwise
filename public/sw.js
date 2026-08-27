@@ -3,13 +3,20 @@
  * Handles offline caching, asset pre-caching, and instant loading.
  */
 
-const CACHE_NAME = 'splitwise-ai-v1.3';
+const CACHE_NAME = 'splitwise-ai-v2.0';
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/landing.css',
   '/landing.js',
+  '/auth.html',
+  '/auth.css',
+  '/auth.js',
+  '/firebase-config.js',
+  '/dashboard.html',
+  '/dashboard.css',
+  '/dashboard.js',
   '/manifest.json',
   '/icons/icon.svg',
   '/icons/icon-192.png',

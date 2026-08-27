@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Dashboard - SplitWise AI</title>
+  <meta name="description" content="SplitWise AI Interactive Dashboard. Upload bills, chat with Gemini AI, and generate dynamic UPI QR settlements.">
+  <meta name="theme-color" content="#0b0f19">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- Firebase Auth SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="/firebase-config.js"></script>
+
+  <link rel="stylesheet" href="/landing.css?v=1.3">
+  <link rel="stylesheet" href="/dashboard.css?v=1.3">
+</head>
+<body class="dark-theme dashboard-body">
+  <!-- Background Glow Orbs -->
+  <div class="glow-mesh" aria-hidden="true">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <!-- Dashboard Top Navigation Bar -->
+  <header class="dash-header">
+    <div class="dash-nav-container">
+      <a href="/" class="brand-logo" title="SplitWise AI Home">
+        <div class="logo-icon-wrapper sm">
+          <i class="ph-bold ph-receipt"></i>
+          <span class="sparkle-dot"></span>
+        </div>
+        <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
+      </a>
+
+      <!-- Important Navigation Tabs -->
+      <nav class="dash-tabs" id="dash-tabs">
+        <button class="dash-tab active" id="tab-wizard" data-view="wizard">
+          <i class="ph-bold ph-magic-wand"></i>
+          <span>New Split Wizard</span>
+        </button>
+        <button class="dash-tab" id="tab-trips" data-view="trips">
+          <i class="ph-bold ph-airplane-tilt"></i>
+          <span>Trip Mode</span>
+          <span class="tab-pill-badge">New</span>
+        </button>
+        <button class="dash-tab" id="tab-settlements" data-view="settlements">
+          <i class="ph-bold ph-qr-code"></i>
+          <span>UPI Settlements</span>
+        </button>
+        <button class="dash-tab" id="tab-engine" data-view="engine">
+          <i class="ph-bold ph-tree-structure"></i>
+          <span>Java Cash-Flow</span>
+        </button>
+      </nav>
+
+      <!-- User Profile & Action Controls -->
+      <div class="dash-user-actions">
+        <div class="user-profile-badge" id="user-profile-badge">
+          <div class="user-avatar" id="user-avatar">G</div>
+          <div class="user-details">
+            <span class="user-name" id="user-name">Guest User</span>
+            <span class="user-status-tag" id="user-status-tag">Demo Mode</span>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline logout-btn" id="logout-btn" title="Sign Out">
+          <i class="ph-bold ph-sign-out"></i>
+          <span class="desktop-only">Sign Out</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area: Split Wizard Stage & Right Progress Panel -->
+  <div class="dash-layout container">
+    
+    <!-- LEFT COLUMN: The 5-Step Interactive Wizard -->
+    <main class="wizard-main-stage" id="wizard-stage">
+
+      <!-- STEP 1: CATEGORY SELECTION -->
+      <section class="wizard-step-panel active" id="step-1-panel" data-step="1">
+        <div class="step-card-header">
+          <div class="step-badge-indicator">
+            <span class="step-num">Step 1</span>
+            <span class="step-sub">Expense Type</span>
+          </div>
+          <h2>What kind of expense are you splitting?</h2>
+          <p>Choose a category to customize the AI itemization and tax distribution rules.</p>
+        </div>
+
+        <div class="category-grid" id="category-grid">
+          <div class="category-card active" data-category="restaurant" id="cat-restaurant">
+            <div class="cat-icon-box cat-emerald">
+              <i class="ph-bold ph-fork-knife"></i>
+            </div>
+            <div class="cat-info">
+              <h3>Restaurant & Dining</h3>
+              <p>Itemized dishes, drinks, shared starters, GST & service tips.</p>
+            </div>
+            <span class="cat-check"><i class="ph-bold ph-check"></i></span>
+          </div>
+
+          <div class="category-card" data-category="hotel" id="cat-hotel">
+            <div class="cat-icon-box cat-indigo">
+              <i class="ph-bold ph-bed"></i>
+            </div>
+            <div class="cat-info">
+              <h3>Hotel & Stays</h3>
+              <p>Room charges, occupancy taxes, resort amenities & food orders.</p>
+            </div>
+            <span class="cat-check"><i class="ph-bold ph-check"></i></span>
+          </div>
+
+          <div class="category-card" data-category="grocery" id="cat-grocery">
+            <div class="cat-icon-box cat-cyan">
+              <i class="ph-bold ph-shopping-cart"></i>
+            </div>
+            <div class="cat-info">
+              <h3>Groceries & Mart</h3>
+              <p>Supermarket receipts, household shared goods & supplies.</p>
+            </div>
+            <span class="cat-check"><i class="ph-bold ph-check"></i></span>
+          </div>
+
+          <div class="category-card" data-category="travel" id="cat-travel">
+            <div class="cat-icon-box cat-amber">
+              <i class="ph-bold ph-taxi"></i>
+            </div>
+            <div class="cat-info">
+              <h3>Travel & Fuel</h3>
+              <p>Cab fares, highway toll receipts, car rentals & fuel refills.</p>
+            </div>
+            <span class="cat-check"><i class="ph-bold ph-check"></i></span>
+          </div>
+
+          <div class="category-card" data-category="entertainment" id="cat-entertainment">
+            <div class="cat-icon-box cat-rose">
+              <i class="ph-bold ph-ticket"></i>
+            </div>
+            <div class="cat-info">
+              <h3>Entertainment</h3>
+              <p>Concert tickets, movie passes, sports events & outings.</p>
+            </div>
+            <span class="cat-check"><i class="ph-bold ph-check"></i></span>
+          </div>
+
+          <!-- Trip Mode Category -->
+          <div class="category-card trip-mode-card" data-category="trip" id="cat-trip">
+            <div class="trip-pill-tag">Multi-Expense Mode</div>
+            <div class="cat-icon-box cat-violet">
+              <i class="ph-bold ph-airplane-tilt"></i>
+            </div>
+            <div class="cat-info">
+              <h3>Trip Mode (Vacation)</h3>
+              <p>Combine multiple days, stays, and meals into one unified debt balance.</p>
+            </div>
+            <span class="cat-check"><i class="ph-bold ph-check"></i></span>
+          </div>
+        </div>
+
+        <div class="step-footer-actions">
+          <div></div>
+          <button class="btn btn-large btn-gradient" id="step-1-next-btn">
+            <span>Continue to Upload Bill</span>
+            <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 2: BILL CAPTURE & UPLOAD -->
+      <section class="wizard-step-panel" id="step-2-panel" data-step="2">
+        <div class="step-card-header">
+          <div class="step-badge-indicator">
+            <span class="step-num">Step 2</span>
+            <span class="step-sub">Receipt Ingestion</span>
+          </div>
+          <h2>Upload or Snap your Bill Photo</h2>
+          <p>Google Gemini 2.5 Vision OCR will extract line items, prices, discounts, and taxes.</p>
+        </div>
+
+        <!-- Receipt Upload Dropzone -->
+        <div class="upload-dropzone glass-panel" id="upload-dropzone">
+          <input type="file" id="receipt-file-input" accept="image/*,application/pdf" class="hidden-file-input">
+          
+          <div class="dropzone-idle" id="dropzone-idle">
+            <div class="drop-icon-circle">
+              <i class="ph-bold ph-cloud-arrow-up"></i>
+            </div>
+            <h3>Drag & Drop your receipt here</h3>
+            <p>Supports JPG, PNG, WebP or PDF bills up to 10MB</p>
+            
+            <div class="upload-btn-row">
+              <button class="btn btn-outline" id="browse-files-btn">
+                <i class="ph-bold ph-folder-open"></i>
+                <span>Browse Files</span>
+              </button>
+              <button class="btn btn-outline" id="camera-snap-btn">
+                <i class="ph-bold ph-camera"></i>
+                <span>Take Photo</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Scanning Overlay with Laser Beam -->
+          <div class="scanner-stage hidden" id="scanner-stage">
+            <div class="scanner-laser-line"></div>
+            <img src="/icons/icon-192.png" alt="Bill Preview" class="scanner-preview-img" id="scanner-preview-img">
+            <div class="scanner-overlay-status">
+              <div class="spinner-circle-wheel"></div>
+              <span>Gemini Vision OCR analyzing dishes & taxes...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1-Tap Sample Bill Presets (For instant testing without photos) -->
+        <div class="sample-bills-bar">
+          <span class="sample-label"><i class="ph-bold ph-lightning"></i> Or test with sample bills:</span>
+          <div class="sample-btn-group">
+            <button class="sample-chip" id="load-sample-dinner">
+              <i class="ph-bold ph-fork-knife"></i> Friday Bistro (₹3,450)
+            </button>
+            <button class="sample-chip" id="load-sample-roadtrip">
+              <i class="ph-bold ph-car-profile"></i> Goa Roadtrip (₹9,800)
+            </button>
+          </div>
+        </div>
+
+        <div class="step-footer-actions">
+          <button class="btn btn-outline" id="step-2-back-btn">
+            <i class="ph-bold ph-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-large btn-gradient" id="step-2-next-btn" disabled>
+            <span>Process & Open AI Split Chat</span>
+            <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 3: AI SPLIT CHAT & INTERACTIVE ITEMIZATION -->
+      <section class="wizard-step-panel" id="step-3-panel" data-step="3">
+        <div class="step-card-header">
+          <div class="step-badge-indicator">
+            <span class="step-num">Step 3</span>
+            <span class="step-sub">Smart Itemization</span>
+          </div>
+          <h2>AI Split Assistant & Line Items</h2>
+          <p>Tell the AI who ordered what in natural language, or tap dish items directly.</p>
+        </div>
+
+        <div class="split-stage-container">
+          <!-- Left: AI Chat Interface -->
+          <div class="ai-chat-box glass-panel">
+            <div class="chat-header">
+              <div class="chat-ai-badge">
+                <div class="ai-avatar-ring"><i class="ph-fill ph-sparkle"></i></div>
+                <div>
+                  <strong>Gemini Split Assistant</strong>
+                  <span class="chat-status">Active • Ready for prompts</span>
+                </div>
+              </div>
+              <span class="chat-model-tag">Gemini 2.5</span>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="chat-messages" id="chat-messages">
+              <div class="chat-msg bot-msg">
+                <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
+                <div class="msg-body">
+                  <p>I've extracted <strong>5 items</strong> totaling <strong class="text-white" id="chat-total-mention">₹3,450</strong> from your receipt!</p>
+                  <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"Aarav and Harsh shared the pizza, Neha had pasta"</em>).</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Prompt Suggestions -->
+            <div class="quick-prompts-row" id="quick-prompts-row">
+              <button class="prompt-chip" data-prompt="Split fries and mocktails equally among all 4 of us">
+                🍟 Split fries & drinks equally
+              </button>
+              <button class="prompt-chip" data-prompt="Aarav and Harsh split truffle pizza, Neha had pasta">
+                🍕 Assign pizza & pasta
+              </button>
+              <button class="prompt-chip" data-prompt="Distribute GST & service tax proportionally to item subtotals">
+                🧾 Proportional taxes
+              </button>
+            </div>
+
+            <!-- Chat Input Bar -->
+            <form class="chat-input-bar" id="chat-form">
+              <input type="text" id="chat-input" placeholder="Type instructions (e.g., 'Aarav paid, split pizza with Neha')..." autocomplete="off">
+              <button type="submit" class="btn-chat-send" id="chat-send-btn" aria-label="Send prompt">
+                <i class="ph-bold ph-paper-plane-right"></i>
+              </button>
+            </form>
+          </div>
+
+          <!-- Right: Live Parsed Dish Items with Allocation Badges -->
+          <div class="items-editor-box glass-panel">
+            <div class="editor-header">
+              <h3>Extracted Line Items</h3>
+              <span class="items-total-pill" id="editor-bill-total">₹3,450</span>
+            </div>
+
+            <!-- Shimmering Skeleton Loader (Shown during transition) -->
+            <div class="skeleton-items-list hidden" id="skeleton-items">
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+            </div>
+
+            <!-- Actual Items List -->
+            <div class="parsed-items-list" id="parsed-items-list">
+              <!-- Dynamically populated by dashboard.js -->
+            </div>
+
+            <!-- Proportional Taxes Box -->
+            <div class="tax-summary-box">
+              <div class="tax-row">
+                <span>GST & Service Charge (Proportional):</span>
+                <strong class="text-white" id="editor-tax-val">₹400</strong>
+              </div>
+              <div class="tax-row">
+                <span>Payer:</span>
+                <strong class="text-emerald" id="editor-payer-name">You (Harsh)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-footer-actions">
+          <button class="btn btn-outline" id="step-3-back-btn">
+            <i class="ph-bold ph-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-large btn-gradient" id="step-3-next-btn">
+            <span>Generate UPI QR Money Requests</span>
+            <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 4: DYNAMIC UPI QR MONEY REQUESTS -->
+      <section class="wizard-step-panel" id="step-4-panel" data-step="4">
+        <div class="step-card-header">
+          <div class="step-badge-indicator">
+            <span class="step-num">Step 4</span>
+            <span class="step-sub">UPI Money Requests</span>
+          </div>
+          <h2>Instant UPI Payment QR Codes</h2>
+          <p>Scan with any UPI app (GPay, PhonePe, Paytm, BHIM) to settle exact amounts.</p>
+        </div>
+
+        <!-- Customizable UPI ID Bar -->
+        <div class="upi-config-bar glass-panel">
+          <div class="upi-config-info">
+            <i class="ph-bold ph-wallet"></i>
+            <div>
+              <strong>Receive payments at:</strong>
+              <span id="upi-display-id">harsh@okhdfcbank</span>
+            </div>
+          </div>
+          <div class="upi-edit-group">
+            <input type="text" id="upi-custom-input" placeholder="yourname@upi" value="harsh@okhdfcbank">
+            <button class="btn btn-sm btn-outline" id="save-upi-btn">Update UPI</button>
+          </div>
+        </div>
+
+        <!-- Grid of Individual QR Cards for Each Friend -->
+        <div class="upi-qr-grid" id="upi-qr-grid">
+          <!-- Dynamically populated by dashboard.js -->
+        </div>
+
+        <div class="step-footer-actions">
+          <button class="btn btn-outline" id="step-4-back-btn">
+            <i class="ph-bold ph-arrow-left"></i>
+            <span>Back to Edit</span>
+          </button>
+          <button class="btn btn-large btn-gradient" id="step-4-next-btn">
+            <span>View Live Settlement Tracker</span>
+            <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 5: LIVE SETTLEMENT TRACKER -->
+      <section class="wizard-step-panel" id="step-5-panel" data-step="5">
+        <div class="step-card-header">
+          <div class="step-badge-indicator">
+            <span class="step-num">Step 5</span>
+            <span class="step-sub">Payment Verification</span>
+          </div>
+          <h2>Settlement Status & Debt Balances</h2>
+          <p>Track real-time collections, mark payments as verified, and export summaries.</p>
+        </div>
+
+        <!-- Summary Metric Cards -->
+        <div class="settlement-metrics-grid">
+          <div class="metric-box glass-panel">
+            <span class="metric-title">Total Bill</span>
+            <span class="metric-val text-white" id="tracker-total-bill">₹3,450</span>
+          </div>
+          <div class="metric-box glass-panel">
+            <span class="metric-title">Amount Collected</span>
+            <span class="metric-val text-emerald" id="tracker-collected-amt">₹0</span>
+          </div>
+          <div class="metric-box glass-panel">
+            <span class="metric-title">Pending Balance</span>
+            <span class="metric-val text-rose" id="tracker-pending-amt">₹3,050</span>
+          </div>
+          <div class="metric-box glass-panel">
+            <span class="metric-title">Settlement Progress</span>
+            <span class="metric-val text-cyan" id="tracker-progress-pct">0%</span>
+          </div>
+        </div>
+
+        <!-- Collection Progress Bar -->
+        <div class="collection-progress-wrap glass-panel">
+          <div class="prog-label-row">
+            <span>Group Collection Progress</span>
+            <strong id="tracker-progress-label">₹0 of ₹3,050 settled</strong>
+          </div>
+          <div class="prog-track">
+            <div class="prog-fill" id="tracker-prog-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Friend Settlement Cards (Paid vs Pending) -->
+        <div class="friends-settlement-list" id="friends-settlement-list">
+          <!-- Dynamically populated by dashboard.js -->
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="step-footer-actions">
+          <button class="btn btn-outline" id="restart-wizard-btn">
+            <i class="ph-bold ph-arrows-counter-clockwise"></i>
+            <span>Start New Split</span>
+          </button>
+          <button class="btn btn-gradient" id="export-summary-btn">
+            <i class="ph-bold ph-share-network"></i>
+            <span>Share WhatsApp Summary</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT COLUMN: Sticky Progress Bar & Split Summary Sidebar -->
+    <aside class="wizard-sidebar" id="wizard-sidebar">
+      <div class="sidebar-sticky-panel glass-panel">
+        <div class="sidebar-header">
+          <h3>Split Progress</h3>
+          <span class="pct-pill" id="sidebar-pct-pill">20% Done</span>
+        </div>
+
+        <!-- Circular or Linear Progress Bar -->
+        <div class="wizard-progress-bar-container">
+          <div class="wizard-progress-track">
+            <div class="wizard-progress-fill" id="wizard-progress-fill" style="width: 20%;"></div>
+          </div>
+          <span class="steps-count-label" id="steps-count-label">Step 1 of 5 Completed</span>
+        </div>
+
+        <!-- Step Checklist -->
+        <div class="steps-checklist">
+          <div class="checklist-item active" id="chk-1" data-step="1">
+            <div class="chk-dot"><i class="ph-bold ph-check"></i></div>
+            <div class="chk-info">
+              <strong>Category</strong>
+              <span>Select bill type</span>
+            </div>
+          </div>
+          <div class="checklist-item" id="chk-2" data-step="2">
+            <div class="chk-dot"><i class="ph-bold ph-check"></i></div>
+            <div class="chk-info">
+              <strong>Capture Bill</strong>
+              <span>Upload receipt photo</span>
+            </div>
+          </div>
+          <div class="checklist-item" id="chk-3" data-step="3">
+            <div class="chk-dot"><i class="ph-bold ph-check"></i></div>
+            <div class="chk-info">
+              <strong>AI Split Chat</strong>
+              <span>Itemize dishes</span>
+            </div>
+          </div>
+          <div class="checklist-item" id="chk-4" data-step="4">
+            <div class="chk-dot"><i class="ph-bold ph-check"></i></div>
+            <div class="chk-info">
+              <strong>UPI QR Codes</strong>
+              <span>Payment links</span>
+            </div>
+          </div>
+          <div class="checklist-item" id="chk-5" data-step="5">
+            <div class="chk-dot"><i class="ph-bold ph-check"></i></div>
+            <div class="chk-info">
+              <strong>Settlement Tracker</strong>
+              <span>Verify who paid</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Running Summary Box -->
+        <div class="sidebar-summary-box">
+          <h4>Current Split Summary</h4>
+          <div class="summary-stat-row">
+            <span>Category:</span>
+            <strong id="side-category-name">Restaurant & Dining</strong>
+          </div>
+          <div class="summary-stat-row">
+            <span>Total Bill:</span>
+            <strong class="text-emerald" id="side-total-bill">₹3,450</strong>
+          </div>
+          <div class="summary-stat-row">
+            <span>Participants:</span>
+            <strong id="side-people-count">4 Friends</strong>
+          </div>
+          <div class="summary-stat-row">
+            <span>Optimized Debts:</span>
+            <strong class="text-cyan" id="side-transfers-count">3 Transfers</strong>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="/dashboard.js?v=1.3"></script>
+</body>
+</html>
