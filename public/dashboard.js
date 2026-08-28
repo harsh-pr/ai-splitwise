@@ -300,9 +300,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sidebarPctPill) sidebarPctPill.innerHTML = `<span class="pct-num">${pct}%</span><span class="pct-done-text"> Done</span>`;
     if (stepsCountLabel) stepsCountLabel.textContent = `Step ${targetStep} of 5 Completed`;
 
-    // Update Checklist items
+    // Update Checklist & Vertical Segment items
     for (let i = 1; i <= 5; i++) {
       const chk = document.getElementById(`chk-${i}`);
+      const seg = document.getElementById(`seg-${i}`);
       if (chk) {
         if (i < targetStep) {
           chk.className = "checklist-item completed";
@@ -310,6 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
           chk.className = "checklist-item active";
         } else {
           chk.className = "checklist-item";
+        }
+      }
+      if (seg) {
+        if (i <= targetStep) {
+          seg.className = "seg-dot active";
+        } else {
+          seg.className = "seg-dot";
         }
       }
     }
@@ -908,7 +916,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
           </div>
           <div class="upi-card-actions" style="grid-template-columns: 1fr;">
-            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}')">
+            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}', 'qr-img-${idx}')">
               <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
             </button>
           </div>
@@ -917,18 +925,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
-  window.shareWhatsApp = function(name, amt, upi) {
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${amt}&cu=INR`;
+  window.shareWhatsApp = async function(name, amt, upi, imgId) {
+    // Copy QR code image to clipboard for instant Ctrl+V pasting in WhatsApp Web
+    try {
+      const img = document.getElementById(imgId) || document.querySelector(`img[alt="UPI QR for ${name}"]`);
+      if (img && navigator.clipboard && window.ClipboardItem) {
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }
+    } catch (e) {
+      console.warn("[QR Clipboard Copy]", e);
+    }
+
     let text = `👋 *Hi ${name}!* Here is your share for *${wizardState.categoryName}*:\n\n`;
     text += `💰 *Your Amount:* ₹${amt}\n`;
-    text += `💳 *Pay via UPI ID:* \`${upi}\`\n`;
-    text += `⚡ *1-Tap Pay Link:* ${upiUri}\n\n`;
+    text += `💳 *Pay via UPI ID:* \`${upi}\`\n\n`;
 
     const myItems = wizardState.items.filter(it => Array.isArray(it.assigned) && it.assigned.includes(name));
     if (myItems.length > 0) {
       text += `🍽️ *YOUR ORDERED ITEMS:*\n`;
       myItems.forEach(it => {
-        text += `🍲 *${it.name}* - ₹${it.price} (Shared with ${(it.assigned || []).join(", ")})\n`;
+        const otherShared = (it.assigned || []).filter(p => p !== name);
+        const shareNote = otherShared.length > 0 ? ` (Shared with ${otherShared.join(", ")})` : ``;
+        text += `• *${it.name}* — ₹${it.price}${shareNote}\n`;
       });
       text += `\n`;
     }
@@ -1110,10 +1130,10 @@ document.addEventListener("DOMContentLoaded", () => {
     text += `👑 *Payer:* ${wizardState.payer || 'Harsh'} (Paid Full Bill Upfront)\n\n`;
 
     if (Array.isArray(wizardState.items) && wizardState.items.length > 0) {
-      text += `🍽️ *ITEMIZED DISHES & WHO ATE WHAT:*\n`;
+      text += `🍽️ *ITEMIZED DISHES & ALLOCATIONS:*\n`;
       wizardState.items.forEach(it => {
         const assignedNames = Array.isArray(it.assigned) && it.assigned.length > 0 ? it.assigned.join(", ") : "Everyone";
-        text += `🍲 *${it.name}* - ₹${it.price}\n   👥 Shared by: ${assignedNames}\n`;
+        text += `• *${it.name}* — ₹${it.price}\n  ↳ Shared with: ${assignedNames}\n`;
       });
       text += `\n`;
     }
@@ -1121,15 +1141,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (Array.isArray(wizardState.settlements) && wizardState.settlements.length > 0) {
       text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
       wizardState.settlements.forEach(s => {
-        text += `👤 *${s.from}* owes ${wizardState.payer || 'Harsh'}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
+        text += `• *${s.from}* owes ${wizardState.payer || 'Harsh'}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
       });
       text += `\n`;
     }
 
     if (wizardState.upiId) {
-      const upiLink = `upi://pay?pa=${encodeURIComponent(wizardState.upiId)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&cu=INR`;
-      text += `💳 *PAY VIA UPI:* \`${wizardState.upiId}\`\n`;
-      text += `⚡ *1-Tap Pay Link:* ${upiLink}\n\n`;
+      text += `💳 *Pay via UPI:* \`${wizardState.upiId}\`\n\n`;
     }
 
     text += `✨ _Calculated with SplitWise AI_`;

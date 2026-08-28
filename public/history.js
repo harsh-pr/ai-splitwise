@@ -301,29 +301,27 @@ document.addEventListener("DOMContentLoaded", () => {
     text += `💰 *Total Bill:* ₹${bill.total}\n`;
     text += `👑 *Payer:* ${bill.payer} (Paid Full Bill Upfront)\n\n`;
 
-    // 1. Detailed Dish Allocations (Who ate what) with emojis
+    // 1. Detailed Dish Allocations (Who ate what)
     if (Array.isArray(bill.items) && bill.items.length > 0) {
-      text += `🍽️ *ITEMIZED DISHES & WHO ATE WHAT:*\n`;
+      text += `🍽️ *ITEMIZED DISHES & ALLOCATIONS:*\n`;
       bill.items.forEach(it => {
         const assignedNames = Array.isArray(it.assigned) && it.assigned.length > 0 ? it.assigned.join(", ") : "Everyone";
-        text += `🍲 *${it.name}* - ₹${it.price}\n   👥 Shared by: ${assignedNames}\n`;
+        text += `• *${it.name}* — ₹${it.price}\n  ↳ Shared with: ${assignedNames}\n`;
       });
       text += `\n`;
     }
 
-    // 2. Individual Settlements Breakdown with emojis
+    // 2. Individual Settlements Breakdown
     if (Array.isArray(bill.settlements) && bill.settlements.length > 0) {
       text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
       bill.settlements.forEach(s => {
-        text += `👤 *${s.from}* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
+        text += `• *${s.from}* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
       });
       text += `\n`;
     }
 
     if (bill.upiId) {
-      const upiLink = `upi://pay?pa=${encodeURIComponent(bill.upiId)}&pn=${encodeURIComponent(bill.payer)}&cu=INR`;
-      text += `💳 *PAY VIA UPI:* \`${bill.upiId}\`\n`;
-      text += `⚡ *1-Tap Pay Link:* ${upiLink}\n\n`;
+      text += `💳 *Pay via UPI:* \`${bill.upiId}\`\n\n`;
     }
 
     text += `✨ _Calculated with SplitWise AI_`;

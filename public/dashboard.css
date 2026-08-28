@@ -2245,21 +2245,43 @@ a:active,
 }
 
 .wizard-progress-track {
-  width: 5px;
-  height: 65px;
+  display: none;
+  width: 100%;
+  height: 6px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 100px;
   overflow: hidden;
-  margin: 0 auto;
   position: relative;
 }
 
 .wizard-progress-fill {
-  width: 100%;
-  height: 20%;
-  background: linear-gradient(180deg, #34d399, #10b981);
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
   border-radius: 100px;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vertical-segments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  margin: 8px auto;
+}
+
+.seg-dot {
+  width: 6px;
+  height: 9px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.seg-dot.active {
+  background: var(--emerald-400);
+  box-shadow: 0 0 10px var(--emerald-glow);
+  height: 14px;
 }
 
 .steps-count-label {
@@ -2404,6 +2426,11 @@ a:active,
     padding: 4px 9px;
   }
 
+  .wizard-sidebar:hover .vertical-segments,
+  .wizard-sidebar:focus-within .vertical-segments {
+    display: none;
+  }
+
   .wizard-sidebar:hover .wizard-progress-bar-container,
   .wizard-sidebar:focus-within .wizard-progress-bar-container {
     width: 100%;
@@ -2414,6 +2441,7 @@ a:active,
 
   .wizard-sidebar:hover .wizard-progress-track,
   .wizard-sidebar:focus-within .wizard-progress-track {
+    display: block;
     width: 100%;
     height: 6px;
   }
@@ -2486,6 +2514,14 @@ a:active,
     font-size: 0.85rem;
   }
 
+  .vertical-segments {
+    display: none !important;
+  }
+
+  .pct-done-text {
+    display: inline !important;
+  }
+
   .wizard-progress-bar-container {
     width: 100%;
     display: block;
@@ -2493,6 +2529,7 @@ a:active,
   }
 
   .wizard-progress-track {
+    display: block !important;
     width: 100%;
     height: 6px;
     margin-bottom: 4px;
