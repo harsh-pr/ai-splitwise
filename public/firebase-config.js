@@ -1,30 +1,34 @@
 /**
  * SplitWise AI - Firebase Configuration & Auth Helpers
- * Configured with Firebase Auth (Email/Password & Google Sign-In)
- * and Guest Evaluator Demo session support.
+ * Dynamically retrieves configuration from /api/config
+ * and supports Guest Evaluator Demo session support.
  */
 
-const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "ai-splitwise",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
-  measurementId: "G-QRDKN6TS19"
-};
-
-// Initialize Firebase if loaded
 let auth = null;
 let googleProvider = null;
 
-if (typeof firebase !== 'undefined') {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+// Dynamic initialization promise to ensure configuration is loaded from environment
+const firebaseInitPromise = (async function() {
+  if (typeof firebase === 'undefined') return null;
+
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.firebase && data.firebase.apiKey) {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(data.firebase);
+        }
+        auth = firebase.auth();
+        googleProvider = new firebase.auth.GoogleAuthProvider();
+        return auth;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load Firebase config from /api/config:", e);
   }
-  auth = firebase.auth();
-  googleProvider = new firebase.auth.GoogleAuthProvider();
-}
+  return null;
+})();
 
 // Guest User definition for 1-Click Demo mode
 const GUEST_USER = {
@@ -58,17 +62,4 @@ function loginAsGuest(customName = "Guest Evaluator") {
   sessionStorage.setItem("guest_display_name", customName);
   localStorage.setItem("splitwise_user", JSON.stringify({ ...GUEST_USER, displayName: customName }));
   window.location.href = "/dashboard.html";
-}
-
-function logoutUser() {
-  sessionStorage.removeItem("is_guest_session");
-  sessionStorage.removeItem("guest_display_name");
-  localStorage.removeItem("splitwise_user");
-  if (auth) {
-    auth.signOut().finally(() => {
-      window.location.href = "/auth.html";
-    });
-  } else {
-    window.location.href = "/auth.html";
-  }
 }

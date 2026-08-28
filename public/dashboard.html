@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Dashboard - SplitWise AI</title>
-  <meta name="description" content="SplitWise AI Interactive Dashboard. Upload bills, chat with Gemini AI, and generate dynamic UPI QR settlements.">
+  <meta name="description"
+    content="SplitWise AI Interactive Dashboard. Upload bills, chat with Gemini AI, and generate dynamic UPI QR settlements.">
   <meta name="theme-color" content="#0b0f19">
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -18,7 +20,9 @@
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <!-- Firebase Auth SDKs -->
@@ -29,6 +33,7 @@
   <link rel="stylesheet" href="/landing.css?v=3.0">
   <link rel="stylesheet" href="/dashboard.css?v=3.0">
 </head>
+
 <body class="dark-theme dashboard-body">
   <!-- Background Glow Orbs -->
   <div class="glow-mesh" aria-hidden="true">
@@ -65,7 +70,7 @@
           </button>
           <div class="split-dropdown-menu" id="split-dropdown-menu">
             <div class="dropdown-header">
-              <span>Choose Category to Split (Direct to Upload)</span>
+              <span>Choose Category to Split</span>
             </div>
             <button class="split-drop-item" data-category="restaurant" data-catname="Restaurant & Dining">
               <span class="drop-icon cat-emerald"><i class="ph-bold ph-fork-knife"></i></span>
@@ -126,7 +131,8 @@
       <!-- User Profile Dropdown Menu (Patterned after attendance-tracker Kokonut UI) -->
       <div class="dash-user-actions">
         <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
-          <button class="profile-pill-trigger" id="profile-pill-trigger" aria-label="User profile menu" aria-haspopup="true" aria-expanded="false">
+          <button class="profile-pill-trigger" id="profile-pill-trigger" aria-label="User profile menu"
+            aria-haspopup="true" aria-expanded="false">
             <div class="profile-avatar-ring">
               <div class="profile-avatar-inner" id="user-avatar-initial">H</div>
             </div>
@@ -216,7 +222,7 @@
 
   <!-- Main Content Area: Split Wizard Stage & Right Progress Panel -->
   <div class="dash-layout container">
-    
+
     <!-- LEFT COLUMN: The 5-Step Interactive Wizard -->
     <main class="wizard-main-stage" id="wizard-stage">
 
@@ -324,14 +330,14 @@
         <!-- Receipt Upload Dropzone -->
         <div class="upload-dropzone glass-panel" id="upload-dropzone">
           <input type="file" id="receipt-file-input" accept="image/*,application/pdf" class="hidden-file-input">
-          
+
           <div class="dropzone-idle" id="dropzone-idle">
             <div class="drop-icon-circle">
               <i class="ph-bold ph-cloud-arrow-up"></i>
             </div>
             <h3>Drag & Drop your receipt here</h3>
             <p>Supports JPG, PNG, WebP or PDF bills up to 10MB</p>
-            
+
             <div class="upload-btn-row">
               <button class="btn btn-outline" id="browse-files-btn">
                 <i class="ph-bold ph-folder-open"></i>
@@ -415,7 +421,8 @@
                 <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
                 <div class="msg-body">
                   <p>Ready to split! Upload or scan your bill to automatically extract items and amounts.</p>
-                  <p>Once scanned, tell me who ordered what (e.g. <em>"Harsh and Shreya shared pizza, Rohit had drinks"</em>) or add friends using the bar above.</p>
+                  <p>Once scanned, tell me who ordered what (e.g. <em>"Harsh and Shreya shared pizza, Rohit had
+                      drinks"</em>) or add friends using the bar above.</p>
                 </div>
               </div>
             </div>
@@ -435,7 +442,8 @@
 
             <!-- Chat Input Bar -->
             <form class="chat-input-bar" id="chat-form">
-              <input type="text" id="chat-input" placeholder="Type instructions (e.g., 'Aarav paid, split pizza with Neha')..." autocomplete="off">
+              <input type="text" id="chat-input"
+                placeholder="Type instructions (e.g., 'Aarav paid, split pizza with Neha')..." autocomplete="off">
               <button type="submit" class="btn-chat-send" id="chat-send-btn" aria-label="Send prompt">
                 <i class="ph-bold ph-paper-plane-right"></i>
               </button>
@@ -675,4 +683,5 @@
 
   <script src="/dashboard.js?v=3.0"></script>
 </body>
+
 </html>

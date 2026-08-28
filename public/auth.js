@@ -157,6 +157,10 @@ document.addEventListener("DOMContentLoaded", () => {
     submitBtnText.textContent = isLoginMode ? "Signing In..." : "Creating Account...";
 
     try {
+      if (typeof firebaseInitPromise !== 'undefined' && !auth) {
+        await firebaseInitPromise;
+      }
+
       if (isLoginMode) {
         // Sign In
         if (auth) {
@@ -185,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
             email: cred.user.email
           }));
         } else {
+          // Fallback simulation if Firebase offline
           localStorage.setItem("splitwise_user", JSON.stringify({
             uid: "local_" + Date.now(),
             displayName: name,
@@ -203,6 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Google Sign-In with Popup
   googleAuthBtn.addEventListener("click", async () => {
     clearError();
+    if (typeof firebaseInitPromise !== 'undefined' && (!auth || !googleProvider)) {
+      await firebaseInitPromise;
+    }
     if (!auth || !googleProvider) {
       showError("Firebase service is initializing. Please try again or use Guest Demo.");
       return;
