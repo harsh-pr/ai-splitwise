@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const authName = document.getElementById("auth-name");
   const authEmail = document.getElementById("auth-email");
   const authPassword = document.getElementById("auth-password");
+  const forgotPasswordBtn = document.getElementById("forgot-password-btn");
   const pwdToggleBtn = document.getElementById("pwd-toggle-btn");
   const pwdEyeIcon = document.getElementById("pwd-eye-icon");
   const pwdReqBox = document.getElementById("pwd-requirements-box");
@@ -37,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let isLoginMode = true;
 
-  // Toggle Tab
+  // Toggle Tab: Show/hide fields & Forgot Password button
   function setTab(isLogin) {
     isLoginMode = isLogin;
     clearError();
@@ -47,18 +48,44 @@ document.addEventListener("DOMContentLoaded", () => {
       tabRegisterBtn.classList.remove("active");
       nameGroup.classList.add("hidden");
       pwdReqBox.classList.add("hidden");
+      forgotPasswordBtn?.classList.remove("hidden");
       submitBtnText.textContent = "Sign In";
     } else {
       tabRegisterBtn.classList.add("active");
       tabLoginBtn.classList.remove("active");
       nameGroup.classList.remove("hidden");
       pwdReqBox.classList.remove("hidden");
+      forgotPasswordBtn?.classList.add("hidden");
       submitBtnText.textContent = "Create Account";
     }
   }
 
   tabLoginBtn.addEventListener("click", () => setTab(true));
   tabRegisterBtn.addEventListener("click", () => setTab(false));
+
+  // Forgot Password Action
+  forgotPasswordBtn?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const email = authEmail?.value.trim();
+    if (!email) {
+      showError("Please enter your email address above, then click 'Forgot?' to receive a reset link.");
+      authEmail?.focus();
+      return;
+    }
+
+    try {
+      if (auth) {
+        await auth.sendPasswordResetEmail(email);
+        showSuccess(`Password reset email sent to ${email}! Please check your inbox.`);
+      } else {
+        showError("Firebase authentication service is currently offline.");
+      }
+    } catch (err) {
+      showError(mapFirebaseError(err));
+    }
+  });
 
   // Show / Hide Password
   pwdToggleBtn.addEventListener("click", () => {
@@ -102,17 +129,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Error Banner Helper
+  // Error & Success Banner Helpers
   function showError(msg) {
     if (authErrorBox && authErrorText) {
+      authErrorBox.className = "auth-alert";
+      const icon = authErrorBox.querySelector("i");
+      if (icon) icon.className = "ph-bold ph-warning-circle";
       authErrorText.textContent = msg;
-      authErrorBox.classList.remove("hidden");
+    }
+  }
+
+  function showSuccess(msg) {
+    if (authErrorBox && authErrorText) {
+      authErrorBox.className = "auth-alert success";
+      const icon = authErrorBox.querySelector("i");
+      if (icon) icon.className = "ph-bold ph-check-circle";
+      authErrorText.textContent = msg;
     }
   }
 
   function clearError() {
     if (authErrorBox) {
-      authErrorBox.classList.add("hidden");
+      authErrorBox.className = "auth-alert hidden";
     }
   }
 

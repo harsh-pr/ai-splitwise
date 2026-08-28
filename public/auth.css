@@ -308,9 +308,34 @@ body.auth-page-body {
   color: #fb7185;
   font-size: 0.85rem;
   margin-bottom: 16px;
+  transition: all var(--trans-fast);
+}
+
+.auth-alert.success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
 }
 
 .auth-alert.hidden {
+  display: none !important;
+}
+
+.forgot-link {
+  font-size: 0.8rem;
+  color: var(--emerald-400);
+  font-weight: 600;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: all var(--trans-fast);
+}
+
+.forgot-link:hover {
+  color: #fff;
+  text-decoration: underline !important;
+}
+
+.forgot-link.hidden {
   display: none !important;
 }
 
