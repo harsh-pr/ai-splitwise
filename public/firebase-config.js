@@ -46,7 +46,6 @@ async function getAuthenticatedFirebaseUser() {
       unsub();
       resolve(u);
     });
-    // Timeout fallback in case auth state doesn't change within 2s
     setTimeout(() => resolve(auth.currentUser || null), 2000);
   });
 }
@@ -202,7 +201,8 @@ async function loadUserBills() {
       for (const localBill of localBills) {
         if (localBill && localBill.id && !cloudIds.has(localBill.id)) {
           try {
-            await db.collection("users").doc(user.uid).collection("bills").doc(localBill.id).set(localBill, { merge: true });
+            const cleanBill = JSON.parse(JSON.stringify(localBill));
+            await db.collection("users").doc(user.uid).collection("bills").doc(localBill.id).set(cleanBill, { merge: true });
             cloudBills.push(localBill);
             cloudIds.add(localBill.id);
           } catch (syncErr) {
@@ -261,21 +261,23 @@ async function saveBillRecord(bill) {
           title: bill.title || "Bill Split",
           category: bill.category || "restaurant",
           categoryName: bill.categoryName || "Restaurant & Dining",
-          total: bill.total || 0,
-          tax: bill.tax || 0,
+          total: Number(bill.total) || 0,
+          tax: Number(bill.tax) || 0,
           payer: bill.payer || "Harsh",
-          payerShare: bill.payerShare || 0,
-          participants: bill.participants || ["Harsh"],
-          items: bill.items || [],
-          settlements: bill.settlements || [],
+          payerShare: Number(bill.payerShare) || 0,
+          participants: Array.isArray(bill.participants) ? bill.participants : ["Harsh"],
+          items: Array.isArray(bill.items) ? bill.items : [],
+          settlements: Array.isArray(bill.settlements) ? bill.settlements : [],
           date: bill.date || new Date().toISOString().split("T")[0],
           createdAt: bill.createdAt || Date.now(),
           updatedAt: Date.now()
         };
-        await db.collection("users").doc(user.uid).collection("bills").doc(bill.id).set(billData, { merge: true });
+        // Sanitize data: completely eliminate any `undefined` values that break Firestore
+        const cleanData = JSON.parse(JSON.stringify(billData));
+        await db.collection("users").doc(user.uid).collection("bills").doc(bill.id).set(cleanData, { merge: true });
         console.log(`[Firestore] Bill ${bill.id} successfully synced to cloud for user ${user.uid}`);
       } catch (err) {
-        console.warn("[Firestore] Could not sync bill to cloud:", err);
+        console.error("[Firestore] Could not sync bill to cloud:", err);
       }
     }
   }
@@ -302,7 +304,7 @@ async function deleteBillRecord(billId) {
         await db.collection("users").doc(user.uid).collection("bills").doc(billId).delete();
         console.log(`[Firestore] Bill ${billId} deleted from cloud for user ${user.uid}`);
       } catch (err) {
-        console.warn("[Firestore] Could not delete bill from cloud:", err);
+        console.error("[Firestore] Could not delete bill from cloud:", err);
       }
     }
   }
@@ -330,13 +332,43 @@ async function updateBillSettlement(billId, settlements) {
     const user = await getAuthenticatedFirebaseUser();
     if (user && db) {
       try {
+        const cleanSettlements = JSON.parse(JSON.stringify(settlements));
         await db.collection("users").doc(user.uid).collection("bills").doc(billId).update({
-          settlements: settlements,
+          settlements: cleanSettlements,
           updatedAt: Date.now()
         });
+        console.log(`[Firestore] Settlements updated for bill ${billId}`);
       } catch (err) {
-        console.warn("[Firestore] Could not update settlement status:", err);
+        console.error("[Firestore] Could not update settlement status:", err);
       }
+    }
+  }
+}
+
+/**
+ * Completely delete all old history data from Firebase Firestore and local cache
+ */
+async function clearAllUserCloudData() {
+  // 1. Wipe local storage
+  localStorage.removeItem("splitwise_bills_history");
+  localStorage.removeItem("splitwise_active_bill_id");
+  updateProfileTotalSettled([]);
+
+  // 2. If authenticated with Firebase, delete all cloud bill documents in batch
+  const user = await getAuthenticatedFirebaseUser();
+  if (user && db) {
+    try {
+      const snapshot = await db.collection("users").doc(user.uid).collection("bills").get();
+      if (!snapshot.empty) {
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+      }
+      console.log(`[Firestore] All cloud bills deleted successfully for user ${user.uid}`);
+    } catch (err) {
+      console.error("[Firestore] Could not clear all user cloud data:", err);
     }
   }
 }

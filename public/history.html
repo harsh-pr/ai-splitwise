@@ -223,10 +223,16 @@
           <h1>Saved Bills & History</h1>
           <p>Review past itemized splits, debt balances, and payment verification records.</p>
         </div>
-        <a href="/dashboard.html" class="btn btn-large btn-gradient">
-          <i class="ph-bold ph-plus"></i>
-          <span>Create New Split</span>
-        </a>
+        <div class="history-actions-row">
+          <button class="btn btn-outline-danger" id="clear-all-history-btn" title="Delete all history from Firebase and start fresh">
+            <i class="ph-bold ph-trash"></i>
+            <span>Clear All History</span>
+          </button>
+          <a href="/dashboard.html" class="btn btn-large btn-gradient">
+            <i class="ph-bold ph-plus"></i>
+            <span>Create New Split</span>
+          </a>
+        </div>
       </div>
 
       <!-- Lifetime Aggregate Statistics Cards -->
