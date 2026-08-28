@@ -5,6 +5,45 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Auth Guard: If not logged in and not guest, redirect to /auth.html
+  const user = getCurrentUser();
+  if (!user) {
+    window.location.href = "/auth.html";
+    return;
+  }
+
+  // Populate User Profile Header and Dropdown
+  const userAvatarInner = document.getElementById("user-avatar-initial");
+  const userDisplayName = document.getElementById("user-display-name");
+  const userStatusLabel = document.getElementById("user-status-label");
+  const menuAvatarLg = document.getElementById("menu-avatar-lg");
+  const menuUserName = document.getElementById("menu-user-name");
+  const menuUserEmail = document.getElementById("menu-user-email");
+  const menuStatusBadge = document.getElementById("menu-status-badge");
+  const menuGuestBox = document.getElementById("menu-guest-box");
+
+  if (user) {
+    const name = user.displayName || (user.isGuest ? "Guest Evaluator" : "Harsh Prasad");
+    const initial = name.charAt(0).toUpperCase();
+    const email = user.email || (user.isGuest ? "guest@splitwise.demo" : "harsh@splitwise.ai");
+
+    if (userAvatarInner) userAvatarInner.textContent = initial;
+    if (userDisplayName) userDisplayName.textContent = name;
+    if (menuAvatarLg) menuAvatarLg.textContent = initial;
+    if (menuUserName) menuUserName.textContent = name;
+    if (menuUserEmail) menuUserEmail.textContent = email;
+
+    if (user.isGuest) {
+      if (userStatusLabel) userStatusLabel.textContent = "Demo Mode";
+      if (menuStatusBadge) menuStatusBadge.textContent = "Guest Mode";
+      if (menuGuestBox) menuGuestBox.classList.remove("hidden");
+    } else {
+      if (userStatusLabel) userStatusLabel.textContent = "Online";
+      if (menuStatusBadge) menuStatusBadge.textContent = "Active User";
+      if (menuGuestBox) menuGuestBox.classList.add("hidden");
+    }
+  }
+
   // Category Icons Map
   const categoryIconMap = {
     restaurant: { icon: 'ph-fork-knife', colorClass: 'cat-emerald' },
@@ -339,32 +378,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Universal Sign Out
-  function executeHistorySignOut() {
-    sessionStorage.clear();
-    localStorage.removeItem("splitwise_user");
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
-      try {
-        firebase.auth().signOut().catch(() => {}).finally(() => {
-          window.location.href = "/auth.html";
-        });
-        return;
-      } catch (err) {
-        console.warn("Firebase signout error:", err);
-      }
-    }
-    window.location.href = "/auth.html";
-  }
+  // Sign Out Handler
+  document.getElementById("btn-sign-out")?.addEventListener("click", () => {
+    if (typeof logoutUser === "function") logoutUser();
+  });
+  document.getElementById("logout-btn")?.addEventListener("click", () => {
+    if (typeof logoutUser === "function") logoutUser();
+  });
 
   // Initial Render from local cache
   renderHistory(false);
 
-  // Sync with Firestore Cloud when Auth resolves
-  if (typeof firebase !== 'undefined') {
+  // Sync with Firestore Cloud when Auth resolves ONLY if NOT in Guest/Demo mode
+  if (typeof firebase !== 'undefined' && !user.isGuest) {
     firebaseInitPromise.then(() => {
       if (auth) {
-        auth.onAuthStateChanged(async (user) => {
-          if (user) {
+        auth.onAuthStateChanged(async (cloudUser) => {
+          if (cloudUser && !getCurrentUser()?.isGuest) {
             await renderHistory(true);
           }
         });

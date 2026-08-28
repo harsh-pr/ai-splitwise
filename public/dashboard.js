@@ -62,11 +62,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user.isGuest) {
       if (userStatusLabel) userStatusLabel.textContent = "Demo Mode";
       if (menuStatusBadge) menuStatusBadge.textContent = "Guest Mode";
-      if (menuGuestBox) menuGuestBox.style.display = "block";
+      if (menuGuestBox) menuGuestBox.classList.remove("hidden");
     } else {
       if (userStatusLabel) userStatusLabel.textContent = "Online";
       if (menuStatusBadge) menuStatusBadge.textContent = "Active User";
-      if (menuGuestBox) menuGuestBox.style.display = "none";
+      if (menuGuestBox) menuGuestBox.classList.add("hidden");
     }
   } else {
     // If no session exists, redirect to auth page
@@ -136,25 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
     goToStep(1);
   });
 
-  // Universal Sign Out
-  function executeSignOut() {
-    sessionStorage.clear();
-    localStorage.removeItem("splitwise_user");
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
-      try {
-        firebase.auth().signOut().catch(() => {}).finally(() => {
-          window.location.href = "/auth.html";
-        });
-        return;
-      } catch (err) {
-        console.warn("Firebase signout error:", err);
-      }
-    }
-    window.location.href = "/auth.html";
-  }
-
-  logoutBtn?.addEventListener("click", executeSignOut);
-  document.getElementById("btn-sign-out")?.addEventListener("click", executeSignOut);
+  // Sign Out Handlers
+  logoutBtn?.addEventListener("click", () => {
+    if (typeof logoutUser === "function") logoutUser();
+  });
+  document.getElementById("btn-sign-out")?.addEventListener("click", () => {
+    if (typeof logoutUser === "function") logoutUser();
+  });
 
   // Category Selection inside Split Dropdown -> Directs to Step 2 (Upload Bill)
   document.querySelectorAll(".split-drop-item").forEach(item => {

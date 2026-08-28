@@ -51,9 +51,7 @@ function getCurrentUser() {
     const savedName = sessionStorage.getItem("guest_display_name") || "Guest Evaluator";
     return { ...GUEST_USER, displayName: savedName };
   }
-  if (auth && auth.currentUser) {
-    return auth.currentUser;
-  }
+  
   // Check localStorage for persisted user profile
   const stored = localStorage.getItem("splitwise_user");
   if (stored) {
@@ -63,10 +61,19 @@ function getCurrentUser() {
       if (parsed && isGuest) return parsed;
     } catch (e) { return null; }
   }
+
+  if (auth && auth.currentUser) {
+    return auth.currentUser;
+  }
+
   return null;
 }
 
 function loginAsGuest(customName = "Guest Evaluator") {
+  // Ensure previous Firebase session is completely cleared so it won't bleed into demo mode
+  if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
+    try { firebase.auth().signOut().catch(() => {}); } catch (e) {}
+  }
   sessionStorage.setItem("is_guest_session", "true");
   sessionStorage.setItem("guest_display_name", customName);
   localStorage.setItem("is_guest_mode", "true");
@@ -79,6 +86,7 @@ function logoutUser() {
   localStorage.removeItem("splitwise_user");
   localStorage.removeItem("is_guest_mode");
   localStorage.removeItem("is_guest_session");
+  localStorage.removeItem("guest_display_name");
   localStorage.removeItem("splitwise_active_bill_id");
 
   if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
@@ -125,15 +133,20 @@ function setLocalBills(bills) {
 }
 
 /**
- * Load user bills: Fetches from Firebase Firestore if authenticated,
+ * Load user bills: Fetches from Firebase Firestore if authenticated AND not in guest mode,
  * and seamlessly synchronizes with local storage cache.
  */
 async function loadUserBills() {
+  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+  if (isGuest) {
+    return getLocalBills();
+  }
+
   await firebaseInitPromise;
   const user = auth?.currentUser;
 
-  // If user is authenticated in Firebase, load from Firestore
-  if (user && db) {
+  // If user is authenticated in Firebase and NOT in guest mode, load from Firestore
+  if (user && db && !isGuest) {
     try {
       const snapshot = await db.collection("users").doc(user.uid).collection("bills").orderBy("createdAt", "desc").get();
       const cloudBills = [];
@@ -151,7 +164,7 @@ async function loadUserBills() {
     }
   }
 
-  // Guest / Demo Mode or offline fallback
+  // Fallback to local storage
   return getLocalBills();
 }
 
@@ -160,6 +173,8 @@ async function loadUserBills() {
  */
 async function saveBillRecord(bill) {
   if (!bill || !bill.id) return;
+
+  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
 
   // 1. Update local cache first for instant UI response
   const localBills = getLocalBills();
@@ -171,30 +186,32 @@ async function saveBillRecord(bill) {
   }
   setLocalBills(localBills);
 
-  // 2. If authenticated, persist to Firebase Firestore
-  await firebaseInitPromise;
-  const user = auth?.currentUser;
-  if (user && db) {
-    try {
-      const billData = {
-        title: bill.title || "Bill Split",
-        category: bill.category || "restaurant",
-        categoryName: bill.categoryName || "Restaurant & Dining",
-        total: bill.total || 0,
-        tax: bill.tax || 0,
-        payer: bill.payer || "Harsh",
-        payerShare: bill.payerShare || 0,
-        participants: bill.participants || ["Harsh"],
-        items: bill.items || [],
-        settlements: bill.settlements || [],
-        date: bill.date || new Date().toISOString().split("T")[0],
-        createdAt: bill.createdAt || Date.now(),
-        updatedAt: Date.now()
-      };
-      await db.collection("users").doc(user.uid).collection("bills").doc(bill.id).set(billData, { merge: true });
-      console.log(`[Firestore] Bill ${bill.id} successfully synced to cloud for user ${user.uid}`);
-    } catch (err) {
-      console.warn("[Firestore] Could not sync bill to cloud:", err);
+  // 2. Only if authenticated and NOT guest, persist to Firebase Firestore
+  if (!isGuest) {
+    await firebaseInitPromise;
+    const user = auth?.currentUser;
+    if (user && db) {
+      try {
+        const billData = {
+          title: bill.title || "Bill Split",
+          category: bill.category || "restaurant",
+          categoryName: bill.categoryName || "Restaurant & Dining",
+          total: bill.total || 0,
+          tax: bill.tax || 0,
+          payer: bill.payer || "Harsh",
+          payerShare: bill.payerShare || 0,
+          participants: bill.participants || ["Harsh"],
+          items: bill.items || [],
+          settlements: bill.settlements || [],
+          date: bill.date || new Date().toISOString().split("T")[0],
+          createdAt: bill.createdAt || Date.now(),
+          updatedAt: Date.now()
+        };
+        await db.collection("users").doc(user.uid).collection("bills").doc(bill.id).set(billData, { merge: true });
+        console.log(`[Firestore] Bill ${bill.id} successfully synced to cloud for user ${user.uid}`);
+      } catch (err) {
+        console.warn("[Firestore] Could not sync bill to cloud:", err);
+      }
     }
   }
 }
@@ -205,19 +222,23 @@ async function saveBillRecord(bill) {
 async function deleteBillRecord(billId) {
   if (!billId) return;
 
+  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+
   // 1. Remove from local cache
   const localBills = getLocalBills().filter(b => b.id !== billId);
   setLocalBills(localBills);
 
-  // 2. If authenticated, delete from Firebase Firestore
-  await firebaseInitPromise;
-  const user = auth?.currentUser;
-  if (user && db) {
-    try {
-      await db.collection("users").doc(user.uid).collection("bills").doc(billId).delete();
-      console.log(`[Firestore] Bill ${billId} deleted from cloud for user ${user.uid}`);
-    } catch (err) {
-      console.warn("[Firestore] Could not delete bill from cloud:", err);
+  // 2. Only if authenticated and NOT guest, delete from Firebase Firestore
+  if (!isGuest) {
+    await firebaseInitPromise;
+    const user = auth?.currentUser;
+    if (user && db) {
+      try {
+        await db.collection("users").doc(user.uid).collection("bills").doc(billId).delete();
+        console.log(`[Firestore] Bill ${billId} deleted from cloud for user ${user.uid}`);
+      } catch (err) {
+        console.warn("[Firestore] Could not delete bill from cloud:", err);
+      }
     }
   }
 }
@@ -228,6 +249,8 @@ async function deleteBillRecord(billId) {
 async function updateBillSettlement(billId, settlements) {
   if (!billId || !settlements) return;
 
+  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+
   // 1. Update local cache
   const localBills = getLocalBills();
   const target = localBills.find(b => b.id === billId);
@@ -236,17 +259,19 @@ async function updateBillSettlement(billId, settlements) {
     setLocalBills(localBills);
   }
 
-  // 2. If authenticated, update in Firestore
-  await firebaseInitPromise;
-  const user = auth?.currentUser;
-  if (user && db) {
-    try {
-      await db.collection("users").doc(user.uid).collection("bills").doc(billId).update({
-        settlements: settlements,
-        updatedAt: Date.now()
-      });
-    } catch (err) {
-      console.warn("[Firestore] Could not update settlement status:", err);
+  // 2. Only if authenticated and NOT guest, update in Firestore
+  if (!isGuest) {
+    await firebaseInitPromise;
+    const user = auth?.currentUser;
+    if (user && db) {
+      try {
+        await db.collection("users").doc(user.uid).collection("bills").doc(billId).update({
+          settlements: settlements,
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        console.warn("[Firestore] Could not update settlement status:", err);
+      }
     }
   }
 }
