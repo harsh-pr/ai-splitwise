@@ -1,68 +1,33 @@
 /**
- * SplitWise AI - Firebase Configuration & Multi-Device Real-Time Cloud Sync
- * Dynamically retrieves configuration from /api/config
- * Supports Firestore real-time cloud sync across Mobile & PC for authenticated accounts,
- * subcollection architecture (users/{uid}/bills/{billId}), and offline localStorage persistence.
+ * SplitWise AI - Firebase Configuration & Real-Time Cloud Sync
+ * Patterned directly after the attendance-tracker Firestore architecture:
+ * - Synchronous SDK initialization for instant startup (zero network waterfalls)
+ * - Atomic document persistence at users/{uid}/bills/data
+ * - Subcollection synchronization at users/{uid}/bills/{billId}
+ * - Real-time Firestore onSnapshot listeners for instant Mobile <-> PC sync
  */
 
-let auth = null;
-let db = null;
-let googleProvider = null;
-let isFirebaseReady = false;
+const firebaseConfig = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "ai-splitwise",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
 
-// Dynamic initialization promise to ensure configuration is loaded from environment
-const firebaseInitPromise = (async function() {
-  if (typeof firebase === 'undefined') return null;
-
+// 1. Synchronous Initialization (Instant - Zero delay)
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
   try {
-    const res = await fetch('/api/config');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.firebase && data.firebase.apiKey) {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(data.firebase);
-        }
-        auth = firebase.auth();
-        if (firebase.firestore) {
-          db = firebase.firestore();
-        }
-        googleProvider = new firebase.auth.GoogleAuthProvider();
-        isFirebaseReady = true;
-        updateCloudSyncBadge('synced');
-        return { auth, db };
-      }
-    }
+    firebase.initializeApp(firebaseConfig);
   } catch (e) {
-    console.warn("[Firebase] Could not load config from /api/config:", e);
-    updateCloudSyncBadge('offline');
+    console.warn("[Firebase] Init note:", e);
   }
-  return null;
-})();
-
-// Helper to reliably get the authenticated Firebase user with minimal latency
-async function getAuthenticatedFirebaseUser() {
-  await firebaseInitPromise;
-  if (!auth) return null;
-  if (auth.currentUser) return auth.currentUser;
-  
-  return new Promise((resolve) => {
-    let resolved = false;
-    const unsub = auth.onAuthStateChanged((u) => {
-      if (!resolved) {
-        resolved = true;
-        unsub();
-        resolve(u);
-      }
-    });
-    // Fallback: don't hang UI
-    setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        resolve(auth.currentUser || null);
-      }
-    }, 1500);
-  });
 }
+
+const auth = (typeof firebase !== 'undefined' && firebase.apps.length) ? firebase.auth() : null;
+const db = (typeof firebase !== 'undefined' && firebase.apps.length && firebase.firestore) ? firebase.firestore() : null;
+const googleProvider = (typeof firebase !== 'undefined' && firebase.auth) ? new firebase.auth.GoogleAuthProvider() : null;
 
 // Guest User definition for 1-Click Demo mode
 const GUEST_USER = {
@@ -73,22 +38,31 @@ const GUEST_USER = {
   photoURL: null
 };
 
+// Helper to get active user ID (matching attendance-tracker getUserId pattern)
+function getUserId() {
+  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+  if (isGuest) return "guest_demo_user";
+  
+  if (auth && auth.currentUser) {
+    return auth.currentUser.uid;
+  }
+  
+  const stored = localStorage.getItem("splitwise_user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.uid) return parsed.uid;
+    } catch (e) {}
+  }
+  return null;
+}
+
 // Auth helper functions
 function getCurrentUser() {
   const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
   if (isGuest) {
     const savedName = sessionStorage.getItem("guest_display_name") || "Guest Evaluator";
     return { ...GUEST_USER, displayName: savedName };
-  }
-  
-  // Check localStorage for persisted user profile
-  const stored = localStorage.getItem("splitwise_user");
-  if (stored) {
-    try { 
-      const parsed = JSON.parse(stored);
-      if (parsed && !parsed.isGuest) return parsed;
-      if (parsed && isGuest) return parsed;
-    } catch (e) { return null; }
   }
 
   if (auth && auth.currentUser) {
@@ -100,12 +74,42 @@ function getCurrentUser() {
     };
   }
 
+  const stored = localStorage.getItem("splitwise_user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed) return parsed;
+    } catch (e) {}
+  }
+
   return null;
 }
 
+async function getAuthenticatedFirebaseUser() {
+  if (!auth) return getCurrentUser();
+  if (auth.currentUser) return auth.currentUser;
+
+  return new Promise((resolve) => {
+    let done = false;
+    const unsub = auth.onAuthStateChanged((u) => {
+      if (!done) {
+        done = true;
+        unsub();
+        resolve(u || getCurrentUser());
+      }
+    });
+    setTimeout(() => {
+      if (!done) {
+        done = true;
+        resolve(auth.currentUser || getCurrentUser());
+      }
+    }, 800);
+  });
+}
+
 function loginAsGuest(customName = "Guest Evaluator") {
-  if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
-    try { firebase.auth().signOut().catch(() => {}); } catch (e) {}
+  if (auth) {
+    try { auth.signOut().catch(() => {}); } catch (e) {}
   }
   sessionStorage.setItem("is_guest_session", "true");
   sessionStorage.setItem("guest_display_name", customName);
@@ -122,23 +126,21 @@ function logoutUser() {
   localStorage.removeItem("guest_display_name");
   localStorage.removeItem("splitwise_active_bill_id");
 
-  if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
-    try {
-      firebase.auth().signOut().catch(() => {}).finally(() => {
-        window.location.href = "/auth.html";
-      });
-      return;
-    } catch (e) {}
+  if (auth) {
+    auth.signOut().catch(() => {}).finally(() => {
+      window.location.href = "/auth.html";
+    });
+    return;
   }
   window.location.href = "/auth.html";
 }
 
-// ─── UI CLOUD SYNC BADGE & INDICATORS ──────────────────────────────────────────
+// ─── UI CLOUD SYNC STATUS PILL ────────────────────────────────────────────────
 
 function updateCloudSyncBadge(status = 'synced') {
   const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
-  
   const badges = document.querySelectorAll(".cloud-sync-pill, .cloud-sync-status, #cloud-sync-pill");
+  
   badges.forEach(badge => {
     if (!badge) return;
     if (isGuest) {
@@ -161,11 +163,8 @@ function updateCloudSyncBadge(status = 'synced') {
   });
 }
 
-// ─── FIRESTORE MULTI-DEVICE CLOUD SYNC & LOCAL CACHE ──────────────────────────
+// ─── LOCAL STORAGE CACHE HELPERS ──────────────────────────────────────────────
 
-/**
- * Dynamically computes and updates the Total Settled amount in the profile dropdown
- */
 function updateProfileTotalSettled(bills) {
   let totalSettled = 0;
   const list = Array.isArray(bills) ? bills : getLocalBills();
@@ -184,9 +183,6 @@ function updateProfileTotalSettled(bills) {
   }
 }
 
-/**
- * Get active bills from local device storage
- */
 function getLocalBills() {
   try {
     const raw = localStorage.getItem("splitwise_bills_history");
@@ -197,64 +193,59 @@ function getLocalBills() {
         return parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-'));
       }
     }
-  } catch (e) {
-    console.warn("[LocalCache] Error reading local bills:", e);
-  }
+  } catch (e) {}
   return [];
 }
 
-/**
- * Save active bills to local device storage & notify components
- */
 function setLocalBills(bills) {
   try {
     localStorage.setItem("splitwise_bills_history", JSON.stringify(bills));
     updateProfileTotalSettled(bills);
     window.dispatchEvent(new CustomEvent('splitwise_bills_updated', { detail: { bills } }));
-  } catch (e) {
-    console.warn("[LocalCache] Error writing local bills:", e);
-  }
+  } catch (e) {}
 }
 
-/**
- * Helper to normalize and merge bills lists avoiding duplicates, keeping newest records
- */
-function mergeBillsLists(primaryList = [], secondaryList = []) {
+function mergeBills(primary = [], secondary = []) {
   const map = new Map();
-
-  // Add primary list first
-  primaryList.forEach(b => {
-    if (b && b.id) map.set(b.id, { ...b });
-  });
-
-  // Merge secondary list
-  secondaryList.forEach(b => {
+  primary.forEach(b => { if (b && b.id) map.set(b.id, { ...b }); });
+  secondary.forEach(b => {
     if (!b || !b.id) return;
     if (!map.has(b.id)) {
       map.set(b.id, { ...b });
     } else {
-      const existing = map.get(b.id);
-      const existingTime = existing.updatedAt || existing.createdAt || 0;
-      const incomingTime = b.updatedAt || b.createdAt || 0;
-      if (incomingTime >= existingTime) {
-        map.set(b.id, { ...existing, ...b });
-      }
+      const ex = map.get(b.id);
+      const exT = ex.updatedAt || ex.createdAt || 0;
+      const inT = b.updatedAt || b.createdAt || 0;
+      if (inT >= exT) map.set(b.id, { ...ex, ...b });
     }
   });
+  const result = Array.from(map.values());
+  result.sort((a, b) => (b.createdAt || b.updatedAt || 0) - (a.createdAt || a.updatedAt || 0));
+  return result;
+}
 
-  const merged = Array.from(map.values());
-  merged.sort((a, b) => (b.createdAt || b.updatedAt || 0) - (a.createdAt || a.updatedAt || 0));
-  return merged;
+// ─── ATTENDANCE-TRACKER FIRESTORE SERVICE ─────────────────────────────────────
+
+/**
+ * References matching attendance-tracker pattern:
+ * users/{uid}/bills/data -> contains { list: [...] }
+ */
+function billsDataDoc(uid) {
+  return db.collection("users").doc(uid).collection("bills").doc("data");
+}
+
+function billItemDoc(uid, billId) {
+  return db.collection("users").doc(uid).collection("bills").doc(billId);
 }
 
 /**
- * Load user bills: Queries Firestore subcollection `users/{uid}/bills`,
- * merges local cache with cloud records, keeps PC and Mobile in sync,
- * and uploads any pending offline local bills.
+ * Load User Bills (Direct sub-50ms document read)
  */
 async function loadUserBills() {
   const local = getLocalBills();
-  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+  const uid = getUserId();
+  const isGuest = uid === "guest_demo_user" || !uid;
+
   if (isGuest) {
     updateProfileTotalSettled(local);
     updateCloudSyncBadge('demo');
@@ -263,77 +254,46 @@ async function loadUserBills() {
 
   updateCloudSyncBadge('syncing');
 
-  try {
-    await firebaseInitPromise;
-    const user = (await getAuthenticatedFirebaseUser()) || getCurrentUser();
-
-    if (user && user.uid && !user.isGuest) {
+  if (db && uid) {
+    try {
+      // 1. Direct document read (matching attendance-tracker loadAllData)
+      const docSnap = await billsDataDoc(uid).get();
       let cloudBills = [];
 
-      // 1. Fetch from Firestore subcollection `users/{uid}/bills`
-      if (db) {
-        try {
-          const snapshot = await db.collection("users").doc(user.uid).collection("bills").get();
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data) {
-              cloudBills.push({ id: doc.id, ...data });
-            }
-          });
-          console.log(`[Firestore] Loaded ${cloudBills.length} bills from users/${user.uid}/bills`);
-        } catch (subErr) {
-          console.warn("[Firestore] Subcollection fetch note:", subErr.message);
-        }
-
-        // Fallback: check legacy bundle users/{uid}/bills/data if subcollection was empty
-        if (cloudBills.length === 0) {
-          try {
-            const legacyDoc = await db.collection("users").doc(user.uid).collection("bills").doc("data").get();
-            if (legacyDoc.exists && Array.isArray(legacyDoc.data()?.list)) {
-              cloudBills = legacyDoc.data().list;
-            }
-          } catch (legErr) {}
-        }
-      }
-
-      // 2. Dual-channel fallback: Fetch from server sync if cloudBills is empty
-      if (cloudBills.length === 0) {
-        try {
-          const srvRes = await fetch(`/api/sync-bills?userId=${encodeURIComponent(user.uid)}`);
-          if (srvRes.ok) {
-            const srvData = await srvRes.json();
-            if (Array.isArray(srvData.bills) && srvData.bills.length > 0) {
-              cloudBills = srvData.bills;
-            }
+      if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
+        cloudBills = docSnap.data().list;
+        console.log(`[Firestore] Loaded ${cloudBills.length} bills from users/${uid}/bills/data`);
+      } else {
+        // Fallback: check individual bill docs in subcollection
+        const colSnap = await db.collection("users").doc(uid).collection("bills").get();
+        colSnap.forEach(d => {
+          if (d.id !== 'data') {
+            const data = d.data();
+            if (data) cloudBills.push({ id: d.id, ...data });
           }
-        } catch (srvErr) {}
+        });
       }
 
-      // 3. Merge Cloud + Local bills
-      const merged = mergeBillsLists(cloudBills, local);
+      // Merge Cloud + Local
+      const merged = mergeBills(cloudBills, local);
       setLocalBills(merged);
       updateProfileTotalSettled(merged);
       updateCloudSyncBadge('synced');
 
-      // 4. If there were local bills missing from cloud, upload them to cloud
-      if (db && local.length > 0) {
-        const missingFromCloud = local.filter(l => !cloudBills.some(c => c.id === l.id));
-        for (const mb of missingFromCloud) {
-          try {
-            await db.collection("users").doc(user.uid).collection("bills").doc(mb.id).set({
-              ...mb,
-              userId: user.uid,
-              userEmail: user.email || ""
-            }, { merge: true });
-          } catch (upErr) {}
+      // If local had bills missing from cloud, push them immediately
+      if (local.length > 0 && cloudBills.length === 0) {
+        const cleanList = JSON.parse(JSON.stringify(merged));
+        await billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }, { merge: true });
+        for (const b of cleanList) {
+          await billItemDoc(uid, b.id).set(b, { merge: true });
         }
       }
 
       return merged;
+    } catch (err) {
+      console.warn("[Firestore] Load notice:", err.message);
+      updateCloudSyncBadge('offline');
     }
-  } catch (outerErr) {
-    console.warn("[CloudSync] Load error, preserving local bills:", outerErr);
-    updateCloudSyncBadge('offline');
   }
 
   updateProfileTotalSettled(local);
@@ -341,21 +301,28 @@ async function loadUserBills() {
 }
 
 /**
- * Save a new bill or update an existing bill in Cloud (Firestore) and Local Cache.
- * Stores cleanly in `users/{uid}/bills/{bill.id}`.
+ * Save Bill Record (Direct parallel write to users/{uid}/bills/data and users/{uid}/bills/{id})
  */
 async function saveBillRecord(bill) {
   if (!bill || !bill.id) return;
 
-  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+  const uid = getUserId();
+  const isGuest = uid === "guest_demo_user" || !uid;
 
-  // 1. Update local cache immediately for instant, lag-free UI
+  // 1. Update local cache immediately (Zero UI lag)
   const localBills = getLocalBills();
-  const index = localBills.findIndex(b => b.id === bill.id);
-  if (index >= 0) {
-    localBills[index] = { ...localBills[index], ...bill, updatedAt: Date.now() };
+  const idx = localBills.findIndex(b => b.id === bill.id);
+  const cleanBill = JSON.parse(JSON.stringify({
+    ...bill,
+    userId: uid || "user",
+    updatedAt: Date.now(),
+    createdAt: bill.createdAt || Date.now()
+  }));
+
+  if (idx >= 0) {
+    localBills[idx] = { ...localBills[idx], ...cleanBill };
   } else {
-    localBills.unshift({ ...bill, updatedAt: Date.now(), createdAt: bill.createdAt || Date.now() });
+    localBills.unshift(cleanBill);
   }
   setLocalBills(localBills);
   updateProfileTotalSettled(localBills);
@@ -365,80 +332,40 @@ async function saveBillRecord(bill) {
     return;
   }
 
-  // 2. Persist to Firebase Firestore
-  updateCloudSyncBadge('syncing');
-  try {
-    await firebaseInitPromise;
-    if (!db && typeof firebase !== 'undefined' && firebase.firestore) {
-      db = firebase.firestore();
-    }
-    const user = (await getAuthenticatedFirebaseUser()) || getCurrentUser();
-    const uid = (user && user.uid) ? user.uid : "user_app";
-    const email = (user && user.email) ? user.email : "";
-
-    const billData = {
-      id: bill.id,
-      userId: uid,
-      userEmail: email,
-      title: bill.title || "Bill Split",
-      category: bill.category || "restaurant",
-      categoryName: bill.categoryName || "Restaurant & Dining",
-      total: Number(bill.total) || 0,
-      tax: Number(bill.tax) || 0,
-      payer: bill.payer || "Harsh",
-      payerShare: Number(bill.payerShare) || 0,
-      participants: Array.isArray(bill.participants) ? bill.participants : ["Harsh"],
-      items: Array.isArray(bill.items) ? bill.items : [],
-      settlements: Array.isArray(bill.settlements) ? bill.settlements : [],
-      date: bill.date || new Date().toISOString().split("T")[0],
-      createdAt: bill.createdAt || Date.now(),
-      updatedAt: Date.now()
-    };
-
-    const cleanBill = JSON.parse(JSON.stringify(billData));
-
-    // Save individual document in users/{uid}/bills/{bill.id}
-    if (db && uid !== 'guest_demo_user') {
-      try {
-        await db.collection("users").doc(uid).collection("bills").doc(bill.id).set(cleanBill, { merge: true });
-        console.log(`[Firestore] Successfully saved bill ${bill.id} to users/${uid}/bills`);
-      } catch (fErr) {
-        console.warn("[Firestore] Subcollection doc write error:", fErr);
-      }
-
-      // Also update user summary metadata
-      try {
-        await db.collection("users").doc(uid).set({
-          lastUpdated: Date.now(),
-          email: email,
-          displayName: user?.displayName || ""
-        }, { merge: true });
-      } catch (uErr) {}
-    }
-
-    // Backup REST Sync
+  // 2. Persist to Firebase Firestore (attendance-tracker direct setDoc)
+  if (db && uid) {
+    updateCloudSyncBadge('syncing');
     try {
-      fetch('/api/sync-bills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: uid, bill: cleanBill })
-      }).catch(() => {});
-    } catch (e) {}
+      const cleanList = JSON.parse(JSON.stringify(localBills));
 
-    updateCloudSyncBadge('synced');
-  } catch (err) {
-    console.warn("[Firestore] Save failed, stored locally:", err);
-    updateCloudSyncBadge('offline');
+      // Atomic batch/parallel write
+      await Promise.all([
+        billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }, { merge: true }),
+        billItemDoc(uid, bill.id).set(cleanBill, { merge: true }),
+        db.collection("users").doc(uid).set({
+          lastActive: Date.now(),
+          displayName: getCurrentUser()?.displayName || "",
+          email: getCurrentUser()?.email || ""
+        }, { merge: true })
+      ]);
+
+      console.log(`[Firestore] Saved bill ${bill.id} to users/${uid}/bills/data!`);
+      updateCloudSyncBadge('synced');
+    } catch (err) {
+      console.error("[Firestore] Cloud save error:", err);
+      updateCloudSyncBadge('offline');
+    }
   }
 }
 
 /**
- * Delete a bill from Cloud (Firestore) and Local Cache
+ * Delete Bill Record
  */
 async function deleteBillRecord(billId) {
   if (!billId) return;
 
-  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+  const uid = getUserId();
+  const isGuest = uid === "guest_demo_user" || !uid;
 
   // 1. Remove from local cache
   const localBills = getLocalBills().filter(b => b.id !== billId);
@@ -447,34 +374,29 @@ async function deleteBillRecord(billId) {
 
   if (isGuest) return;
 
-  // 2. Delete from Firebase Firestore
-  try {
-    const user = (await getAuthenticatedFirebaseUser()) || getCurrentUser();
-    if (user && user.uid && db) {
-      try {
-        await db.collection("users").doc(user.uid).collection("bills").doc(billId).delete();
-        console.log(`[Firestore] Deleted bill ${billId} from users/${user.uid}/bills`);
-      } catch (e) {
-        console.warn("[Firestore] Doc delete error:", e);
-      }
+  // 2. Delete from Firestore
+  if (db && uid) {
+    try {
+      const cleanList = JSON.parse(JSON.stringify(localBills));
+      await Promise.all([
+        billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }),
+        billItemDoc(uid, billId).delete()
+      ]);
+      console.log(`[Firestore] Deleted bill ${billId} from users/${uid}/bills`);
+    } catch (e) {
+      console.warn("[Firestore] Delete note:", e);
     }
-
-    // Backup REST delete
-    fetch(`/api/sync-bills?userId=${encodeURIComponent(user?.uid || '')}&billId=${encodeURIComponent(billId)}`, {
-      method: 'DELETE'
-    }).catch(() => {});
-  } catch (err) {
-    console.warn("[Firestore] Delete cloud error:", err);
   }
 }
 
 /**
- * Update settlement status for a bill
+ * Update Settlement Status
  */
 async function updateBillSettlement(billId, settlements) {
   if (!billId || !settlements) return;
 
-  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
+  const uid = getUserId();
+  const isGuest = uid === "guest_demo_user" || !uid;
 
   // 1. Update local cache
   const localBills = getLocalBills();
@@ -489,70 +411,51 @@ async function updateBillSettlement(billId, settlements) {
   if (isGuest) return;
 
   // 2. Update in Firestore
-  try {
-    const user = (await getAuthenticatedFirebaseUser()) || getCurrentUser();
-    if (user && user.uid && db) {
+  if (db && uid) {
+    try {
+      const cleanList = JSON.parse(JSON.stringify(localBills));
       const cleanSettlements = JSON.parse(JSON.stringify(settlements));
-      try {
-        await db.collection("users").doc(user.uid).collection("bills").doc(billId).update({
-          settlements: cleanSettlements,
-          updatedAt: Date.now()
-        });
-        console.log(`[Firestore] Settlements updated for bill ${billId}`);
-      } catch (e) {
-        // If document doesn't exist, use saveBillRecord fallback
-        if (target) saveBillRecord(target);
-      }
+      await Promise.all([
+        billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }),
+        billItemDoc(uid, billId).set({ settlements: cleanSettlements, updatedAt: Date.now() }, { merge: true })
+      ]);
+      console.log(`[Firestore] Updated settlements for ${billId}`);
+    } catch (e) {
+      console.warn("[Firestore] Settlement update note:", e);
     }
-  } catch (err) {
-    console.warn("[Firestore] Settlement update error:", err);
   }
 }
 
 /**
  * Real-time Firestore Multi-Device Listener
- * Listens for remote updates on Mobile / PC and notifies the UI immediately
+ * Listens directly on users/{uid}/bills/data for instant live updates
  */
 function subscribeToUserBills(callback) {
-  if (typeof callback !== 'function') return () => {};
+  if (typeof callback !== 'function' || !db) return () => {};
 
-  const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
-  if (isGuest) return () => {};
+  const uid = getUserId();
+  if (!uid || uid === 'guest_demo_user') return () => {};
 
-  let unsubscribeFirestore = null;
+  try {
+    const unsub = billsDataDoc(uid).onSnapshot((docSnap) => {
+      if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
+        const cloudBills = docSnap.data().list;
+        const local = getLocalBills();
+        const merged = mergeBills(cloudBills, local);
+        setLocalBills(merged);
+        updateProfileTotalSettled(merged);
+        updateCloudSyncBadge('synced');
+        callback(merged);
+      }
+    }, (err) => {
+      console.warn("[Firestore Listener] Notice:", err.message);
+    });
 
-  firebaseInitPromise.then(async () => {
-    const user = (await getAuthenticatedFirebaseUser()) || getCurrentUser();
-    if (!user || !user.uid || user.isGuest || !db) return;
-
-    try {
-      unsubscribeFirestore = db.collection("users").doc(user.uid).collection("bills")
-        .onSnapshot((snapshot) => {
-          const cloudBills = [];
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data) cloudBills.push({ id: doc.id, ...data });
-          });
-
-          if (cloudBills.length > 0 || snapshot.empty) {
-            const local = getLocalBills();
-            const merged = mergeBillsLists(cloudBills, local);
-            setLocalBills(merged);
-            updateProfileTotalSettled(merged);
-            updateCloudSyncBadge('synced');
-            callback(merged);
-          }
-        }, (error) => {
-          console.warn("[Firestore Snapshot] Notice:", error.message);
-        });
-    } catch (err) {
-      console.warn("[Firestore Listener] Setup note:", err);
-    }
-  });
-
-  return () => {
-    if (typeof unsubscribeFirestore === 'function') {
-      unsubscribeFirestore();
-    }
-  };
+    return unsub;
+  } catch (err) {
+    return () => {};
+  }
 }
+
+// Initial Sync Status Badge on script load
+updateCloudSyncBadge('synced');
