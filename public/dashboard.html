@@ -174,9 +174,14 @@
                 <span class="menu-item-label"><i class="ph-bold ph-user"></i> Profile Status</span>
                 <span class="menu-item-badge" id="menu-status-badge">Active</span>
               </div>
-              <div class="menu-item-row">
+              <div class="menu-item-row upi-edit-row">
                 <span class="menu-item-label"><i class="ph-bold ph-wallet"></i> Default UPI</span>
-                <span class="menu-item-val font-mono" id="menu-upi-val">harsh@okhdfcbank</span>
+                <div class="upi-val-wrap">
+                  <span class="menu-item-val font-mono" id="menu-upi-val">harsh@okhdfcbank</span>
+                  <button class="btn-edit-upi" id="btn-edit-upi" title="Change Default UPI ID">
+                    <i class="ph-bold ph-pencil-simple"></i>
+                  </button>
+                </div>
               </div>
               <div class="menu-item-row">
                 <span class="menu-item-label"><i class="ph-bold ph-chart-line-up"></i> Total Settled</span>
@@ -724,6 +729,46 @@
 
   <!-- Live Payment Notification Toast Container -->
   <div class="payment-toast-container" id="payment-toast-container"></div>
+
+  <!-- Change Default UPI Modal -->
+  <div class="history-modal-overlay hidden" id="upi-edit-modal-overlay">
+    <div class="history-modal-box glass-panel" style="max-width: 440px;">
+      <div class="history-modal-header">
+        <div class="flex-align-center" style="gap: 10px;">
+          <div class="logo-icon-wrapper sm" style="background: rgba(16, 185, 129, 0.15); color: var(--emerald-400);">
+            <i class="ph-bold ph-wallet"></i>
+          </div>
+          <h3>Change Default UPI ID</h3>
+        </div>
+        <button class="modal-close-btn" id="close-upi-modal-btn">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div style="padding: 22px 24px;">
+        <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+          Set your primary UPI ID (e.g. Google Pay, PhonePe, Paytm) to automatically generate personalized QR codes and payment requests.
+        </p>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">
+            Your UPI ID
+          </label>
+          <div class="input-with-icon" style="position: relative;">
+            <input type="text" id="custom-upi-input" placeholder="e.g. name@okhdfcbank or 9876543210@paytm" 
+              style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; color: #fff; font-family: var(--font-mono); font-size: 0.95rem; outline: none;">
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn-outline-danger" id="cancel-upi-modal-btn" style="padding: 10px 18px; border-color: rgba(255,255,255,0.15); color: var(--text-muted); background: transparent;">
+            Cancel
+          </button>
+          <button class="btn btn-gradient" id="save-upi-modal-btn" style="padding: 10px 22px;">
+            <i class="ph-bold ph-check"></i>
+            <span>Save UPI ID</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="/dashboard.js?v=3.0"></script>
 </body>

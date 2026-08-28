@@ -516,6 +516,33 @@ a:active,
   flex-shrink: 1;
 }
 
+.upi-val-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-edit-upi {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--emerald-400);
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-edit-upi:hover {
+  background: var(--emerald-500);
+  color: #fff;
+  transform: scale(1.08);
+}
+
 /* Demo Notice in Profile Menu (From attendance-tracker) */
 .guest-mode-box {
   background: rgba(245, 158, 11, 0.1);
