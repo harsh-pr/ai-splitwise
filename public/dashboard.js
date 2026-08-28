@@ -177,42 +177,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===================================================================
-  // 4. Persistent Bill History Storage System
+  // 4. Persistent Bill History Cloud Sync System
   // ===================================================================
   function getSavedBills() {
-    try {
-      const raw = localStorage.getItem("splitwise_bills_history");
-      if (raw) {
-        let parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          const DUMMY_IDS = ['dinner-01', 'roadtrip-02', 'grocery-03'];
-          parsed = parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-'));
-          localStorage.setItem("splitwise_bills_history", JSON.stringify(parsed));
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error("Error reading saved bills:", e);
-    }
-    return [];
+    return typeof getLocalBills === "function" ? getLocalBills() : [];
   }
 
   function saveCurrentBillToHistory() {
     if (!wizardState.totalAmount || !wizardState.items || wizardState.items.length === 0) return;
     try {
-      let bills = [];
-      const raw = localStorage.getItem("splitwise_bills_history");
-      if (raw) {
-        try {
-          bills = JSON.parse(raw);
-        } catch (e) {
-          bills = [];
-        }
-      }
-      if (!Array.isArray(bills) || bills.length === 0) {
-        bills = [...savedHistoryBills];
-      }
-
       if (!wizardState.billId) {
         wizardState.billId = 'bill_' + Date.now();
       }
@@ -236,14 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
         updatedAt: Date.now()
       };
 
-      const existingIndex = bills.findIndex(b => b.id === record.id);
-      if (existingIndex >= 0) {
-        bills[existingIndex] = record;
-      } else {
-        bills.unshift(record);
+      if (typeof saveBillRecord === "function") {
+        saveBillRecord(record);
       }
-
-      localStorage.setItem("splitwise_bills_history", JSON.stringify(bills));
     } catch (err) {
       console.error("Error saving bill to history:", err);
     }

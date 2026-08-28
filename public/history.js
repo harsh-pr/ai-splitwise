@@ -36,28 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeStatus = "all";
   let activeSearchTerm = "";
 
-  // 1. Data Retrieval (Pure real user bills only)
+  // 1. Data Retrieval (Multi-Device Firestore Cloud Sync)
   function getAllBills() {
-    try {
-      const raw = localStorage.getItem("splitwise_bills_history");
-      if (raw) {
-        let parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          // Strict purge: remove any old dummy/sample test bills
-          const DUMMY_IDS = ['dinner-01', 'roadtrip-02', 'grocery-03'];
-          parsed = parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-'));
-          localStorage.setItem("splitwise_bills_history", JSON.stringify(parsed));
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error("Error reading saved bills:", e);
-    }
-    return [];
-  }
-
-  function saveBills(bills) {
-    localStorage.setItem("splitwise_bills_history", JSON.stringify(bills));
+    return typeof getLocalBills === "function" ? getLocalBills() : [];
   }
 
   // 2. Compute Lifetime Statistics
@@ -87,8 +68,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 3. Render Bills Cards
-  function renderHistory() {
-    const allBills = getAllBills();
+  async function renderHistory(syncFromCloud = false) {
+    let allBills = getAllBills();
+
+    if (syncFromCloud && typeof loadUserBills === "function") {
+      try {
+        allBills = await loadUserBills();
+      } catch (err) {
+        console.warn("Could not sync bills from cloud:", err);
+      }
+    }
+
     updateStats(allBills);
 
     // Apply Filter & Search
@@ -280,11 +270,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  window.deleteBill = function(billId) {
+  window.deleteBill = async function(billId) {
     if (!confirm("Are you sure you want to delete this bill from history?")) return;
-    const bills = getAllBills().filter(b => b.id !== billId);
-    saveBills(bills);
-    renderHistory();
+    if (typeof deleteBillRecord === "function") {
+      await deleteBillRecord(billId);
+    }
+    renderHistory(false);
   };
 
   // 5. Search & Filter Listeners
@@ -365,9 +356,19 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/auth.html";
   }
 
-  document.getElementById("btn-sign-out")?.addEventListener("click", executeHistorySignOut);
-  document.getElementById("logout-btn")?.addEventListener("click", executeHistorySignOut);
+  // Initial Render from local cache
+  renderHistory(false);
 
-  // Initial Render
-  renderHistory();
+  // Sync with Firestore Cloud when Auth resolves
+  if (typeof firebase !== 'undefined') {
+    firebaseInitPromise.then(() => {
+      if (auth) {
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            await renderHistory(true);
+          }
+        });
+      }
+    });
+  }
 });
