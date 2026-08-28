@@ -282,11 +282,11 @@ function billItemDoc(uid, billId) {
  * Load User Bills (Direct sub-50ms document read)
  */
 async function loadUserBills() {
-  const local = getLocalBills();
   const uid = getUserId();
   const isGuest = uid === "guest_demo_user" || !uid;
 
   if (isGuest) {
+    const local = getLocalBills();
     updateProfileTotalSettled(local);
     updateCloudSyncBadge('demo');
     return local;
@@ -296,46 +296,48 @@ async function loadUserBills() {
 
   if (db && uid) {
     try {
-      // 1. Direct document read (matching attendance-tracker loadAllData)
+      // 1. Direct document read (Firestore as Single Source of Truth)
       const docSnap = await billsDataDoc(uid).get();
-      let cloudBills = [];
 
       if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
-        cloudBills = docSnap.data().list;
-        console.log(`[Firestore] Loaded ${cloudBills.length} bills from users/${uid}/bills/data`);
-      } else {
-        // Fallback: check individual bill docs in subcollection
-        const colSnap = await db.collection("users").doc(uid).collection("bills").get();
-        colSnap.forEach(d => {
-          if (d.id !== 'data') {
-            const data = d.data();
-            if (data) cloudBills.push({ id: d.id, ...data });
-          }
-        });
+        const cloudBills = docSnap.data().list;
+        setLocalBills(cloudBills);
+        updateProfileTotalSettled(cloudBills);
+        updateCloudSyncBadge('synced');
+        return cloudBills;
       }
 
-      // Merge Cloud + Local
-      const merged = mergeBills(cloudBills, local);
-      setLocalBills(merged);
-      updateProfileTotalSettled(merged);
-      updateCloudSyncBadge('synced');
-
-      // If local had bills missing from cloud, push them immediately
-      if (local.length > 0 && cloudBills.length === 0) {
-        const cleanList = JSON.parse(JSON.stringify(merged));
-        await billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }, { merge: true });
-        for (const b of cleanList) {
-          await billItemDoc(uid, b.id).set(b, { merge: true });
+      // 2. Check individual bill docs in subcollection if bundle doc is not created yet
+      const colSnap = await db.collection("users").doc(uid).collection("bills").get();
+      const cloudBills = [];
+      colSnap.forEach(d => {
+        if (d.id !== 'data') {
+          const data = d.data();
+          if (data) cloudBills.push({ id: d.id, ...data });
         }
+      });
+
+      if (cloudBills.length > 0) {
+        cloudBills.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setLocalBills(cloudBills);
+        updateProfileTotalSettled(cloudBills);
+        updateCloudSyncBadge('synced');
+        await billsDataDoc(uid).set({ list: cloudBills, updatedAt: Date.now() }, { merge: true });
+        return cloudBills;
       }
 
-      return merged;
+      // If Firestore is empty (e.g. all bills deleted), sync local cache to empty array
+      setLocalBills([]);
+      updateProfileTotalSettled([]);
+      updateCloudSyncBadge('synced');
+      return [];
     } catch (err) {
       console.warn("[Firestore] Load notice:", err.message);
       updateCloudSyncBadge('offline');
     }
   }
 
+  const local = getLocalBills();
   updateProfileTotalSettled(local);
   return local;
 }
@@ -493,12 +495,15 @@ function subscribeToUserBills(callback) {
     const unsub = billsDataDoc(uid).onSnapshot((docSnap) => {
       if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
         const cloudBills = docSnap.data().list;
-        const local = getLocalBills();
-        const merged = mergeBills(cloudBills, local);
-        setLocalBills(merged);
-        updateProfileTotalSettled(merged);
+        setLocalBills(cloudBills);
+        updateProfileTotalSettled(cloudBills);
         updateCloudSyncBadge('synced');
-        callback(merged);
+        callback(cloudBills);
+      } else if (docSnap.exists && (!docSnap.data()?.list || docSnap.data().list.length === 0)) {
+        setLocalBills([]);
+        updateProfileTotalSettled([]);
+        updateCloudSyncBadge('synced');
+        callback([]);
       }
     }, (err) => {
       console.warn("[Firestore Listener] Notice:", err.message);
