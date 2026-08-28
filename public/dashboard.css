@@ -2161,22 +2161,22 @@ a:active,
   transform: translateY(-50%);
   transform-origin: right center;
   z-index: 95;
-  width: 48px;
-  height: 155px;
+  width: 54px;
+  height: 160px;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-sticky-panel {
   position: relative;
   top: 0;
-  padding: 12px 6px;
-  border-radius: 16px 0 0 16px;
+  padding: 14px 6px;
+  border-radius: 18px 0 0 18px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-right: none;
-  background: rgba(13, 13, 18, 0.92);
+  background: rgba(13, 13, 18, 0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.6);
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.65);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   display: flex;
@@ -2193,6 +2193,7 @@ a:active,
   align-items: center;
   gap: 6px;
   margin-bottom: 0;
+  width: 100%;
 }
 
 .sidebar-title-row {
@@ -2202,7 +2203,7 @@ a:active,
 }
 
 .sidebar-mini-icon {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   display: block;
 }
 
@@ -2215,7 +2216,7 @@ a:active,
 }
 
 .pct-pill {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: var(--emerald-400);
   background: rgba(16, 185, 129, 0.15);
@@ -2224,8 +2225,13 @@ a:active,
   white-space: nowrap !important;
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   line-height: 1 !important;
   flex-shrink: 0 !important;
+}
+
+.pct-done-text {
+  display: none;
 }
 
 .wizard-progress-bar-container {
@@ -2234,15 +2240,16 @@ a:active,
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
 .wizard-progress-track {
   width: 5px;
-  height: 60px;
+  height: 65px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 100px;
   overflow: hidden;
-  margin-bottom: 0;
+  margin: 0 auto;
   position: relative;
 }
 
@@ -2382,6 +2389,11 @@ a:active,
   .wizard-sidebar:focus-within .sidebar-header h3 {
     display: block;
     font-size: 1rem;
+  }
+
+  .wizard-sidebar:hover .pct-done-text,
+  .wizard-sidebar:focus-within .pct-done-text {
+    display: inline;
   }
 
   .wizard-sidebar:hover .pct-pill,

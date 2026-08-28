@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
       wizardProgressFill.style.width = `${pct}%`;
       wizardProgressFill.style.height = `${pct}%`;
     }
-    if (sidebarPctPill) sidebarPctPill.textContent = `${pct}% Done`;
+    if (sidebarPctPill) sidebarPctPill.innerHTML = `<span class="pct-num">${pct}%</span><span class="pct-done-text"> Done</span>`;
     if (stepsCountLabel) stepsCountLabel.textContent = `Step ${targetStep} of 5 Completed`;
 
     // Update Checklist items
@@ -915,34 +915,24 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
     }).join("");
-  }
-
-  window.shareWhatsApp = async function(name, amt, upi, imgId) {
+  window.shareWhatsApp = function(name, amt, upi) {
     const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${amt}&cu=INR`;
-    const textMsg = `👋 Hi *${name}*!\n💰 Your share for *${wizardState.categoryName}* is *₹${amt}*.\n\n💳 *Pay via UPI ID:* \`${upi}\`\n⚡ *1-Tap Pay Link:* ${upiUri}\n\n📷 Scan the QR code image or tap the link above to pay instantly via Google Pay, PhonePe, or Paytm!`;
+    let text = `👋 *Hi ${name}!* Here is your share for *${wizardState.categoryName}*:\n\n`;
+    text += `💰 *Your Amount:* ₹${amt}\n`;
+    text += `💳 *Pay via UPI ID:* \`${upi}\`\n`;
+    text += `⚡ *1-Tap Pay Link:* ${upiUri}\n\n`;
 
-    // Try Web Share API with QR image file
-    try {
-      const img = document.getElementById(imgId);
-      if (img && navigator.canShare) {
-        const response = await fetch(img.src);
-        const blob = await response.blob();
-        const file = new File([blob], `UPI_QR_${name}_₹${amt}.png`, { type: 'image/png' });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `UPI Payment QR - ₹${amt}`,
-            text: textMsg,
-            files: [file]
-          });
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn("[Share API] File share notice:", e);
+    const myItems = wizardState.items.filter(it => Array.isArray(it.assigned) && it.assigned.includes(name));
+    if (myItems.length > 0) {
+      text += `🍽️ *YOUR ORDERED ITEMS:*\n`;
+      myItems.forEach(it => {
+        text += `🍲 *${it.name}* - ₹${it.price} (Shared with ${(it.assigned || []).join(", ")})\n`;
+      });
+      text += `\n`;
     }
 
-    // Direct WhatsApp Web / App share fallback
-    window.open(`https://wa.me/?text=${encodeURIComponent(textMsg)}`, "_blank");
+    text += `✨ _Calculated with SplitWise AI_`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   document.getElementById("step-4-back-btn")?.addEventListener("click", () => goToStep(3));
@@ -1111,8 +1101,37 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("export-summary-btn")?.addEventListener("click", () => {
-    const summary = encodeURIComponent(`⚡ SplitWise AI Summary (${wizardState.categoryName}): Total ₹${wizardState.totalAmount}. Pay via UPI: ${wizardState.upiId}`);
-    window.open(`https://wa.me/?text=${summary}`, "_blank");
+    let text = `🧾 *SPLITWISE AI - DETAILED BILL BREAKDOWN*\n`;
+    text += `📌 *Expense:* ${wizardState.categoryName || 'Bill Split'}\n`;
+    text += `📅 *Date:* ${new Date().toLocaleDateString()}\n`;
+    text += `💰 *Total Bill:* ₹${wizardState.totalAmount}\n`;
+    text += `👑 *Payer:* ${wizardState.payer || 'Harsh'} (Paid Full Bill Upfront)\n\n`;
+
+    if (Array.isArray(wizardState.items) && wizardState.items.length > 0) {
+      text += `🍽️ *ITEMIZED DISHES & WHO ATE WHAT:*\n`;
+      wizardState.items.forEach(it => {
+        const assignedNames = Array.isArray(it.assigned) && it.assigned.length > 0 ? it.assigned.join(", ") : "Everyone";
+        text += `🍲 *${it.name}* - ₹${it.price}\n   👥 Shared by: ${assignedNames}\n`;
+      });
+      text += `\n`;
+    }
+
+    if (Array.isArray(wizardState.settlements) && wizardState.settlements.length > 0) {
+      text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
+      wizardState.settlements.forEach(s => {
+        text += `👤 *${s.from}* owes ${wizardState.payer || 'Harsh'}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
+      });
+      text += `\n`;
+    }
+
+    if (wizardState.upiId) {
+      const upiLink = `upi://pay?pa=${encodeURIComponent(wizardState.upiId)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&cu=INR`;
+      text += `💳 *PAY VIA UPI:* \`${wizardState.upiId}\`\n`;
+      text += `⚡ *1-Tap Pay Link:* ${upiLink}\n\n`;
+    }
+
+    text += `✨ _Calculated with SplitWise AI_`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   });
 
   // ===================================================================

@@ -299,23 +299,23 @@ document.addEventListener("DOMContentLoaded", () => {
     text += `📌 *Expense:* ${bill.title || 'Bill Split'}\n`;
     text += `📅 *Date:* ${bill.date || new Date().toLocaleDateString()}\n`;
     text += `💰 *Total Bill:* ₹${bill.total}\n`;
-    text += `👤 *Payer:* ${bill.payer} (Paid Full Bill Upfront)\n\n`;
+    text += `👑 *Payer:* ${bill.payer} (Paid Full Bill Upfront)\n\n`;
 
-    // 1. Detailed Dish Allocations (Who ate what)
+    // 1. Detailed Dish Allocations (Who ate what) with emojis
     if (Array.isArray(bill.items) && bill.items.length > 0) {
       text += `🍽️ *ITEMIZED DISHES & WHO ATE WHAT:*\n`;
       bill.items.forEach(it => {
         const assignedNames = Array.isArray(it.assigned) && it.assigned.length > 0 ? it.assigned.join(", ") : "Everyone";
-        text += `• ${it.name} - ₹${it.price}\n  ↳ Shared by: ${assignedNames}\n`;
+        text += `🍲 *${it.name}* - ₹${it.price}\n   👥 Shared by: ${assignedNames}\n`;
       });
       text += `\n`;
     }
 
-    // 2. Individual Settlements Breakdown
+    // 2. Individual Settlements Breakdown with emojis
     if (Array.isArray(bill.settlements) && bill.settlements.length > 0) {
       text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
       bill.settlements.forEach(s => {
-        text += `• *${s.from}* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Paid' : '⏳ Pending'}]\n`;
+        text += `👤 *${s.from}* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
       });
       text += `\n`;
     }
@@ -327,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     text += `✨ _Calculated with SplitWise AI_`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   window.deleteBill = async function(billId) {
