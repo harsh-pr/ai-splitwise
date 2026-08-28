@@ -2,6 +2,62 @@
    SplitWise AI - Dedicated History Page Styles
    =================================================================== */
 
+/* Universal Sleek Minimal Dark Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.history-empty-state.hidden {
+  display: none !important;
+}
+
+/* Ambient Background Fixed Positioning */
+.ambient-mesh, .mesh-glow {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+}
+
+.ambient-orb {
+  position: absolute !important;
+  border-radius: 50% !important;
+  filter: blur(140px) !important;
+  opacity: 0.25 !important;
+  pointer-events: none !important;
+}
+
 a,
 a:hover,
 a:focus,
@@ -18,9 +74,11 @@ button,
 }
 
 .history-page-main {
-  padding-top: 100px;
+  padding-top: 40px;
   padding-bottom: 80px;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .history-container {

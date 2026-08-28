@@ -2,11 +2,64 @@
    SplitWise AI - Dashboard & 5-Step Smart Wizard Styles
    =================================================================== */
 
+/* Universal Sleek Minimal Dark Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Ambient Background Fixed Positioning (Zero In-Flow Height) */
+.ambient-mesh, .glow-mesh {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+}
+
+.ambient-orb, .glow-orb, .mesh-glow {
+  position: absolute !important;
+  border-radius: 50% !important;
+  filter: blur(140px) !important;
+  opacity: 0.25 !important;
+  pointer-events: none !important;
+}
+
 .dashboard-body {
   min-height: 100vh;
-  background-color: var(--bg-darkest);
+  background-color: var(--bg-black, #09090b);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* Dashboard Top Navigation Bar */
@@ -16,10 +69,11 @@
   z-index: 100;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  background: rgba(11, 15, 25, 0.92);
-  border-bottom: 1px solid var(--surface-glass-border);
+  background: rgba(9, 9, 11, 0.9);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
   padding: max(10px, env(safe-area-inset-top)) 0 10px;
   width: 100%;
+  margin-top: 0 !important;
 }
 
 .dash-nav-container {
@@ -1362,7 +1416,13 @@ a:active,
   padding: 8px 12px;
   background: rgba(0, 0, 0, 0.2);
   overflow-x: auto;
-  border-top: 1px solid var(--surface-glass-border);
+  border-top: 1px solid var(--surface-glass-border, rgba(255, 255, 255, 0.08));
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.quick-prompts-row::-webkit-scrollbar {
+  display: none;
 }
 
 .prompt-chip {
@@ -1515,6 +1575,10 @@ a:active,
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.skeleton-items-list.hidden {
+  display: none !important;
 }
 
 .skeleton-row {
