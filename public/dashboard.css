@@ -337,15 +337,15 @@ a:active,
   padding: 14px;
   box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.95), 0 0 35px rgba(99, 102, 241, 0.3);
   z-index: 1000 !important;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 10px;
   box-sizing: border-box;
   animation: dropdownFadeSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.profile-dropdown-panel.hidden {
-  display: none !important;
+.profile-dropdown-wrapper.open .profile-dropdown-panel {
+  display: flex !important;
 }
 
 .profile-menu-header {

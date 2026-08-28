@@ -138,7 +138,7 @@
           </button>
 
           <!-- Floating Profile Dropdown Panel -->
-          <div class="profile-dropdown-panel hidden" id="profile-dropdown-panel">
+          <div class="profile-dropdown-panel" id="profile-dropdown-panel">
             <div class="profile-menu-header">
               <div class="profile-menu-logo-row">
                 <div class="logo-icon-wrapper sm">
@@ -165,10 +165,40 @@
                 <span class="menu-item-label"><i class="ph-bold ph-wallet"></i> Default UPI</span>
                 <span class="menu-item-val font-mono" id="menu-upi-val">harsh@okhdfcbank</span>
               </div>
-              <div class="dropdown-divider"></div>
-              <button class="profile-menu-link text-rose" id="btn-sign-out">
-                <i class="ph-bold ph-sign-out"></i>
-                <span>Sign Out</span>
+              <div class="menu-item-row">
+                <span class="menu-item-label"><i class="ph-bold ph-chart-line-up"></i> Total Settled</span>
+                <span class="menu-item-badge badge-emerald" id="menu-total-settled">₹0</span>
+              </div>
+
+              <!-- Demo Mode Notice Box -->
+              <div class="guest-mode-box hidden" id="menu-guest-box">
+                <div class="guest-box-header">
+                  <span>🎭 Demo Mode Active</span>
+                </div>
+                <p>Data is stored locally in temporary session and cleared upon tab close.</p>
+              </div>
+
+              <div class="menu-divider"></div>
+
+              <!-- Menu Actions -->
+              <a href="/dashboard.html" class="profile-action-btn" id="menu-open-dash-btn">
+                <i class="ph-bold ph-plus-circle"></i>
+                <span>Scan New Bill</span>
+              </a>
+              <a href="/dashboard.html?category=trip" class="profile-action-btn" id="menu-open-trip-btn">
+                <i class="ph-bold ph-airplane-tilt"></i>
+                <span>Launch Trip Mode</span>
+              </a>
+
+              <div class="menu-divider"></div>
+
+              <!-- Sign Out -->
+              <button class="profile-action-btn btn-sign-out" id="logout-btn">
+                <div class="flex-align-center gap-2">
+                  <i class="ph-bold ph-sign-out"></i>
+                  <span>Sign Out</span>
+                </div>
+                <span class="action-hint">Exit Session</span>
               </button>
             </div>
           </div>

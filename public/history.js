@@ -324,7 +324,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // 6. Profile Dropdown Navigation
   const profileDropdownWrapper = document.getElementById("profile-dropdown-wrapper");
   const profilePillTrigger = document.getElementById("profile-pill-trigger");
-  const profileDropdownPanel = document.getElementById("profile-dropdown-panel");
   const splitDropdownWrapper = document.getElementById("split-dropdown-wrapper");
   const navTabSplit = document.getElementById("nav-tab-split");
 
@@ -332,20 +331,17 @@ document.addEventListener("DOMContentLoaded", () => {
     e.stopPropagation();
     splitDropdownWrapper?.classList.remove("open");
     profileDropdownWrapper?.classList.toggle("open");
-    profileDropdownPanel?.classList.toggle("hidden");
   });
 
   navTabSplit?.addEventListener("click", (e) => {
     e.stopPropagation();
     profileDropdownWrapper?.classList.remove("open");
-    profileDropdownPanel?.classList.add("hidden");
     splitDropdownWrapper?.classList.toggle("open");
   });
 
   document.addEventListener("click", (e) => {
     if (!profileDropdownWrapper?.contains(e.target)) {
       profileDropdownWrapper?.classList.remove("open");
-      profileDropdownPanel?.classList.add("hidden");
     }
     if (!splitDropdownWrapper?.contains(e.target)) {
       splitDropdownWrapper?.classList.remove("open");
