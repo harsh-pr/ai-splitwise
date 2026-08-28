@@ -1,7 +1,7 @@
 /**
  * SplitWise AI - Dedicated History Controller
  * Manages persistent bill records, lifetime metrics, search & filters,
- * line item breakdowns, and dashboard loading.
+ * line item breakdowns, and real-time Firestore multi-device sync.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -54,9 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
     trip: { icon: 'ph-airplane-tilt', colorClass: 'cat-violet' }
   };
 
-  // Pure real user bills only - no hardcoded dummy data
-  const defaultSampleBills = [];
-
   // DOM Elements
   const statTotalBills = document.getElementById("stat-total-bills");
   const statTotalSpend = document.getElementById("stat-total-spend");
@@ -75,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeStatus = "all";
   let activeSearchTerm = "";
 
-  // 1. Data Retrieval (Multi-Device Firestore Cloud Sync)
+  // 1. Data Retrieval
   function getAllBills() {
     return typeof getLocalBills === "function" ? getLocalBills() : [];
   }
@@ -88,13 +85,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let totalPending = 0;
 
     bills.forEach(bill => {
-      totalSpend += (bill.total || 0);
+      totalSpend += (Number(bill.total) || 0);
       if (Array.isArray(bill.settlements)) {
         bill.settlements.forEach(s => {
           if (s.paid) {
-            totalSettled += (s.amount || 0);
+            totalSettled += (Number(s.amount) || 0);
           } else {
-            totalPending += (s.amount || 0);
+            totalPending += (Number(s.amount) || 0);
           }
         });
       }
@@ -155,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (emptyStateMessage) {
         emptyStateMessage.textContent = activeSearchTerm
           ? `No bills found matching "${activeSearchTerm}". Try a different keyword.`
-          : "No bills found for the selected category filter.";
+          : "No bills saved yet. Create a new split on the Dashboard to start!";
       }
       return;
     }
@@ -188,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="bill-amount-badge-group">
-              <span class="bill-total-price">₹${(bill.total || 0).toLocaleString()}</span>
+              <span class="bill-total-price">₹${(Number(bill.total) || 0).toLocaleString()}</span>
               <span class="bill-status-pill ${statusClass}">${statusText}</span>
             </div>
           </div>
@@ -217,12 +214,12 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="drawer-col">
                 <h4>Dish / Line Item Allocations</h4>
                 <div class="drawer-items-list">
-                  ${(bill.items || []).map(it => `
+                  ${(bill.items && bill.items.length > 0) ? bill.items.map(it => `
                     <div class="drawer-row">
                       <span>${it.name} <small style="color: var(--text-muted);">(${(it.assigned || []).join(", ")})</small></span>
                       <strong class="text-white">₹${it.price}</strong>
                     </div>
-                  `).join("")}
+                  `).join("") : '<div class="drawer-row text-muted"><span>No line items specified.</span></div>'}
                 </div>
               </div>
 
@@ -390,19 +387,25 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof logoutUser === "function") logoutUser();
   });
 
+  // 7. Event listeners for local updates
+  window.addEventListener('splitwise_bills_updated', (e) => {
+    renderHistory(false);
+  });
+
   // Initial Render from local cache
   renderHistory(false);
 
-  // Sync with Firestore Cloud when Auth resolves ONLY if NOT in Guest/Demo mode
-  if (typeof firebase !== 'undefined' && !user.isGuest) {
-    firebaseInitPromise.then(() => {
-      if (auth) {
-        auth.onAuthStateChanged(async (cloudUser) => {
-          if (cloudUser && !getCurrentUser()?.isGuest) {
-            await renderHistory(true);
-          }
-        });
-      }
+  // Sync with Firestore Cloud when Auth resolves
+  if (typeof loadUserBills === "function") {
+    loadUserBills().then(() => {
+      renderHistory(false);
+    }).catch(() => {});
+  }
+
+  // Subscribe to real-time updates from Mobile & PC
+  if (typeof subscribeToUserBills === "function") {
+    subscribeToUserBills(() => {
+      renderHistory(false);
     });
   }
 });

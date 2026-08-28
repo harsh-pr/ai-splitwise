@@ -2,12 +2,13 @@
  * SplitWise AI - Dashboard & 5-Step Smart Split Wizard
  * Manages category selection, Gemini OCR scanning simulation,
  * interactive AI chat dish assignment, dynamic UPI QR generation,
- * and real-time settlement tracking.
+ * real-time settlement tracking, and Firebase multi-device cloud sync.
  */
 
 // Default State
 const wizardState = {
   step: 1,
+  billId: null,
   category: 'restaurant',
   categoryName: 'Restaurant & Dining',
   isTripMode: false,
@@ -38,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Auth Guard & User Profile Setup (attendance-tracker style)
   // ===================================================================
   const user = getCurrentUser();
-  const userAvatarInner = document.getElementById("user-avatar-inner");
+  const userAvatarInner = document.getElementById("user-avatar-initial") || document.getElementById("user-avatar-inner");
   const userDisplayName = document.getElementById("user-display-name");
   const userStatusLabel = document.getElementById("user-status-label");
   const menuAvatarLg = document.getElementById("menu-avatar-lg");
@@ -58,6 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (menuAvatarLg) menuAvatarLg.textContent = initial;
     if (menuUserName) menuUserName.textContent = name;
     if (menuUserEmail) menuUserEmail.textContent = email;
+
+    // Set default payer to authenticated user's first name
+    const firstName = name.split(" ")[0] || "Harsh";
+    wizardState.payer = firstName;
+    wizardState.participants = [firstName];
 
     if (user.isGuest) {
       if (userStatusLabel) userStatusLabel.textContent = "Demo Mode";
@@ -98,13 +104,14 @@ document.addEventListener("DOMContentLoaded", () => {
     splitDropdownWrapper?.classList.toggle("open");
   });
 
-  // Home Tab Click
+  // Home Tab Click -> Reset to Step 1
   navTabHome?.addEventListener("click", () => {
     navTabHome.classList.add("active");
     navTabSplit?.classList.remove("active");
     navTabHistory?.classList.remove("active");
     splitDropdownWrapper?.classList.remove("open");
     profileDropdownWrapper?.classList.remove("open");
+    resetWizardState('restaurant', 'Restaurant & Dining');
     goToStep(1);
   });
 
@@ -126,13 +133,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("menu-open-trip-btn")?.addEventListener("click", () => {
     profileDropdownWrapper?.classList.remove("open");
-    selectCategory('trip', 'Trip Mode (Vacation)');
+    resetWizardState('trip', 'Trip Mode (Vacation)');
     goToStep(2);
   });
 
   document.getElementById("menu-reset-split-btn")?.addEventListener("click", () => {
     profileDropdownWrapper?.classList.remove("open");
-    wizardState.settlements.forEach(s => s.paid = false);
+    resetWizardState(wizardState.category, wizardState.categoryName);
     goToStep(1);
   });
 
@@ -158,11 +165,52 @@ document.addEventListener("DOMContentLoaded", () => {
       navTabSplit?.classList.add("active");
       navTabHistory?.classList.remove("active");
 
-      // Set category and immediately direct to Step 2 (asking to upload bill)!
+      // Reset and direct to Step 2
+      resetWizardState(catKey, catName);
       selectCategory(catKey, catName);
       goToStep(2);
     });
   });
+
+  // Helper to generate a new unique bill ID
+  function generateNewBillId() {
+    return 'bill_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+  }
+
+  // Reset wizard state for starting a fresh split without overwriting previous bills
+  function resetWizardState(catKey = 'restaurant', catName = 'Restaurant & Dining') {
+    const currentName = (getCurrentUser()?.displayName?.split(" ")[0]) || "Harsh";
+    wizardState.billId = generateNewBillId();
+    wizardState.category = catKey;
+    wizardState.categoryName = catName;
+    wizardState.isTripMode = (catKey === 'trip');
+    wizardState.totalAmount = 0;
+    wizardState.taxAmount = 0;
+    wizardState.payer = currentName;
+    wizardState.payerShare = 0;
+    wizardState.participants = [currentName];
+    wizardState.items = [];
+    wizardState.settlements = [];
+    wizardState.billDate = new Date().toISOString().split('T')[0];
+
+    // Reset Dropzone UI
+    if (dropzoneIdle) dropzoneIdle.classList.remove("hidden");
+    if (scannerStage) scannerStage.classList.add("hidden");
+    if (step2NextBtn) step2NextBtn.disabled = true;
+
+    // Reset Chat Messages
+    if (chatMessages) {
+      chatMessages.innerHTML = `
+        <div class="chat-msg bot-msg">
+          <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
+          <div class="msg-body">
+            <p>Ready to itemize your <strong>${catName}</strong> bill!</p>
+            <p>Tell me who ordered what (e.g. <em>"${currentName} and Rohan had pizza, Neha got pasta"</em>) or add friends above.</p>
+          </div>
+        </div>
+      `;
+    }
+  }
 
   // ===================================================================
   // 4. Persistent Bill History Cloud Sync System
@@ -178,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
         wizardState.totalAmount = wizardState.items.reduce((sum, i) => sum + (Number(i.price) || 0), 0) + (Number(wizardState.taxAmount) || 0);
       }
       if (!wizardState.billId) {
-        wizardState.billId = 'bill_' + Date.now();
+        wizardState.billId = generateNewBillId();
       }
 
       const isSettled = wizardState.settlements.length > 0 && wizardState.settlements.every(s => s.paid);
@@ -267,10 +315,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (targetStep === 3) {
       renderParticipantsChips();
       renderItemsEditor();
+      saveCurrentBillToHistory();
     } else if (targetStep === 4) {
+      recalculateSettlements();
       saveCurrentBillToHistory();
       renderUpiCards();
     } else if (targetStep === 5) {
+      recalculateSettlements();
       saveCurrentBillToHistory();
       renderSettlementTracker();
     }
@@ -302,11 +353,13 @@ document.addEventListener("DOMContentLoaded", () => {
   categoryCards.forEach(card => {
     card.addEventListener("click", () => {
       const title = card.querySelector("h3")?.textContent || card.dataset.category;
+      resetWizardState(card.dataset.category, title);
       selectCategory(card.dataset.category, title);
     });
   });
 
   document.getElementById("step-1-next-btn")?.addEventListener("click", () => {
+    if (!wizardState.billId) wizardState.billId = generateNewBillId();
     goToStep(2);
   });
 
@@ -363,6 +416,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const scanStatusH4 = scannerStage?.querySelector("h4");
     if (scanStatusH4) scanStatusH4.textContent = "Gemini AI Reading Bill Items & Prices...";
 
+    if (!wizardState.billId) {
+      wizardState.billId = generateNewBillId();
+    }
+
     try {
       const reader = new FileReader();
       reader.onload = async (evt) => {
@@ -381,16 +438,15 @@ document.addEventListener("DOMContentLoaded", () => {
           const json = await res.json();
           if (json.success && json.data) {
             const data = json.data;
+            const currentPayer = wizardState.payer || 'Harsh';
             if (data.items && data.items.length > 0) {
               wizardState.items = data.items.map((it, idx) => ({
                 id: idx + 1,
                 name: it.name,
                 price: parseFloat(it.price) || 0,
-                assigned: ['Harsh']
+                assigned: [currentPayer]
               }));
-              // Reset participants to current user for new bill scan
-              wizardState.participants = ['Harsh'];
-              wizardState.payer = 'Harsh';
+              wizardState.participants = [currentPayer];
               wizardState.settlements = [];
 
               // Update initial chat greeting
@@ -400,7 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
                     <div class="msg-body">
                       <p>I've extracted <strong>${wizardState.items.length} items</strong> totaling <strong class="text-white">₹${(data.total || wizardState.totalAmount).toLocaleString()}</strong> from your ${data.restaurantName || 'receipt'}!</p>
-                      <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"Harsh ate butter naan, Shreya ate chicken kabuli, everyone got water"</em>), or add friends using the bar above.</p>
+                      <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"${currentPayer} ate butter naan, Shreya ate chicken, everyone got water"</em>), or add friends using the bar above.</p>
                     </div>
                   </div>
                 `;
@@ -409,7 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.total !== undefined && data.total !== null) {
               wizardState.totalAmount = parseFloat(data.total) || 0;
             }
-            // Strict reset: if bill has no tax, ensure taxAmount is 0!
             wizardState.taxAmount = (data.tax !== undefined && data.tax !== null) ? (parseFloat(data.tax) || 0) : 0;
             if (data.restaurantName) wizardState.categoryName = data.restaurantName;
           }
@@ -434,19 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function simulateReceiptScan() {
-    dropzoneIdle?.classList.add("hidden");
-    scannerStage?.classList.remove("hidden");
-
-    // Scanner beam animation for 1.2s, then unlock step 3
-    setTimeout(() => {
-      dropzoneIdle?.classList.remove("hidden");
-      scannerStage?.classList.add("hidden");
-      if (step2NextBtn) step2NextBtn.disabled = false;
-      goToStep(3);
-    }, 1300);
-  }
-
   step2BackBtn?.addEventListener("click", () => goToStep(1));
   step2NextBtn?.addEventListener("click", () => goToStep(3));
 
@@ -460,7 +502,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorBillTotal = document.getElementById("editor-bill-total");
   const editorTaxVal = document.getElementById("editor-tax-val");
   const editorPayerName = document.getElementById("editor-payer-name");
-  const skeletonItems = document.getElementById("skeleton-items");
   const participantsChipsContainer = document.getElementById("participants-chips-container");
   const addFriendForm = document.getElementById("add-friend-form");
   const inlineFriendInput = document.getElementById("inline-friend-input");
@@ -505,6 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderParticipantsChips();
     renderItemsEditor();
     recalculateSettlements();
+    saveCurrentBillToHistory();
     addChatMessage(`Removed ${nameToRemove} from this split. Recomputed balances proportionally.`, false);
   };
 
@@ -522,29 +564,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inlineFriendInput) inlineFriendInput.value = "";
     renderParticipantsChips();
     recalculateSettlements();
+    saveCurrentBillToHistory();
     addChatMessage(`✓ Added ${newName} to the split! You can now assign dishes to them in chat.`, false);
   });
 
   function isCurrentUser(name) {
     if (!name) return false;
+    const currentName = (getCurrentUser()?.displayName || "Harsh").toLowerCase();
     const s = String(name).toLowerCase().trim();
-    return s === 'harsh' || s === 'you' || s === 'you (harsh)' || s === 'harsh prasad' || s === 'me' || s === 'i';
+    return s === 'harsh' || s === 'you' || s === 'you (harsh)' || s === 'harsh prasad' || s === 'me' || s === 'i' || s === currentName;
   }
 
   function normalizePersonName(name) {
-    if (!name) return 'Harsh';
-    if (isCurrentUser(name)) return 'Harsh';
+    if (!name) return wizardState.payer || 'Harsh';
+    if (isCurrentUser(name)) return wizardState.payer || 'Harsh';
     return String(name).trim();
   }
 
   function recalculateSettlements() {
+    const currentPayer = wizardState.payer || 'Harsh';
     // 1. Standardize and deduplicate participants
     wizardState.participants = [...new Set(wizardState.participants.map(normalizePersonName))];
-    if (!wizardState.participants.includes('Harsh')) {
-      wizardState.participants.unshift('Harsh');
+    if (!wizardState.participants.includes(currentPayer)) {
+      wizardState.participants.unshift(currentPayer);
     }
-    const payer = normalizePersonName(wizardState.payer || 'Harsh');
-    wizardState.payer = payer;
+    wizardState.payer = currentPayer;
 
     const friendTotals = {};
     wizardState.participants.forEach(p => friendTotals[p] = 0);
@@ -552,11 +596,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Sum item allocations
     let allocatedTotal = 0;
     wizardState.items.forEach(item => {
-      let assigned = (item.assigned && item.assigned.length > 0) ? item.assigned.map(normalizePersonName) : [payer];
+      let assigned = (item.assigned && item.assigned.length > 0) ? item.assigned.map(normalizePersonName) : [currentPayer];
       assigned = [...new Set(assigned)];
       item.assigned = assigned;
 
-      const perPerson = item.price / assigned.length;
+      const perPerson = (item.price || 0) / (assigned.length || 1);
       assigned.forEach(p => {
         if (friendTotals[p] !== undefined) {
           friendTotals[p] += perPerson;
@@ -564,7 +608,7 @@ document.addEventListener("DOMContentLoaded", () => {
           friendTotals[p] = perPerson;
         }
       });
-      allocatedTotal += item.price;
+      allocatedTotal += (item.price || 0);
     });
 
     // 3. Strict Tax & Total check: If bill items already sum to or exceed totalAmount, taxAmount MUST be 0!
@@ -581,17 +625,17 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // 4. Record Payer's own consumption share (Harsh paid upfront, he does NOT owe himself!)
-    wizardState.payerShare = Math.round(friendTotals[payer] || 0);
+    // 4. Record Payer's own consumption share
+    wizardState.payerShare = Math.round(friendTotals[currentPayer] || 0);
 
     // 5. Settlements: ONLY friends owe the payer
     const newSettlements = [];
     Object.keys(friendTotals).forEach(p => {
-      if (p !== payer && friendTotals[p] > 0) {
+      if (p !== currentPayer && friendTotals[p] > 0) {
         const prev = wizardState.settlements.find(s => s.from === p);
         newSettlements.push({
           from: p,
-          to: payer,
+          to: currentPayer,
           amount: Math.round(friendTotals[p]),
           paid: prev ? prev.paid : false,
           utr: prev ? prev.utr : null,
@@ -765,7 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
     thinkingEl.id = thinkingId;
     thinkingEl.innerHTML = `
       <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
-      <div class="msg-body"><p><em>Gemini 2.5 Flash is calculating splits...</em></p></div>
+      <div class="msg-body"><p><em>Gemini AI is calculating splits...</em></p></div>
     `;
     chatMessages?.appendChild(thinkingEl);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -796,10 +840,13 @@ document.addEventListener("DOMContentLoaded", () => {
       addChatMessage(data.assistantMessage || `✓ Split updated successfully based on your instruction!`, false);
       recalculateSettlements();
       renderItemsEditor();
+      saveCurrentBillToHistory();
     } catch (err) {
       document.getElementById(thinkingId)?.remove();
-      addChatMessage("✓ Got it! Updated dish allocations between " + wizardState.participants.join(", ") + ". Subtotals & taxes balanced proportionally.", false);
+      addChatMessage("✓ Updated dish allocations between " + wizardState.participants.join(", ") + ". Subtotals balanced proportionally.", false);
+      recalculateSettlements();
       renderItemsEditor();
+      saveCurrentBillToHistory();
     }
   });
 
@@ -836,6 +883,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderUpiCards() {
     if (!upiQrGrid) return;
+    if (wizardState.settlements.length === 0) {
+      upiQrGrid.innerHTML = `
+        <div class="p-6 text-center text-muted" style="grid-column: 1 / -1;">
+          No outstanding debts! All items are assigned to the payer.
+        </div>
+      `;
+      return;
+    }
+
     upiQrGrid.innerHTML = wizardState.settlements.map((s, idx) => {
       const upiUri = `upi://pay?pa=${encodeURIComponent(wizardState.upiId)}&pn=SplitWise&am=${s.amount}&cu=INR`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
@@ -889,7 +945,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderSettlementTracker() {
     if (trackerTotalBill) trackerTotalBill.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
 
-    // Total to collect is ONLY from the friends
     let totalToCollect = 0;
     let collected = 0;
 
@@ -931,31 +986,39 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    // 2. Individual friend settlement cards (Pure manual Mark as Paid)
-    html += wizardState.settlements.map((s, idx) => `
-      <div class="settle-row-card ${s.paid ? 'paid' : ''}" id="settle-card-${idx}">
-        <div class="settle-person-info">
-          <div class="settle-avatar">${s.from.charAt(0)}</div>
-          <div class="settle-name-wrap">
-            <strong>${s.from}</strong>
-            <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
-              <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
-              ${s.paid ? `Payment Settled ${s.utr ? `(Ref #${s.utr})` : ''}` : 'Payment Pending'}
-            </span>
+    // 2. Individual friend settlement cards
+    if (wizardState.settlements.length === 0) {
+      html += `
+        <div class="p-6 text-center text-muted" style="border: 1px dashed var(--surface-glass-border); border-radius: 12px; margin-top: 10px;">
+          All dishes assigned to ${wizardState.payer}. No payments to collect!
+        </div>
+      `;
+    } else {
+      html += wizardState.settlements.map((s, idx) => `
+        <div class="settle-row-card ${s.paid ? 'paid' : ''}" id="settle-card-${idx}">
+          <div class="settle-person-info">
+            <div class="settle-avatar">${s.from.charAt(0)}</div>
+            <div class="settle-name-wrap">
+              <strong>${s.from}</strong>
+              <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
+                <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
+                ${s.paid ? `Payment Settled ${s.utr ? `(Ref #${s.utr})` : ''}` : 'Payment Pending'}
+              </span>
+            </div>
+          </div>
+
+          <div class="settle-amount-col">
+            <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
+          </div>
+
+          <div class="flex-align-center gap-2">
+            <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
+              ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
+            </button>
           </div>
         </div>
-
-        <div class="settle-amount-col">
-          <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
-        </div>
-
-        <div class="flex-align-center gap-2">
-          <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
-            ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
-          </button>
-        </div>
-      </div>
-    `).join("");
+      `).join("");
+    }
 
     friendsSettlementList.innerHTML = html;
   }
@@ -992,9 +1055,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.6);
-    } catch (e) {
-      // Audio context might be restricted before user gesture
-    }
+    } catch (e) {}
   }
 
   function showPaymentToast(friendName, amount, utr) {
@@ -1008,8 +1069,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <i class="ph-fill ph-check-circle"></i>
       </div>
       <div class="toast-content">
-        <strong>Payment Auto-Detected!</strong>
-        <span>₹${amount.toLocaleString()} received from <strong>${friendName}</strong> via Google Pay / UPI</span>
+        <strong>Payment Recorded!</strong>
+        <span>₹${amount.toLocaleString()} received from <strong>${friendName}</strong></span>
         <span class="utr-info-pill">UPI Ref: #${utr}</span>
       </div>
     `;
@@ -1029,37 +1090,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${prefix}${suffix}`;
   }
 
-  function verifyPaymentAutomatically(friendName, source = "auto-polling") {
-    const settlement = wizardState.settlements.find(s => s.from.toLowerCase() === friendName.toLowerCase() && !s.paid);
-    if (!settlement) return false;
-
-    const utr = generateRandomUtr();
-    settlement.paid = true;
-    settlement.utr = utr;
-    settlement.verifiedAt = new Date().toLocaleTimeString();
-
-    playPaymentChime();
-    showPaymentToast(settlement.from, settlement.amount, utr);
-    renderSettlementTracker();
-    return true;
-  }
-
-  window.promptVerifyUtr = function(idx) {
-    const settlement = wizardState.settlements[idx];
-    if (!settlement) return;
-    const utr = generateRandomUtr();
-    settlement.paid = true;
-    settlement.utr = utr;
-    settlement.verifiedAt = new Date().toLocaleTimeString();
-    playPaymentChime();
-    showPaymentToast(settlement.from, settlement.amount, utr);
-    saveCurrentBillToHistory();
-    renderSettlementTracker();
-  };
-
-
   document.getElementById("restart-wizard-btn")?.addEventListener("click", () => {
-    wizardState.settlements.forEach(s => s.paid = false);
+    resetWizardState(wizardState.category, wizardState.categoryName);
     goToStep(1);
   });
 
@@ -1068,7 +1100,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://wa.me/?text=${summary}`, "_blank");
   });
 
-  // Synchronize cloud bills on dashboard startup and update total settled badge
+  // ===================================================================
+  // 6. Multi-Device Real-Time Cloud Synchronization
+  // ===================================================================
+
+  // Synchronize cloud bills on dashboard startup
   if (typeof loadUserBills === "function") {
     loadUserBills().then(bills => {
       if (typeof updateProfileTotalSettled === "function") {
@@ -1077,11 +1113,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(err => {
       console.warn("Could not sync bills on dashboard load:", err);
     });
-  } else if (typeof updateProfileTotalSettled === "function") {
-    updateProfileTotalSettled(getSavedBills());
   }
 
-  // Check if directed from history.html to load a saved bill
+  // Subscribe to real-time Firestore updates across PC & Mobile
+  if (typeof subscribeToUserBills === "function") {
+    subscribeToUserBills((cloudBills) => {
+      if (typeof updateProfileTotalSettled === "function") {
+        updateProfileTotalSettled(cloudBills);
+      }
+
+      // If viewing a bill on Step 5, sync settlements live if updated on another device
+      if (wizardState.step === 5 && wizardState.billId) {
+        const matching = cloudBills.find(b => b.id === wizardState.billId);
+        if (matching && matching.settlements) {
+          // Check if any settlement was newly marked paid
+          matching.settlements.forEach(remoteS => {
+            const localS = wizardState.settlements.find(s => s.from === remoteS.from);
+            if (localS && !localS.paid && remoteS.paid) {
+              playPaymentChime();
+              showPaymentToast(remoteS.from, remoteS.amount, remoteS.utr || generateRandomUtr());
+            }
+          });
+
+          wizardState.settlements = matching.settlements;
+          renderSettlementTracker();
+        }
+      }
+    });
+  }
+
+  // Check if directed from history.html to load an existing saved bill
   const activeBillId = localStorage.getItem("splitwise_active_bill_id");
   if (activeBillId) {
     localStorage.removeItem("splitwise_active_bill_id");
@@ -1103,10 +1164,12 @@ document.addEventListener("DOMContentLoaded", () => {
       renderParticipantsChips();
       goToStep(5);
     } else {
+      resetWizardState();
       goToStep(1);
     }
   } else {
-    // Initialize Wizard at Step 1
+    // Initialize fresh Wizard at Step 1
+    resetWizardState();
     goToStep(1);
   }
 });

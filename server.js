@@ -70,6 +70,42 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Backup In-Memory Cloud Sync Store (Dual-channel multi-device persistence)
+const userBillsStore = new Map();
+
+app.get('/api/sync-bills', (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) return res.json({ bills: [] });
+  const bills = userBillsStore.get(userId) || [];
+  res.json({ bills });
+});
+
+app.post('/api/sync-bills', (req, res) => {
+  const { userId, bill } = req.body;
+  if (!userId || !bill || !bill.id) {
+    return res.status(400).json({ error: 'Missing userId or bill' });
+  }
+  const userList = userBillsStore.get(userId) || [];
+  const idx = userList.findIndex(b => b.id === bill.id);
+  if (idx >= 0) {
+    userList[idx] = { ...userList[idx], ...bill, updatedAt: Date.now() };
+  } else {
+    userList.unshift({ ...bill, updatedAt: Date.now() });
+  }
+  userBillsStore.set(userId, userList);
+  res.json({ success: true, count: userList.length });
+});
+
+app.delete('/api/sync-bills', (req, res) => {
+  const { userId, billId } = req.query;
+  if (userId && billId) {
+    const userList = userBillsStore.get(userId) || [];
+    const filtered = userList.filter(b => b.id !== billId);
+    userBillsStore.set(userId, filtered);
+  }
+  res.json({ success: true });
+});
+
 // High-Availability Multi-Model Gemini Waterfall
 // Automatically fails over between active models if any model hits a rate limit or 429 quota
 const GEMINI_MODELS = [
