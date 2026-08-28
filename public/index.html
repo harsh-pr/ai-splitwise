@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>SplitWise AI - Intelligent Expense Sharing & Multimodal Receipt Splitting</title>
-  <meta name="description" content="AI-powered bill splitting and expense manager built with Google Gemini Multimodal Vision & Java Debt Optimization algorithms. Scan receipts, itemize debts, and settle seamlessly.">
+  <title>SplitWise AI - Intelligent Multimodal Expense Sharing</title>
+  <meta name="description" content="Minimal, AI-powered bill splitting and expense manager built with Google Gemini Multimodal Vision and smart debt optimization.">
   
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -12,66 +12,54 @@
 
   <!-- PWA & Mobile Capabilities -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0b0f19">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SplitWise AI">
+  <meta name="theme-color" content="#09090b">
   
   <!-- Favicons & App Icons -->
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   
-  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono for Code -->
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   
-  <link rel="stylesheet" href="landing.css?v=3.0">
+  <link rel="stylesheet" href="/landing.css?v=4.0">
 </head>
-<body class="dark-theme">
-  <!-- Background Glow Orbs -->
-  <div class="glow-mesh" aria-hidden="true">
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
-    <div class="glow-orb orb-3"></div>
+<body>
+  <!-- Ambient Background Glows (Non-Blue) -->
+  <div class="ambient-mesh" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
   </div>
 
-  <!-- Navigation Bar -->
+  <!-- Minimal Header / Navbar -->
   <header class="site-header">
     <div class="container header-container">
-      <a href="#" class="brand-logo" id="brand-logo">
-        <div class="logo-icon-wrapper">
+      <a href="/" class="brand-logo">
+        <div class="logo-icon">
           <i class="ph-bold ph-receipt"></i>
-          <span class="sparkle-dot"></span>
         </div>
-        <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
+        <span>SplitWise<span class="gradient-text">.AI</span></span>
       </a>
 
-      <nav class="desktop-nav" id="desktop-nav">
+      <nav class="desktop-nav">
         <a href="#features" class="nav-link">Features</a>
         <a href="#how-it-works" class="nav-link">How It Works</a>
-        <a href="#algorithm" class="nav-link">Smart Debt Engine</a>
-        <a href="#tech-stack" class="nav-link">Architecture</a>
         <a href="#faq" class="nav-link">FAQ</a>
       </nav>
 
       <div class="header-actions">
-        <a href="/dashboard.html" class="btn btn-demo desktop-only" id="one-click-demo-btn">
+        <button class="btn btn-demo" id="nav-demo-btn">
           <i class="ph-bold ph-play-circle"></i>
-          <span>1-Click Live Demo</span>
-        </a>
-        <a href="/dashboard.html" class="btn btn-primary desktop-only" id="get-started-btn">
-          <span>Explore App</span>
+          <span>Demo</span>
+        </button>
+        <a href="/auth.html" class="btn btn-primary" id="nav-open-app-btn">
+          <span>Open App</span>
           <i class="ph-bold ph-arrow-right"></i>
-        </a>
-        <a href="/auth.html" class="btn btn-outline desktop-only" id="nav-login-btn">
-          <i class="ph-bold ph-user"></i>
-          <span>Sign In</span>
         </a>
         <button class="mobile-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation menu">
           <i class="ph-bold ph-list"></i>
@@ -83,17 +71,14 @@
     <div class="mobile-nav-drawer" id="mobile-nav-drawer">
       <a href="#features" class="mobile-nav-link">Features</a>
       <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
-      <a href="#algorithm" class="mobile-nav-link">Smart Debt Engine</a>
-      <a href="#tech-stack" class="mobile-nav-link">Architecture</a>
       <a href="#faq" class="mobile-nav-link">FAQ</a>
       <div class="mobile-drawer-actions">
-        <a href="/dashboard.html" class="btn btn-demo w-full" id="mobile-demo-btn">
+        <button class="btn btn-demo w-full" id="mobile-demo-btn">
           <i class="ph-bold ph-play-circle"></i>
-          <span>1-Click Live Demo</span>
-        </a>
-        <a href="/auth.html" class="btn btn-outline w-full" id="mobile-signin-btn">
-          <i class="ph-bold ph-user"></i>
-          <span>Sign In / Register</span>
+          <span>Try Demo</span>
+        </button>
+        <a href="/auth.html" class="btn btn-primary w-full" id="mobile-open-app-btn">
+          <span>Open App</span>
         </a>
       </div>
     </div>
@@ -101,442 +86,171 @@
 
   <main>
     <!-- Hero Section -->
-    <section class="hero-section" id="hero">
+    <section class="hero-section">
       <div class="container hero-container">
         <div class="hero-content">
-          <div class="badge-pill" id="hero-badge">
-            <span class="badge-pulse"></span>
-            <span class="badge-text"><i class="ph-fill ph-sparkle"></i> Gemini AI + Smart Debt Engine</span>
+          <div class="badge-pill">
+            <i class="ph-fill ph-sparkle"></i>
+            <span>Gemini AI Expense Splitting</span>
           </div>
 
           <h1 class="hero-title">
-            Split Expenses Intelligently, <br>
-            <span class="gradient-text hero-highlight">Without the Headache.</span>
+            Split expenses intelligently. <br>
+            <span class="gradient-text">Without the math.</span>
           </h1>
 
           <p class="hero-subtitle">
-            Snap a receipt photo, let Gemini Multimodal AI parse every item and tax, and let our Smart Cash-Flow Optimization Engine calculate the simplest way to settle up. No manual math, zero awkward debates.
+            Upload receipt photos, itemize shared dishes with AI vision, and settle group balances instantly with smart debt minimization and dynamic UPI QR codes.
           </p>
 
           <div class="hero-cta-group">
-            <a href="/dashboard.html" class="btn btn-large btn-gradient" id="hero-start-demo-btn">
+            <button class="btn btn-large btn-primary" id="hero-demo-btn">
               <i class="ph-fill ph-lightning"></i>
-              <span>Launch Interactive Demo</span>
+              <span>Try Demo</span>
+            </button>
+            <a href="/auth.html" class="btn btn-large btn-outline" id="hero-open-app-btn">
+              <span>Open App</span>
+              <i class="ph-bold ph-arrow-right"></i>
             </a>
-            <a href="#how-it-works" class="btn btn-large btn-outline" id="hero-see-how-btn">
-              <i class="ph-bold ph-video"></i>
-              <span>See How It Works</span>
-            </a>
           </div>
 
-          <div class="hero-social-proof">
-            <div class="proof-avatars">
-              <span class="avatar av-1">A</span>
-              <span class="avatar av-2">B</span>
-              <span class="avatar av-3">C</span>
-              <span class="avatar av-4">H</span>
-            </div>
-            <div class="proof-text">
-              <strong>100% Automated</strong> itemized splitting for roommates, dining, & road trips
-            </div>
+          <div class="hero-meta">
+            <span><i class="ph-bold ph-check-circle"></i> 100% Free & Offline-Ready</span>
+            <span><i class="ph-bold ph-check-circle"></i> Instant UPI QR Settlement</span>
           </div>
         </div>
 
-        <!-- Static Hero App Showcase Model -->
-        <div class="hero-preview-wrapper" id="hero-preview">
-          <div class="preview-card glass-panel">
-            <div class="preview-card-header">
-              <div class="preview-title-row">
-                <div class="window-controls">
-                  <span class="dot dot-red"></span>
-                  <span class="dot dot-yellow"></span>
-                  <span class="dot dot-green"></span>
-                </div>
-                <span class="preview-badge"><i class="ph-fill ph-receipt"></i> SplitWise AI • Live Preview</span>
-              </div>
-              <span class="badge-tech"><i class="ph-bold ph-shield-check"></i> Step 5: Settle Up</span>
+        <!-- Static App Model Showcase Card -->
+        <div class="preview-card glass-panel">
+          <div class="preview-header">
+            <div class="window-dots">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
             </div>
+            <span class="preview-tag">
+              <i class="ph-fill ph-check-circle"></i> Step 5: Settle Up
+            </span>
+          </div>
 
-            <div class="preview-card-body">
-              <!-- Scanned Receipt Snapshot -->
-              <div class="receipt-banner">
-                <div class="receipt-icon"><i class="ph-bold ph-fork-knife"></i></div>
-                <div class="receipt-info">
-                  <h3>Friday Bistro Dinner & Mocktails</h3>
-                  <p>Paid by <strong class="text-white">You (Harsh)</strong> • 4 Participants</p>
-                </div>
-                <div class="receipt-total">
-                  <span class="total-label">Total Bill</span>
-                  <span class="total-value">₹3,450</span>
-                </div>
-              </div>
-
-              <!-- AI Status Tag -->
-              <div class="ai-status-bar">
-                <span class="ai-scan-pulse"><i class="ph-fill ph-check-circle"></i> Gemini Vision OCR Confirmed (99.4%)</span>
-                <span class="items-count-badge">5 Items Extracted</span>
-              </div>
-
-              <!-- Static Extracted Items List -->
-              <div class="items-breakdown-list">
-                <div class="item-row">
-                  <div class="item-name-group">
-                    <span class="item-name">Woodfired Truffle Pizza</span>
-                    <div class="item-assigned-chips">
-                      <span class="chip">Harsh</span>
-                      <span class="chip">Aarav</span>
-                    </div>
-                  </div>
-                  <span class="item-price">₹850</span>
-                </div>
-                <div class="item-row">
-                  <div class="item-name-group">
-                    <span class="item-name">Creamy Pesto Penne</span>
-                    <div class="item-assigned-chips">
-                      <span class="chip">Neha</span>
-                    </div>
-                  </div>
-                  <span class="item-price">₹650</span>
-                </div>
-                <div class="item-row">
-                  <div class="item-name-group">
-                    <span class="item-name">Peri Peri Loaded Fries</span>
-                    <div class="item-assigned-chips">
-                      <span class="chip">All 4</span>
-                    </div>
-                  </div>
-                  <span class="item-price">₹420</span>
-                </div>
-                <div class="item-row">
-                  <div class="item-name-group">
-                    <span class="item-name">Craft Mocktails (x3)</span>
-                    <div class="item-assigned-chips">
-                      <span class="chip">Harsh</span>
-                      <span class="chip">Aarav</span>
-                      <span class="chip">Rohan</span>
-                    </div>
-                  </div>
-                  <span class="item-price">₹750</span>
-                </div>
-              </div>
-
-              <!-- Settlement Preview Box -->
-              <div class="settlement-preview-box">
-                <div class="settlement-header">
-                  <div class="settle-tag">
-                    <i class="ph-bold ph-tree-structure"></i>
-                    <span>Smart Cash-Flow Optimizer</span>
-                  </div>
-                  <span class="savings-pill">Collapses to 3 direct transfers</span>
-                </div>
-
-                <div class="settlement-transfers">
-                  <div class="transfer-pill">
-                    <div class="transfer-parties">
-                      <strong>Aarav</strong>
-                      <i class="ph-bold ph-arrow-right transfer-arrow"></i>
-                      <span>Harsh (You)</span>
-                    </div>
-                    <span class="transfer-amount">₹1,005</span>
-                  </div>
-                  <div class="transfer-pill">
-                    <div class="transfer-parties">
-                      <strong>Neha</strong>
-                      <i class="ph-bold ph-arrow-right transfer-arrow"></i>
-                      <span>Harsh (You)</span>
-                    </div>
-                    <span class="transfer-amount">₹1,105</span>
-                  </div>
-                  <div class="transfer-pill">
-                    <div class="transfer-parties">
-                      <strong>Rohan</strong>
-                      <i class="ph-bold ph-arrow-right transfer-arrow"></i>
-                      <span>Harsh (You)</span>
-                    </div>
-                    <span class="transfer-amount">₹940</span>
-                  </div>
-                </div>
-              </div>
+          <!-- Receipt Banner -->
+          <div class="receipt-banner">
+            <div>
+              <h4>Friday Bistro Dinner</h4>
+              <p>Paid by <strong class="text-white">Harsh (You)</strong> • 4 Friends</p>
             </div>
+            <div class="receipt-total">
+              <span>Total Bill</span>
+              <strong>₹3,450</strong>
+            </div>
+          </div>
 
-            <div class="preview-card-footer">
-              <span class="sync-status"><i class="ph-fill ph-circle"></i> LocalStorage Offline Engine</span>
-              <a href="/dashboard.html" class="btn btn-sm btn-action" id="preview-full-app-btn">
-                <span>Launch App</span>
-                <i class="ph-bold ph-arrow-up-right"></i>
-              </a>
+          <!-- Itemized Breakdown -->
+          <div class="item-list">
+            <div class="item-row">
+              <span class="item-name">Woodfired Truffle Pizza <span class="chips"><span class="chip">Harsh</span><span class="chip">Aarav</span></span></span>
+              <span class="item-price">₹850</span>
+            </div>
+            <div class="item-row">
+              <span class="item-name">Creamy Pesto Penne <span class="chips"><span class="chip">Neha</span></span></span>
+              <span class="item-price">₹650</span>
+            </div>
+            <div class="item-row">
+              <span class="item-name">Peri Peri Loaded Fries <span class="chips"><span class="chip">All 4</span></span></span>
+              <span class="item-price">₹420</span>
+            </div>
+            <div class="item-row">
+              <span class="item-name">Craft Mocktails (x3) <span class="chips"><span class="chip">Harsh</span><span class="chip">Aarav</span><span class="chip">Rohan</span></span></span>
+              <span class="item-price">₹750</span>
+            </div>
+          </div>
+
+          <!-- Debt Settlement Result -->
+          <div class="settlement-card">
+            <div class="settle-head">
+              <span>Smart Debt Resolution</span>
+              <span class="badge-pill" style="padding:2px 8px; font-size:0.7rem;">3 Direct Transfers</span>
+            </div>
+            <div class="settle-row">
+              <span><strong>Aarav</strong> owes <strong>Harsh</strong></span>
+              <span class="amt">₹1,005</span>
+            </div>
+            <div class="settle-row">
+              <span><strong>Neha</strong> owes <strong>Harsh</strong></span>
+              <span class="amt">₹1,105</span>
+            </div>
+            <div class="settle-row">
+              <span><strong>Rohan</strong> owes <strong>Harsh</strong></span>
+              <span class="amt">₹940</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Key Metrics / Stats Strip -->
-    <section class="stats-strip" id="stats">
-      <div class="container stats-grid">
-        <div class="stat-card">
-          <div class="stat-number gradient-text">&lt; 2s</div>
-          <div class="stat-label">AI Receipt Parsing Speed</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number gradient-text">O(V log V)</div>
-          <div class="stat-label">Greedy Cash-Flow Optimization</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number gradient-text">60%</div>
-          <div class="stat-label">Fewer Transactions to Settle</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number gradient-text">100%</div>
-          <div class="stat-label">Itemized Precision (Taxes & Tips)</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Problem vs Solution -->
-    <section class="comparison-section" id="comparison">
-      <div class="container">
-        <div class="section-header text-center">
-          <span class="section-tag">Comparison</span>
-          <h2 class="section-title">The Pain of Manual Math vs. <span class="gradient-text">SplitWise AI</span></h2>
-          <p class="section-subtitle">Why traditional bill splitting leads to confusion, wasted time, and unfair shares.</p>
-        </div>
-
-        <div class="comparison-grid">
-          <!-- The Old Way -->
-          <div class="comparison-card old-way glass-panel">
-            <div class="comp-header">
-              <div class="comp-icon danger"><i class="ph-bold ph-x-circle"></i></div>
-              <h3>The Traditional Way</h3>
-            </div>
-            <ul class="comp-list">
-              <li>
-                <i class="ph-bold ph-minus-circle text-danger"></i>
-                <span>Squinting at crumpled, faded thermal paper bills</span>
-              </li>
-              <li>
-                <i class="ph-bold ph-minus-circle text-danger"></i>
-                <span>Manual calculator arguments over who ate which slice</span>
-              </li>
-              <li>
-                <i class="ph-bold ph-minus-circle text-danger"></i>
-                <span>Messy web of 12 circular payments between 4 friends</span>
-              </li>
-              <li>
-                <i class="ph-bold ph-minus-circle text-danger"></i>
-                <span>Forgetting to account for GST, service charges, or delivery tips</span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- The SplitWise AI Way -->
-          <div class="comparison-card modern-way glass-panel highlight-border">
-            <div class="popular-badge">Smart Choice</div>
-            <div class="comp-header">
-              <div class="comp-icon success"><i class="ph-bold ph-check-circle"></i></div>
-              <h3>The SplitWise AI Way</h3>
-            </div>
-            <ul class="comp-list">
-              <li>
-                <i class="ph-bold ph-check-circle text-emerald"></i>
-                <span><strong>Instant Multimodal Vision OCR</strong> reads receipt items, totals, & taxes in seconds</span>
-              </li>
-              <li>
-                <i class="ph-bold ph-check-circle text-emerald"></i>
-                <span><strong>Item-Level Tagging:</strong> Tap friend avatars to assign specific dishes or shared platters</span>
-              </li>
-              <li>
-                <i class="ph-bold ph-check-circle text-emerald"></i>
-                <span><strong>Smart Debt Minimization</strong> collapses circular debts into the minimum direct payments</span>
-              </li>
-              <li>
-                <i class="ph-bold ph-check-circle text-emerald"></i>
-                <span><strong>Proportional Tax & Tip:</strong> Auto-distribute extras fairly based on each person's exact subtotal</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Core Features Grid -->
+    <!-- Core Features Section -->
     <section class="features-section" id="features">
       <div class="container">
-        <div class="section-header text-center">
-          <span class="section-tag">Powerful Features</span>
-          <h2 class="section-title">Engineered for Frictionless Group Finances</h2>
-          <p class="section-subtitle">Everything you need to manage group trips, flatmates, and dinners in one place.</p>
+        <div class="section-header">
+          <span class="section-tag">Features</span>
+          <h2 class="section-title">Built for Effortless Splitting</h2>
+          <p class="section-subtitle">Everything needed to split dining bills, group trips, and flatmate expenses cleanly.</p>
         </div>
 
         <div class="features-grid">
           <div class="feature-card glass-panel">
-            <div class="feature-icon icon-emerald">
+            <div class="feature-icon">
               <i class="ph-bold ph-camera"></i>
             </div>
             <h3>Multimodal Receipt Scanner</h3>
-            <p>Powered by Google Gemini Multimodal AI. Upload restaurant bills, supermarket receipts, or UPI screenshots and extract line items automatically.</p>
-            <div class="feature-tag">Gemini Vision OCR</div>
+            <p>Powered by Google Gemini AI. Snap a photo of any receipt to automatically extract dish items, prices, and tax subtotals.</p>
           </div>
 
           <div class="feature-card glass-panel">
-            <div class="feature-icon icon-indigo">
-              <i class="ph-bold ph-tree-structure"></i>
-            </div>
-            <h3>Algorithmic Debt Simplification</h3>
-            <p>Runs an optimized greedy priority-queue cash flow algorithm that eliminates redundant circular transfers among group members.</p>
-            <div class="feature-tag">Min-Cash-Flow Algorithm</div>
-          </div>
-
-          <div class="feature-card glass-panel">
-            <div class="feature-icon icon-cyan">
-              <i class="ph-bold ph-chat-circle-dots"></i>
-            </div>
-            <h3>Natural Language Splitting</h3>
-            <p>Simply type <em>"Harsh paid 1200 for burgers, split between Harsh, Aarav and Neha"</em> and let AI format the expense accurately.</p>
-            <div class="feature-tag">NLP Prompt Parsing</div>
-          </div>
-
-          <div class="feature-card glass-panel">
-            <div class="feature-icon icon-violet">
+            <div class="feature-icon">
               <i class="ph-bold ph-users-three"></i>
             </div>
-            <h3>Smart Proportional Taxes</h3>
-            <p>No more manual percentage calculations. Taxes, discounts, and tips are distributed proportionally based on each person's consumed items.</p>
-            <div class="feature-tag">Fair Math</div>
+            <h3>Item-Level Dish Tagging</h3>
+            <p>Easily assign who ordered what. Split shared appetizers across multiple people with fair proportional tax and tip calculations.</p>
           </div>
 
           <div class="feature-card glass-panel">
-            <div class="feature-icon icon-amber">
-              <i class="ph-bold ph-chart-donut"></i>
+            <div class="feature-icon">
+              <i class="ph-bold ph-qr-code"></i>
             </div>
-            <h3>Interactive Spending Insights</h3>
-            <p>Visual breakdown of who spent the most, group expense categories (Food, Travel, Stays), and running balances over time.</p>
-            <div class="feature-tag">Analytics</div>
-          </div>
-
-          <div class="feature-card glass-panel">
-            <div class="feature-icon icon-rose">
-              <i class="ph-bold ph-device-mobile"></i>
-            </div>
-            <h3>PWA & Mobile First</h3>
-            <p>Optimized for smartphones with offline caching and seamless Add-to-Home-Screen app capabilities.</p>
-            <div class="feature-tag">Home Screen App</div>
+            <h3>Smart UPI Settle Up</h3>
+            <p>Collapses circular group debts into the minimum direct payments. Generate dynamic UPI QR codes for instant 1-tap transfers.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- How It Works -->
-    <section class="how-section" id="how-it-works">
+    <!-- How It Works (3 Steps) -->
+    <section class="workflow-section" id="how-it-works">
       <div class="container">
-        <div class="section-header text-center">
-          <span class="section-tag">Simple Workflow</span>
-          <h2 class="section-title">From Receipt to Settlement in 3 Steps</h2>
-          <p class="section-subtitle">How SplitWise AI transforms messy bills into clear, settled balances.</p>
+        <div class="section-header">
+          <span class="section-tag">Workflow</span>
+          <h2 class="section-title">Settled in 3 Simple Steps</h2>
+          <p class="section-subtitle">No manual math or messy group chats.</p>
         </div>
 
-        <div class="steps-container">
+        <div class="steps-grid">
           <div class="step-card glass-panel">
-            <div class="step-badge">01</div>
-            <div class="step-icon-circle"><i class="ph-bold ph-upload-simple"></i></div>
-            <h3>Upload or Snap Receipt</h3>
-            <p>Take a photo with your phone or drag-and-drop any receipt image or PDF bill.</p>
+            <span class="step-num">STEP 01</span>
+            <h3>Upload Receipt</h3>
+            <p>Drag and drop a bill image, snap a photo, or choose from popular preset categories.</p>
           </div>
-
-          <div class="step-connector"><i class="ph-bold ph-caret-right"></i></div>
 
           <div class="step-card glass-panel">
-            <div class="step-badge">02</div>
-            <div class="step-icon-circle"><i class="ph-bold ph-sparkle"></i></div>
-            <h3>AI Extracts & Assigns</h3>
-            <p>Gemini Vision parses individual dishes, quantities, and taxes. Tap names to assign who ordered what.</p>
+            <span class="step-num">STEP 02</span>
+            <h3>Assign Dishes</h3>
+            <p>Tap friend avatars to assign specific line items or shared dishes with AI assistance.</p>
           </div>
-
-          <div class="step-connector"><i class="ph-bold ph-caret-right"></i></div>
 
           <div class="step-card glass-panel">
-            <div class="step-badge">03</div>
-            <div class="step-icon-circle"><i class="ph-bold ph-currency-inr"></i></div>
-            <h3>Smart Engine Optimizes Debts</h3>
-            <p>Debts are simplified into the fewest possible payments. Settle up via UPI or cash with zero confusion.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Algorithm Deep-Dive & Tech Architecture -->
-    <section class="tech-section" id="algorithm">
-      <div class="container">
-        <div class="section-header text-center">
-          <span class="section-tag">Core Algorithmic Design & Cash-Flow Engine</span>
-          <h2 class="section-title">Behind the Scenes: The Cash-Flow Engine</h2>
-          <p class="section-subtitle">A deep dive into our graph debt minimization algorithm.</p>
-        </div>
-
-        <div class="tech-card-grid">
-          <!-- Code Snippet Display -->
-          <div class="code-preview-card glass-panel">
-            <div class="code-card-header">
-              <span class="file-name"><i class="ph-bold ph-file-code"></i> DebtSimplifier Engine</span>
-              <span class="badge-tech">Optimized Algorithmic Core</span>
-            </div>
-            <div class="code-body">
-              <pre><code><span class="keyword">public static</span> List&lt;Transaction&gt; <span class="fn">simplifyDebts</span>(List&lt;Transaction&gt; initialDebts) {
-    <span class="comment">// 1. Compute Net Balances for each member</span>
-    Map&lt;String, Double&gt; netBalances = <span class="keyword">new</span> HashMap&lt;&gt;();
-    <span class="keyword">for</span> (Transaction t : initialDebts) {
-        netBalances.merge(t.from, -t.amount, Double::sum);
-        netBalances.merge(t.to, t.amount, Double::sum);
-    }
-
-    <span class="comment">// 2. Dual Priority Queues for Greedy Matching</span>
-    PriorityQueue&lt;ParticipantBalance&gt; debtors = <span class="keyword">new</span> PriorityQueue&lt;&gt;();
-    PriorityQueue&lt;ParticipantBalance&gt; creditors = <span class="keyword">new</span> PriorityQueue&lt;&gt;();
-
-    <span class="comment">// 3. Match Max Debtor with Max Creditor (O(V log V))</span>
-    <span class="keyword">while</span> (!debtors.isEmpty() && !creditors.isEmpty()) {
-        <span class="keyword">double</span> settle = Math.min(-debtor.netAmount, creditor.netAmount);
-        transactions.add(<span class="keyword">new</span> Transaction(debtor.name, creditor.name, settle));
-        <span class="comment">// update balances and re-queue</span>
-    }
-    <span class="keyword">return</span> transactions;
-}</code></pre>
-            </div>
-          </div>
-
-          <!-- Architecture Components -->
-          <div class="architecture-specs glass-panel" id="tech-stack">
-            <h3>System Architecture Stack</h3>
-            <div class="spec-list">
-              <div class="spec-item">
-                <div class="spec-icon"><i class="ph-bold ph-tree-structure"></i></div>
-                <div>
-                  <strong>High-Performance Optimization Engine</strong>
-                  <p>Greedy priority-queue cash flow reduction reducing graph edges to minimum spanning settlements.</p>
-                </div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-icon"><i class="ph-bold ph-brain"></i></div>
-                <div>
-                  <strong>Google Gemini Multimodal AI</strong>
-                  <p>Multimodal vision analysis structured via JSON schema output for receipts.</p>
-                </div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-icon"><i class="ph-bold ph-device-mobile"></i></div>
-                <div>
-                  <strong>Progressive Web App (PWA)</strong>
-                  <p>Installable standalone experience with Service Worker offline caching and mobile home-screen integration.</p>
-                </div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-icon"><i class="ph-bold ph-shield-check"></i></div>
-                <div>
-                  <strong>Secure & Lightweight REST API</strong>
-                  <p>Node.js / Express micro-server providing rapid local deployment and seamless endpoints.</p>
-                </div>
-              </div>
-            </div>
+            <span class="step-num">STEP 03</span>
+            <h3>Settle via UPI</h3>
+            <p>Get exact individual debtor amounts and collect payments via instant UPI QR codes.</p>
           </div>
         </div>
       </div>
@@ -544,60 +258,50 @@
 
     <!-- FAQ Section -->
     <section class="faq-section" id="faq">
-      <div class="container faq-container">
-        <div class="section-header text-center">
-          <span class="section-tag">Got Questions?</span>
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">FAQ</span>
           <h2 class="section-title">Frequently Asked Questions</h2>
         </div>
 
-        <div class="faq-accordion">
+        <div class="faq-list">
           <div class="faq-item glass-panel active">
-            <button class="faq-question" aria-expanded="true">
-              <span>How do I add SplitWise AI to my mobile home screen?</span>
+            <button class="faq-question">
+              <span>Can I test the app without signing up?</span>
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>When opening on a mobile device, a quick notification prompt will appear at the bottom. Tap <strong>"Add"</strong> or follow the prompt to save SplitWise AI to your phone's home screen!</p>
+              <p>Yes! Click on <strong>"Demo"</strong> to launch an immediate offline session. All data is saved securely in your browser's local storage.</p>
             </div>
           </div>
 
           <div class="faq-item glass-panel">
-            <button class="faq-question" aria-expanded="false">
-              <span>How does SplitWise AI differ from the standard Splitwise app?</span>
+            <button class="faq-question">
+              <span>How are taxes and tips calculated?</span>
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Standard apps require you to manually type each item, price, and calculate taxes. SplitWise AI uses Gemini Vision to read bills instantly from photos, assigns dishes to specific friends, and optimizes debts with our smart cash-flow engine.</p>
+              <p>Taxes and tips are distributed proportionally based on each person's exact dish subtotal, rather than split equally.</p>
             </div>
           </div>
 
           <div class="faq-item glass-panel">
-            <button class="faq-question" aria-expanded="false">
-              <span>How does the debt minimization algorithm work?</span>
+            <button class="faq-question">
+              <span>What receipt formats are supported?</span>
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>It calculates the net balance for every individual in a group. Then, using two priority queues (one for debtors and one for creditors), it greedily matches the largest debtor with the largest creditor, minimizing the overall number of bank transfers needed to settle all debts.</p>
+              <p>You can upload JPG, PNG, WebP receipt images or PDF documents up to 10MB.</p>
             </div>
           </div>
 
           <div class="faq-item glass-panel">
-            <button class="faq-question" aria-expanded="false">
-              <span>Can I test the application without signing up or uploading real receipts?</span>
+            <button class="faq-question">
+              <span>How does UPI payment settlement work?</span>
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Yes! Click on the <strong>"1-Click Live Demo"</strong> button at the top or bottom. It instantly launches the full SplitWise AI dashboard with local offline storage enabled!</p>
-            </div>
-          </div>
-
-          <div class="faq-item glass-panel">
-            <button class="faq-question" aria-expanded="false">
-              <span>Does it support proportional taxes and tips?</span>
-              <i class="ph-bold ph-caret-down faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Yes! Instead of splitting taxes equally, taxes and tips are computed proportionally based on the exact dollar or rupee value of the items each participant consumed.</p>
+              <p>Each friend's exact debt is encoded into a custom UPI QR code. Friends scan with GPay, PhonePe, or Paytm to pay directly to your VPA.</p>
             </div>
           </div>
         </div>
@@ -605,178 +309,39 @@
     </section>
 
     <!-- Bottom CTA Banner -->
-    <section class="cta-banner-section">
+    <section class="cta-section">
       <div class="container">
-        <div class="cta-banner-card glass-panel">
-          <div class="cta-banner-content">
-            <h2>Ready to Experience Painless Expense Splitting?</h2>
-            <p>Launch the interactive demo right now or explore the application.</p>
-            <div class="cta-banner-buttons">
-              <a href="/dashboard.html" class="btn btn-large btn-gradient" id="bottom-demo-btn">
-                <i class="ph-fill ph-play-circle"></i>
-                <span>Launch 1-Click Demo</span>
-              </a>
-              <a href="/dashboard.html" class="btn btn-large btn-outline" id="bottom-explore-btn">
-                <i class="ph-bold ph-arrow-right"></i>
-                <span>Explore App</span>
-              </a>
-            </div>
+        <div class="cta-box">
+          <h2>Ready to simplify expense splitting?</h2>
+          <p>Launch the interactive demo right now or sign in to save your history.</p>
+          <div class="cta-actions">
+            <button class="btn btn-large btn-primary" id="cta-demo-btn">
+              <i class="ph-fill ph-play-circle"></i>
+              <span>Try Demo</span>
+            </button>
+            <a href="/auth.html" class="btn btn-large btn-outline" id="cta-open-app-btn">
+              <span>Open App</span>
+              <i class="ph-bold ph-arrow-right"></i>
+            </a>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Polished Footer -->
+  <!-- Clean Minimal Footer -->
   <footer class="site-footer">
     <div class="container footer-container">
-      <div class="footer-brand">
-        <div class="footer-logo">
-          <div class="logo-icon-wrapper sm">
-            <i class="ph-bold ph-receipt"></i>
-          </div>
-          <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
-        </div>
-        <p class="footer-desc">AI-powered expense tracking, multimodal receipt scanning, and debt optimization designed for seamless settlements.</p>
-      </div>
-
+      <p>&copy; 2026 SplitWise AI. Multimodal expense splitting powered by Gemini AI.</p>
       <div class="footer-links">
-        <div class="link-column">
-          <h4>Navigation</h4>
-          <a href="#features">Features</a>
-          <a href="#how-it-works">How It Works</a>
-          <a href="#algorithm">Smart Debt Engine</a>
-          <a href="#faq">FAQ</a>
-        </div>
-        <div class="link-column">
-          <h4>Technology</h4>
-          <a href="#algorithm">Cash-Flow Optimizer</a>
-          <a href="#tech-stack">Google Gemini Multimodal AI</a>
-          <a href="#tech-stack">Progressive Web App</a>
-          <a href="/dashboard.html">Live Dashboard</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="container footer-bottom">
-      <p>&copy; 2026 SplitWise AI. Built with Gemini Multimodal AI & Debt Optimization Algorithms.</p>
-      <div class="footer-badges">
-        <span class="footer-tech-tag"><i class="ph-bold ph-device-mobile"></i> Mobile Ready</span>
-        <span class="footer-tech-tag"><i class="ph-bold ph-tree-structure"></i> Graph Optimized</span>
-        <span class="footer-tech-tag"><i class="ph-fill ph-sparkle"></i> Gemini AI</span>
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#faq">FAQ</a>
+        <a href="/auth.html">Sign In</a>
       </div>
     </div>
   </footer>
 
-  <!-- Mobile-Only Add-to-Home-Screen Notification Toast (Shown only on Mobile) -->
-  <aside class="mobile-pwa-toast" id="mobile-pwa-toast" aria-label="Add to home screen notification" aria-hidden="true">
-    <div class="toast-content">
-      <div class="toast-icon-wrap">
-        <img src="/icons/icon-192.png" alt="App Icon" class="toast-app-icon">
-        <span class="toast-sparkle"></span>
-      </div>
-      <div class="toast-text">
-        <strong>Add SplitWise AI</strong>
-        <span>Add to home screen for fast 1-tap access</span>
-      </div>
-    </div>
-    <div class="toast-actions">
-      <button class="btn btn-sm btn-gradient toast-add-btn" id="toast-add-btn">Add</button>
-      <button class="toast-close-btn" id="toast-close-btn" aria-label="Dismiss notification">
-        <i class="ph-bold ph-x"></i>
-      </button>
-    </div>
-  </aside>
-
-  <!-- iOS Add-to-Home-Screen Instructions Modal (Mobile iOS only) -->
-  <div class="demo-modal-overlay" id="ios-install-modal" aria-hidden="true">
-    <div class="demo-modal-box glass-panel ios-modal-box">
-      <div class="demo-modal-header">
-        <div class="modal-title-wrap">
-          <i class="ph-fill ph-device-mobile gradient-text"></i>
-          <h3>Add to Home Screen</h3>
-        </div>
-        <button class="modal-close-btn" id="ios-modal-close" aria-label="Close iOS guide">
-          <i class="ph-bold ph-x"></i>
-        </button>
-      </div>
-      <div class="demo-modal-body">
-        <p class="modal-desc">Add SplitWise AI to your iPhone/iPad home screen in 3 steps:</p>
-        <div class="ios-steps-list">
-          <div class="ios-step-row">
-            <div class="ios-step-num">1</div>
-            <div class="ios-step-text">
-              Tap the <strong>Share</strong> button in Safari toolbar:
-              <span class="ios-icon-inline"><i class="ph-bold ph-export"></i> Share</span>
-            </div>
-          </div>
-          <div class="ios-step-row">
-            <div class="ios-step-num">2</div>
-            <div class="ios-step-text">
-              Scroll down and tap <strong>Add to Home Screen</strong>:
-              <span class="ios-icon-inline"><i class="ph-bold ph-plus-square"></i> Add to Home Screen</span>
-            </div>
-          </div>
-          <div class="ios-step-row">
-            <div class="ios-step-num">3</div>
-            <div class="ios-step-text">
-              Tap <strong>Add</strong> in the top-right corner to open SplitWise AI like a native app.
-            </div>
-          </div>
-        </div>
-        <div class="modal-note">
-          <i class="ph-fill ph-check-circle"></i>
-          <span>Full-screen standalone view and offline receipt access!</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 1-Click Demo Modal (Evaluator quick-launcher) -->
-  <div class="demo-modal-overlay" id="demo-modal" aria-hidden="true">
-    <div class="demo-modal-box glass-panel">
-      <div class="demo-modal-header">
-        <div class="modal-title-wrap">
-          <i class="ph-fill ph-lightning gradient-text"></i>
-          <h3>Quick Demo Mode Launcher</h3>
-        </div>
-        <button class="modal-close-btn" id="demo-modal-close" aria-label="Close demo modal">
-          <i class="ph-bold ph-x"></i>
-        </button>
-      </div>
-      <div class="demo-modal-body">
-        <p class="modal-desc">Select an interactive demonstration mode to explore without creating an account:</p>
-        <div class="demo-options-list">
-          <div class="demo-option-card" id="demo-option-dinner">
-            <div class="option-icon"><i class="ph-bold ph-fork-knife"></i></div>
-            <div class="option-content">
-              <h4>Friday Night Bistro (₹3,450)</h4>
-              <p>4 friends, itemized dishes (pizza, mocktails, fries), tax & tip distribution.</p>
-            </div>
-            <button class="btn btn-sm btn-primary">Simulate</button>
-          </div>
-          <div class="demo-option-card" id="demo-option-roadtrip">
-            <div class="option-icon"><i class="ph-bold ph-car-profile"></i></div>
-            <div class="option-content">
-              <h4>Goa Weekend Trip (₹9,800)</h4>
-              <p>Fuel, shared seafood, highway toll passes, multi-person debt settlement.</p>
-            </div>
-            <button class="btn btn-sm btn-primary">Simulate</button>
-          </div>
-        </div>
-        <div class="modal-note">
-          <i class="ph-fill ph-info"></i>
-          <span>This loads live mock data directly into the interactive simulator above!</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Floating Back to Top Button (Mobile & Desktop) -->
-  <button class="back-to-top-btn" id="back-to-top-btn" aria-label="Scroll back to top" title="Back to top">
-    <i class="ph-bold ph-arrow-up"></i>
-  </button>
-
-  <script src="landing.js?v=3.0"></script>
+  <script src="/landing.js?v=4.0"></script>
 </body>
 </html>
