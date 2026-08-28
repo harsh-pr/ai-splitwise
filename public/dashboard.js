@@ -295,7 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const pct = targetStep * 20;
     if (wizardProgressFill) {
       wizardProgressFill.style.width = `${pct}%`;
-      wizardProgressFill.style.height = `${pct}%`;
     }
     if (sidebarPctPill) sidebarPctPill.innerHTML = `<span class="pct-num">${pct}%</span><span class="pct-done-text"> Done</span>`;
     if (stepsCountLabel) stepsCountLabel.textContent = `Step ${targetStep} of 5 Completed`;
@@ -925,21 +924,50 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
-  window.shareWhatsApp = async function(name, amt, upi, imgId) {
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${amt}&cu=INR`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUri)}`;
-
-    // Copy QR code image to clipboard for instant Ctrl+V pasting in WhatsApp Web
+  async function shareWithQrImage(title, text, qrImageUrl, filename) {
+    let imageBlob = null;
     try {
-      const img = document.getElementById(imgId) || document.querySelector(`img[alt="UPI QR for ${name}"]`);
-      if (img && navigator.clipboard && window.ClipboardItem) {
-        const res = await fetch(img.src);
-        const blob = await res.blob();
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      const res = await fetch(qrImageUrl);
+      if (res.ok) {
+        imageBlob = await res.blob();
       }
     } catch (e) {
-      console.warn("[QR Clipboard Copy]", e);
+      console.warn("[QR Image Fetch Error]", e);
     }
+
+    // 1. Try Native Web Share with attached file (Mobile & Windows Native Share)
+    if (imageBlob && navigator.canShare) {
+      try {
+        const file = new File([imageBlob], filename || "UPI_QR_Payment.png", { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: title,
+            text: text,
+            files: [file]
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn("[Web Share API]", err);
+      }
+    }
+
+    // 2. Fallback: Copy QR image to clipboard for instant Ctrl+V pasting in WhatsApp Web
+    if (imageBlob && navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': imageBlob })]);
+      } catch (e) {
+        console.warn("[Clipboard Copy Error]", e);
+      }
+    }
+
+    // Open WhatsApp Web with clean text
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
+  window.shareWhatsApp = async function(name, amt, upi, imgId) {
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${amt}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUri)}`;
 
     let text = `👋 *Hi ${name}!* Here is your share for *${wizardState.categoryName}*:\n\n`;
     text += `💰 *Your Amount:* ₹${amt}\n`;
@@ -956,9 +984,9 @@ document.addEventListener("DOMContentLoaded", () => {
       text += `\n`;
     }
 
-    text += `📷 *Scan QR to Pay:*\n${qrUrl}\n\n`;
     text += `✨ _Calculated with SplitWise AI_`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+
+    await shareWithQrImage(`Payment for ${name}`, text, qrUrl, `UPI_QR_${name}_Rs${amt}.png`);
   };
 
   document.getElementById("step-4-back-btn")?.addEventListener("click", () => goToStep(3));
@@ -1157,7 +1185,7 @@ document.addEventListener("DOMContentLoaded", () => {
     goToStep(1);
   });
 
-  document.getElementById("export-summary-btn")?.addEventListener("click", () => {
+  document.getElementById("export-summary-btn")?.addEventListener("click", async () => {
     let text = `🧾 *SPLITWISE AI - DETAILED BILL BREAKDOWN*\n`;
     text += `📌 *Expense:* ${wizardState.categoryName || 'Bill Split'}\n`;
     text += `📅 *Date:* ${new Date().toLocaleDateString()}\n`;
@@ -1174,14 +1202,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (Array.isArray(wizardState.settlements) && wizardState.settlements.length > 0) {
-      text += `👥 *INDIVIDUAL SHARES & QR PAYMENT LINKS:*\n`;
+      text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
       wizardState.settlements.forEach(s => {
-        const upiUri = `upi://pay?pa=${encodeURIComponent(wizardState.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${s.amount}&cu=INR`;
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUri)}`;
-
         text += `• *${s.from}:* owes *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
-        text += `  📷 Scan QR: ${qrUrl}\n\n`;
       });
+      text += `\n`;
     }
 
     if (wizardState.upiId) {
@@ -1189,7 +1214,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     text += `✨ _Calculated with SplitWise AI_`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+
+    const upiUri = `upi://pay?pa=${encodeURIComponent(wizardState.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${wizardState.totalAmount}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUri)}`;
+
+    await shareWithQrImage(`Bill Summary - ${wizardState.categoryName || 'SplitWise'}`, text, qrUrl, `SplitWise_${wizardState.category || 'Bill'}_Summary.png`);
   });
 
   // ===================================================================

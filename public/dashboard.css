@@ -677,7 +677,7 @@ a:active,
   width: 100%;
   max-width: 600px;
   max-height: 85vh;
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(18, 18, 24, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 20px;
   display: flex;
@@ -1187,7 +1187,7 @@ a:active,
   padding: 12px 18px;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(18, 18, 24, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
 }
@@ -1911,7 +1911,7 @@ a:active,
   pointer-events: auto;
   min-width: 320px;
   max-width: 420px;
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(18, 18, 24, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(16, 185, 129, 0.4);
@@ -2444,13 +2444,17 @@ a:active,
   .wizard-sidebar:focus-within .wizard-progress-track {
     display: block;
     width: 100%;
-    height: 6px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
   }
 
   .wizard-sidebar:hover .wizard-progress-fill,
   .wizard-sidebar:focus-within .wizard-progress-fill {
-    height: 100%;
+    height: 100% !important;
     background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 100px;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
   }
 
   .wizard-sidebar:hover .steps-count-label,
@@ -2613,7 +2617,7 @@ a:active,
   border-radius: 20px;
   overflow: hidden;
   position: relative;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(18, 18, 24, 0.98);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.12);

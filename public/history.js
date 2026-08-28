@@ -290,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/dashboard.html";
   };
 
-  window.shareBillWhatsApp = function(billId) {
+  window.shareBillWhatsApp = async function(billId) {
     const bills = getAllBills();
     const bill = bills.find(b => b.id === billId);
     if (!bill) return;
@@ -311,16 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
       text += `\n`;
     }
 
-    // 2. Individual Settlements Breakdown with QR links
+    // 2. Individual Settlements Breakdown
     if (Array.isArray(bill.settlements) && bill.settlements.length > 0) {
-      text += `👥 *INDIVIDUAL SHARES & QR PAYMENT LINKS:*\n`;
+      text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
       bill.settlements.forEach(s => {
-        const upiUri = `upi://pay?pa=${encodeURIComponent(bill.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(bill.payer || 'SplitWise')}&am=${s.amount}&cu=INR`;
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUri)}`;
-
         text += `• *${s.from}:* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
-        text += `  📷 Scan QR: ${qrUrl}\n\n`;
       });
+      text += `\n`;
     }
 
     if (bill.upiId) {
@@ -328,6 +325,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     text += `✨ _Calculated with SplitWise AI_`;
+
+    const upiUri = `upi://pay?pa=${encodeURIComponent(bill.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(bill.payer || 'SplitWise')}&am=${bill.total}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUri)}`;
+
+    let imageBlob = null;
+    try {
+      const res = await fetch(qrUrl);
+      if (res.ok) imageBlob = await res.blob();
+    } catch (e) {}
+
+    if (imageBlob && navigator.canShare) {
+      try {
+        const file = new File([imageBlob], `SplitWise_${bill.title || 'Bill'}_QR.png`, { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: bill.title || 'Bill Summary', text, files: [file] });
+          return;
+        }
+      } catch (e) {}
+    }
+
+    if (imageBlob && navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': imageBlob })]);
+      } catch (e) {}
+    }
+
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
 
