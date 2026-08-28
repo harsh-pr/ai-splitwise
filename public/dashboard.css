@@ -824,10 +824,10 @@ a:active,
   align-items: center;
 }
 
-/* Dashboard Layout Container */
+/* Dashboard Layout Container - Wide Canvas */
 .dash-layout {
   display: block;
-  max-width: 900px;
+  max-width: 1240px;
   margin: 0 auto;
   padding-top: 24px;
   padding-bottom: 60px;
@@ -1284,35 +1284,35 @@ a:active,
 }
 
 .btn-add-inline {
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 0.76rem;
   font-weight: 700;
-  background: var(--indigo-600);
-  color: #fff;
+  background: var(--emerald-500);
+  color: #000;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .btn-add-inline:hover {
-  background: var(--indigo-500);
+  background: var(--emerald-400);
 }
 
 .split-stage-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
 }
 
 /* Left: AI Chat Box */
 .ai-chat-box {
   display: flex;
   flex-direction: column;
-  height: 480px;
+  height: 560px;
   border-radius: 16px;
   border: 1px solid var(--surface-glass-border);
-  background: rgba(11, 15, 25, 0.9);
+  background: rgba(13, 13, 18, 0.9);
   overflow: hidden;
 }
 
@@ -1335,8 +1335,8 @@ a:active,
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--indigo-500), var(--cyan-500));
-  color: #fff;
+  background: linear-gradient(135deg, var(--emerald-500), #059669);
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1364,7 +1364,7 @@ a:active,
 
 .chat-messages {
   flex-grow: 1;
-  padding: 14px;
+  padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1376,7 +1376,7 @@ a:active,
   gap: 10px;
   align-items: flex-start;
   max-width: 90%;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   line-height: 1.5;
 }
 
@@ -1384,8 +1384,8 @@ a:active,
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.2);
-  color: var(--indigo-400);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--emerald-400);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1407,7 +1407,7 @@ a:active,
 }
 
 .user-msg .msg-body {
-  background: linear-gradient(135deg, var(--indigo-600), var(--indigo-500));
+  background: linear-gradient(135deg, #059669, #10b981);
   color: #fff;
   padding: 10px 14px;
   border-radius: 12px;
@@ -1460,39 +1460,41 @@ a:active,
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--surface-glass-border);
   border-radius: 8px;
-  padding: 9px 12px;
+  padding: 10px 14px;
   color: var(--text-white);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   outline: none;
 }
 
 .chat-input-bar input:focus {
-  border-color: var(--indigo-400);
+  border-color: var(--emerald-400);
+  box-shadow: 0 0 0 2px var(--emerald-glow);
 }
 
 .btn-chat-send {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
-  background: var(--indigo-500);
+  background: var(--emerald-500);
   border: none;
-  color: #fff;
+  color: #000;
   font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-fast);
 }
 
 .btn-chat-send:hover {
-  background: var(--indigo-600);
+  background: var(--emerald-400);
 }
 
 /* Right: Items Editor Box */
 .items-editor-box {
   display: flex;
   flex-direction: column;
-  height: 480px;
+  height: 560px;
   border-radius: 16px;
   border: 1px solid var(--surface-glass-border);
   padding: 18px;
@@ -2152,12 +2154,17 @@ a:active,
 /* ===================================================================
    RIGHT COLUMN: Minimal Hover-Expandable Progress Widget & Summary
    =================================================================== */
+/* ===================================================================
+   RIGHT COLUMN: Minimal Hover-Expandable Progress Widget & Summary
+   =================================================================== */
 .wizard-sidebar {
   position: fixed;
-  top: 76px;
+  top: 50%;
   right: 20px;
+  transform: translateY(-50%);
+  transform-origin: right center;
   z-index: 95;
-  width: 175px;
+  width: 195px;
   transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2167,7 +2174,7 @@ a:active,
   padding: 10px 14px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(13, 13, 18, 0.88);
+  background: rgba(13, 13, 18, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -2180,7 +2187,7 @@ a:active,
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sidebar-header h3 {
@@ -2191,12 +2198,17 @@ a:active,
 }
 
 .pct-pill {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--emerald-400);
   background: rgba(16, 185, 129, 0.12);
-  padding: 2px 7px;
+  padding: 4px 9px;
   border-radius: 100px;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
 
 .wizard-progress-bar-container {
@@ -2323,7 +2335,8 @@ a:active,
 @media (min-width: 1025px) {
   .wizard-sidebar:hover,
   .wizard-sidebar:focus-within {
-    width: 320px;
+    width: 330px;
+    transform: translateY(-50%);
   }
 
   .wizard-sidebar:hover .sidebar-sticky-panel,
@@ -2376,21 +2389,49 @@ a:active,
 @media (max-width: 1024px) {
   .wizard-sidebar {
     position: static;
+    top: auto;
+    right: auto;
+    transform: none;
     width: 100%;
-    margin-bottom: 20px;
+    margin: 0 auto 20px;
+    max-width: 600px;
   }
+
   .sidebar-sticky-panel {
-    padding: 14px 16px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(18, 18, 24, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-header h3 {
+    font-size: 0.85rem;
+  }
+
+  .wizard-progress-track {
+    height: 6px;
+    margin-bottom: 4px;
+  }
+
   .steps-count-label {
     display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
   }
-  .steps-checklist {
-    display: none;
-  }
+
+  .steps-checklist,
   .sidebar-summary-box {
-    display: none;
+    display: none !important;
   }
+
   .split-stage-container {
     grid-template-columns: 1fr;
   }
