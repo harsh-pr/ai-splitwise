@@ -2228,6 +2228,7 @@ a:active,
   justify-content: center !important;
   line-height: 1 !important;
   flex-shrink: 0 !important;
+  gap: 3px;
 }
 
 .pct-done-text {
@@ -2254,11 +2255,11 @@ a:active,
 }
 
 .wizard-progress-fill {
-  width: 100% !important;
+  width: 100%;
   height: 20%;
   background: linear-gradient(180deg, #34d399, #10b981);
   border-radius: 100px;
-  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .steps-count-label {
@@ -2394,6 +2395,7 @@ a:active,
   .wizard-sidebar:hover .pct-done-text,
   .wizard-sidebar:focus-within .pct-done-text {
     display: inline;
+    margin-left: 2px;
   }
 
   .wizard-sidebar:hover .pct-pill,
@@ -2418,7 +2420,7 @@ a:active,
 
   .wizard-sidebar:hover .wizard-progress-fill,
   .wizard-sidebar:focus-within .wizard-progress-fill {
-    height: 100% !important;
+    height: 100%;
     background: linear-gradient(90deg, #10b981, #34d399);
   }
 

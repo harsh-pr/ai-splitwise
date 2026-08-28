@@ -908,13 +908,15 @@ document.addEventListener("DOMContentLoaded", () => {
             <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
           </div>
           <div class="upi-card-actions" style="grid-template-columns: 1fr;">
-            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}', 'qr-img-${idx}')">
+            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}')">
               <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
             </button>
           </div>
         </div>
       `;
     }).join("");
+  }
+
   window.shareWhatsApp = function(name, amt, upi) {
     const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${amt}&cu=INR`;
     let text = `👋 *Hi ${name}!* Here is your share for *${wizardState.categoryName}*:\n\n`;
@@ -1202,8 +1204,26 @@ document.addEventListener("DOMContentLoaded", () => {
       goToStep(1);
     }
   } else {
-    // Initialize fresh Wizard at Step 1
-    resetWizardState();
-    goToStep(1);
+    // Check if category is passed via URL query (e.g. from History Split dropdown)
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('category');
+    if (catParam) {
+      const catTitles = {
+        restaurant: 'Restaurant & Dining',
+        hotel: 'Hotel & Stays',
+        grocery: 'Groceries & Mart',
+        travel: 'Travel & Fuel',
+        entertainment: 'Entertainment',
+        trip: 'Trip Mode (Vacation)'
+      };
+      const targetTitle = catTitles[catParam] || 'Restaurant & Dining';
+      resetWizardState(catParam, targetTitle);
+      selectCategory(catParam, targetTitle);
+      goToStep(2);
+    } else {
+      // Initialize fresh Wizard at Step 1
+      resetWizardState();
+      goToStep(1);
+    }
   }
 });
