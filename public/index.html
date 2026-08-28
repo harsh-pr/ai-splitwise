@@ -55,7 +55,7 @@
       <nav class="desktop-nav" id="desktop-nav">
         <a href="#features" class="nav-link">Features</a>
         <a href="#how-it-works" class="nav-link">How It Works</a>
-        <a href="#algorithm" class="nav-link">Java Core Engine</a>
+        <a href="#algorithm" class="nav-link">Smart Debt Engine</a>
         <a href="#tech-stack" class="nav-link">Architecture</a>
         <a href="#faq" class="nav-link">FAQ</a>
       </nav>
@@ -83,7 +83,7 @@
     <div class="mobile-nav-drawer" id="mobile-nav-drawer">
       <a href="#features" class="mobile-nav-link">Features</a>
       <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
-      <a href="#algorithm" class="mobile-nav-link">Java Core Engine</a>
+      <a href="#algorithm" class="mobile-nav-link">Smart Debt Engine</a>
       <a href="#tech-stack" class="mobile-nav-link">Architecture</a>
       <a href="#faq" class="mobile-nav-link">FAQ</a>
       <div class="mobile-drawer-actions">
@@ -106,7 +106,7 @@
         <div class="hero-content">
           <div class="badge-pill" id="hero-badge">
             <span class="badge-pulse"></span>
-            <span class="badge-text"><i class="ph-fill ph-sparkle"></i> Gemini 2.5 + Java Debt Engine</span>
+            <span class="badge-text"><i class="ph-fill ph-sparkle"></i> Gemini AI + Smart Debt Engine</span>
           </div>
 
           <h1 class="hero-title">
@@ -115,7 +115,7 @@
           </h1>
 
           <p class="hero-subtitle">
-            Snap a receipt photo, let Gemini Multimodal AI parse every item and tax, and let our Java Greedy Cash-Flow Engine calculate the simplest way to settle up. No manual math, zero awkward debates.
+            Snap a receipt photo, let Gemini Multimodal AI parse every item and tax, and let our Smart Cash-Flow Optimization Engine calculate the simplest way to settle up. No manual math, zero awkward debates.
           </p>
 
           <div class="hero-cta-group">
@@ -142,7 +142,7 @@
           </div>
         </div>
 
-        <!-- Interactive Hero Demo Card -->
+        <!-- Static Hero App Showcase Model -->
         <div class="hero-preview-wrapper" id="hero-preview">
           <div class="preview-card glass-panel">
             <div class="preview-card-header">
@@ -152,65 +152,119 @@
                   <span class="dot dot-yellow"></span>
                   <span class="dot dot-green"></span>
                 </div>
-                <span class="preview-badge"><i class="ph-fill ph-cpu"></i> AI Live Parser</span>
+                <span class="preview-badge"><i class="ph-fill ph-receipt"></i> SplitWise AI • Live Preview</span>
               </div>
-              <div class="receipt-selector-pills">
-                <button class="pill-btn active" id="pill-dinner" data-preset="dinner">
-                  <i class="ph-bold ph-fork-knife"></i> Friday Dinner
-                </button>
-                <button class="pill-btn" id="pill-roadtrip" data-preset="roadtrip">
-                  <i class="ph-bold ph-car-profile"></i> Goa Roadtrip
-                </button>
-              </div>
+              <span class="badge-tech"><i class="ph-bold ph-shield-check"></i> Step 5: Settle Up</span>
             </div>
 
             <div class="preview-card-body">
               <!-- Scanned Receipt Snapshot -->
               <div class="receipt-banner">
-                <div class="receipt-icon"><i class="ph-bold ph-receipt"></i></div>
+                <div class="receipt-icon"><i class="ph-bold ph-fork-knife"></i></div>
                 <div class="receipt-info">
-                  <h3 id="receipt-title">Friday Bistro Dinner & Mocktails</h3>
-                  <p id="receipt-meta">Paid by <strong class="text-white" id="receipt-payer">You (Harsh)</strong> • 4 Participants</p>
+                  <h3>Friday Bistro Dinner & Mocktails</h3>
+                  <p>Paid by <strong class="text-white">You (Harsh)</strong> • 4 Participants</p>
                 </div>
                 <div class="receipt-total">
                   <span class="total-label">Total Bill</span>
-                  <span class="total-value" id="receipt-total">₹3,450</span>
+                  <span class="total-value">₹3,450</span>
                 </div>
               </div>
 
               <!-- AI Status Tag -->
               <div class="ai-status-bar">
-                <span class="ai-scan-pulse"><i class="ph-fill ph-check-circle"></i> Gemini Vision OCR Confirmed (<span id="receipt-confidence">98.6%</span>)</span>
-                <span class="items-count-badge" id="receipt-items-count">5 Items Extracted</span>
+                <span class="ai-scan-pulse"><i class="ph-fill ph-check-circle"></i> Gemini Vision OCR Confirmed (99.4%)</span>
+                <span class="items-count-badge">5 Items Extracted</span>
               </div>
 
-              <!-- Items Breakdown -->
-              <div class="items-breakdown-list" id="receipt-items-list">
-                <!-- Dynamically populated by landing.js -->
+              <!-- Static Extracted Items List -->
+              <div class="items-breakdown-list">
+                <div class="item-row">
+                  <div class="item-name-group">
+                    <span class="item-name">Woodfired Truffle Pizza</span>
+                    <div class="item-assigned-chips">
+                      <span class="chip">Harsh</span>
+                      <span class="chip">Aarav</span>
+                    </div>
+                  </div>
+                  <span class="item-price">₹850</span>
+                </div>
+                <div class="item-row">
+                  <div class="item-name-group">
+                    <span class="item-name">Creamy Pesto Penne</span>
+                    <div class="item-assigned-chips">
+                      <span class="chip">Neha</span>
+                    </div>
+                  </div>
+                  <span class="item-price">₹650</span>
+                </div>
+                <div class="item-row">
+                  <div class="item-name-group">
+                    <span class="item-name">Peri Peri Loaded Fries</span>
+                    <div class="item-assigned-chips">
+                      <span class="chip">All 4</span>
+                    </div>
+                  </div>
+                  <span class="item-price">₹420</span>
+                </div>
+                <div class="item-row">
+                  <div class="item-name-group">
+                    <span class="item-name">Craft Mocktails (x3)</span>
+                    <div class="item-assigned-chips">
+                      <span class="chip">Harsh</span>
+                      <span class="chip">Aarav</span>
+                      <span class="chip">Rohan</span>
+                    </div>
+                  </div>
+                  <span class="item-price">₹750</span>
+                </div>
               </div>
 
-              <!-- Java Debt Simplification Result -->
+              <!-- Settlement Preview Box -->
               <div class="settlement-preview-box">
                 <div class="settlement-header">
                   <div class="settle-tag">
                     <i class="ph-bold ph-tree-structure"></i>
-                    <span>Java Cash-Flow Optimizer</span>
+                    <span>Smart Cash-Flow Optimizer</span>
                   </div>
-                  <span class="savings-pill">Reduced to 3 direct transfers</span>
+                  <span class="savings-pill">Collapses to 3 direct transfers</span>
                 </div>
 
-                <div class="settlement-transfers" id="settlement-transfers-list">
-                  <!-- Dynamically populated by landing.js -->
+                <div class="settlement-transfers">
+                  <div class="transfer-pill">
+                    <div class="transfer-parties">
+                      <strong>Aarav</strong>
+                      <i class="ph-bold ph-arrow-right transfer-arrow"></i>
+                      <span>Harsh (You)</span>
+                    </div>
+                    <span class="transfer-amount">₹1,005</span>
+                  </div>
+                  <div class="transfer-pill">
+                    <div class="transfer-parties">
+                      <strong>Neha</strong>
+                      <i class="ph-bold ph-arrow-right transfer-arrow"></i>
+                      <span>Harsh (You)</span>
+                    </div>
+                    <span class="transfer-amount">₹1,105</span>
+                  </div>
+                  <div class="transfer-pill">
+                    <div class="transfer-parties">
+                      <strong>Rohan</strong>
+                      <i class="ph-bold ph-arrow-right transfer-arrow"></i>
+                      <span>Harsh (You)</span>
+                    </div>
+                    <span class="transfer-amount">₹940</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div class="preview-card-footer">
-              <span class="sync-status"><i class="ph-fill ph-circle"></i> Live Engine Active</span>
-              <button class="btn btn-sm btn-action" id="preview-full-app-btn">
-                <span>Open in App</span>
+              <span class="sync-status"><i class="ph-fill ph-circle"></i> LocalStorage Offline Engine</span>
+              <a href="/dashboard.html" class="btn btn-sm btn-action" id="preview-full-app-btn">
+                <span>Launch App</span>
                 <i class="ph-bold ph-arrow-up-right"></i>
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -293,7 +347,7 @@
               </li>
               <li>
                 <i class="ph-bold ph-check-circle text-emerald"></i>
-                <span><strong>Java Greedy Debt Minimization</strong> collapses circular debts into the minimum direct payments</span>
+                <span><strong>Smart Debt Minimization</strong> collapses circular debts into the minimum direct payments</span>
               </li>
               <li>
                 <i class="ph-bold ph-check-circle text-emerald"></i>
@@ -320,7 +374,7 @@
               <i class="ph-bold ph-camera"></i>
             </div>
             <h3>Multimodal Receipt Scanner</h3>
-            <p>Powered by Google Gemini 2.5 Flash. Upload restaurant bills, supermarket receipts, or UPI screenshots and extract line items automatically.</p>
+            <p>Powered by Google Gemini Multimodal AI. Upload restaurant bills, supermarket receipts, or UPI screenshots and extract line items automatically.</p>
             <div class="feature-tag">Gemini Vision OCR</div>
           </div>
 
@@ -328,9 +382,9 @@
             <div class="feature-icon icon-indigo">
               <i class="ph-bold ph-tree-structure"></i>
             </div>
-            <h3>Java Debt Simplification</h3>
+            <h3>Algorithmic Debt Simplification</h3>
             <p>Runs an optimized greedy priority-queue cash flow algorithm that eliminates redundant circular transfers among group members.</p>
-            <div class="feature-tag">Java 25 Algorithm</div>
+            <div class="feature-tag">Min-Cash-Flow Algorithm</div>
           </div>
 
           <div class="feature-card glass-panel">
@@ -403,28 +457,28 @@
           <div class="step-card glass-panel">
             <div class="step-badge">03</div>
             <div class="step-icon-circle"><i class="ph-bold ph-currency-inr"></i></div>
-            <h3>Java Engine Optimizes Debts</h3>
+            <h3>Smart Engine Optimizes Debts</h3>
             <p>Debts are simplified into the fewest possible payments. Settle up via UPI or cash with zero confusion.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Java Algorithm Deep-Dive & Tech Architecture -->
+    <!-- Algorithm Deep-Dive & Tech Architecture -->
     <section class="tech-section" id="algorithm">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag">Java Core & Algorithmic Design</span>
+          <span class="section-tag">Core Algorithmic Design & Cash-Flow Engine</span>
           <h2 class="section-title">Behind the Scenes: The Cash-Flow Engine</h2>
-          <p class="section-subtitle">A collegiate deep dive into our Java graph debt minimization algorithm.</p>
+          <p class="section-subtitle">A deep dive into our graph debt minimization algorithm.</p>
         </div>
 
         <div class="tech-card-grid">
           <!-- Code Snippet Display -->
           <div class="code-preview-card glass-panel">
             <div class="code-card-header">
-              <span class="file-name"><i class="ph-bold ph-file-code"></i> DebtSimplifier.java</span>
-              <span class="badge-tech">Java 25 LTS</span>
+              <span class="file-name"><i class="ph-bold ph-file-code"></i> DebtSimplifier Engine</span>
+              <span class="badge-tech">Optimized Algorithmic Core</span>
             </div>
             <div class="code-body">
               <pre><code><span class="keyword">public static</span> List&lt;Transaction&gt; <span class="fn">simplifyDebts</span>(List&lt;Transaction&gt; initialDebts) {
@@ -455,16 +509,16 @@
             <h3>System Architecture Stack</h3>
             <div class="spec-list">
               <div class="spec-item">
-                <div class="spec-icon"><i class="ph-bold ph-coffee"></i></div>
+                <div class="spec-icon"><i class="ph-bold ph-tree-structure"></i></div>
                 <div>
-                  <strong>Java 25 Core Engine</strong>
+                  <strong>High-Performance Optimization Engine</strong>
                   <p>Greedy priority-queue cash flow reduction reducing graph edges to minimum spanning settlements.</p>
                 </div>
               </div>
               <div class="spec-item">
                 <div class="spec-icon"><i class="ph-bold ph-brain"></i></div>
                 <div>
-                  <strong>Google Gemini 2.5 Flash</strong>
+                  <strong>Google Gemini Multimodal AI</strong>
                   <p>Multimodal vision analysis structured via JSON schema output for receipts.</p>
                 </div>
               </div>
@@ -513,13 +567,13 @@
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Standard apps require you to manually type each item, price, and calculate taxes. SplitWise AI uses Gemini Vision to read bills instantly from photos, assigns dishes to specific friends, and optimizes debts with a Java cash-flow engine.</p>
+              <p>Standard apps require you to manually type each item, price, and calculate taxes. SplitWise AI uses Gemini Vision to read bills instantly from photos, assigns dishes to specific friends, and optimizes debts with our smart cash-flow engine.</p>
             </div>
           </div>
 
           <div class="faq-item glass-panel">
             <button class="faq-question" aria-expanded="false">
-              <span>How does the Java debt minimization algorithm work?</span>
+              <span>How does the debt minimization algorithm work?</span>
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
@@ -533,7 +587,7 @@
               <i class="ph-bold ph-caret-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Yes! Click on the <strong>"1-Click Live Demo"</strong> button at the top. It provides immediate access with preloaded sample receipts (dinner, road trip) so evaluators can test all features instantly.</p>
+              <p>Yes! Click on the <strong>"1-Click Live Demo"</strong> button at the top or bottom. It instantly launches the full SplitWise AI dashboard with local offline storage enabled!</p>
             </div>
           </div>
 
@@ -556,15 +610,15 @@
         <div class="cta-banner-card glass-panel">
           <div class="cta-banner-content">
             <h2>Ready to Experience Painless Expense Splitting?</h2>
-            <p>Launch the interactive demo right now or explore the simulator.</p>
+            <p>Launch the interactive demo right now or explore the application.</p>
             <div class="cta-banner-buttons">
               <a href="/dashboard.html" class="btn btn-large btn-gradient" id="bottom-demo-btn">
                 <i class="ph-fill ph-play-circle"></i>
                 <span>Launch 1-Click Demo</span>
               </a>
-              <a href="#hero-preview" class="btn btn-large btn-outline">
-                <i class="ph-bold ph-receipt"></i>
-                <span>View Interactive Simulator</span>
+              <a href="/dashboard.html" class="btn btn-large btn-outline" id="bottom-explore-btn">
+                <i class="ph-bold ph-arrow-right"></i>
+                <span>Explore App</span>
               </a>
             </div>
           </div>
@@ -591,25 +645,25 @@
           <h4>Navigation</h4>
           <a href="#features">Features</a>
           <a href="#how-it-works">How It Works</a>
-          <a href="#algorithm">Java Engine</a>
+          <a href="#algorithm">Smart Debt Engine</a>
           <a href="#faq">FAQ</a>
         </div>
         <div class="link-column">
           <h4>Technology</h4>
-          <a href="#algorithm">Java 25 Cash-Flow</a>
-          <a href="#tech-stack">Google Gemini 2.5 Flash</a>
+          <a href="#algorithm">Cash-Flow Optimizer</a>
+          <a href="#tech-stack">Google Gemini Multimodal AI</a>
           <a href="#tech-stack">Progressive Web App</a>
-          <a href="#hero-preview">Interactive Simulator</a>
+          <a href="/dashboard.html">Live Dashboard</a>
         </div>
       </div>
     </div>
 
     <div class="container footer-bottom">
-      <p>&copy; 2026 SplitWise AI. Built with Java 25 & Gemini Multimodal AI.</p>
+      <p>&copy; 2026 SplitWise AI. Built with Gemini Multimodal AI & Debt Optimization Algorithms.</p>
       <div class="footer-badges">
         <span class="footer-tech-tag"><i class="ph-bold ph-device-mobile"></i> Mobile Ready</span>
-        <span class="footer-tech-tag"><i class="ph-bold ph-coffee"></i> Java Powered</span>
-        <span class="footer-tech-tag"><i class="ph-fill ph-sparkle"></i> Gemini 2.5</span>
+        <span class="footer-tech-tag"><i class="ph-bold ph-tree-structure"></i> Graph Optimized</span>
+        <span class="footer-tech-tag"><i class="ph-fill ph-sparkle"></i> Gemini AI</span>
       </div>
     </div>
   </footer>
