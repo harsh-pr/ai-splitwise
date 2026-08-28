@@ -354,21 +354,50 @@ async function clearAllUserCloudData() {
   localStorage.removeItem("splitwise_active_bill_id");
   updateProfileTotalSettled([]);
 
-  // 2. If authenticated with Firebase, delete all cloud bill documents in batch
+  // 2. Clear all cloud collections in Firebase Firestore
+  await firebaseInitPromise;
   const user = await getAuthenticatedFirebaseUser();
-  if (user && db) {
+  if (db) {
+    // A. Delete all from old root 'history' collection (as shown in user screenshot)
     try {
-      const snapshot = await db.collection("users").doc(user.uid).collection("bills").get();
-      if (!snapshot.empty) {
-        const batch = db.batch();
-        snapshot.forEach(doc => {
-          batch.delete(doc.ref);
+      const histSnap = await db.collection("history").get();
+      if (!histSnap.empty) {
+        const batch1 = db.batch();
+        histSnap.forEach(doc => {
+          batch1.delete(doc.ref);
         });
-        await batch.commit();
+        await batch1.commit();
+        console.log(`[Firestore] Purged ${histSnap.size} documents from root 'history' collection.`);
       }
-      console.log(`[Firestore] All cloud bills deleted successfully for user ${user.uid}`);
     } catch (err) {
-      console.error("[Firestore] Could not clear all user cloud data:", err);
+      console.warn("[Firestore] Root 'history' purge note:", err);
+    }
+
+    // B. Delete all from 'bills' collection if any
+    try {
+      const billsSnap = await db.collection("bills").get();
+      if (!billsSnap.empty) {
+        const batch2 = db.batch();
+        billsSnap.forEach(doc => batch2.delete(doc.ref));
+        await batch2.commit();
+      }
+    } catch (err) {}
+
+    // C. Delete all from 'users/{uid}/bills'
+    if (user) {
+      try {
+        const userBillsSnap = await db.collection("users").doc(user.uid).collection("bills").get();
+        if (!userBillsSnap.empty) {
+          const batch3 = db.batch();
+          userBillsSnap.forEach(doc => {
+            batch3.delete(doc.ref);
+          });
+          await batch3.commit();
+          console.log(`[Firestore] All cloud bills deleted successfully for user ${user.uid}`);
+        }
+      } catch (err) {
+        console.error("[Firestore] Could not clear user bills:", err);
+      }
     }
   }
 }
