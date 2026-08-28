@@ -57,11 +57,11 @@ app.get('/api/config', (req, res) => {
   res.json({
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || "",
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN || "attendance-hvpp.firebaseapp.com",
-      projectId: process.env.FIREBASE_PROJECT_ID || "attendance-hvpp",
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "attendance-hvpp.firebasestorage.app",
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "1052095327914",
-      appId: process.env.FIREBASE_APP_ID || "1:1052095327914:web:f6c526dfe3dc9526eaaad3"
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN || "",
+      projectId: process.env.FIREBASE_PROJECT_ID || "ai-splitwise",
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "",
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "",
+      appId: process.env.FIREBASE_APP_ID || ""
     },
     googleClientId: process.env.GOOGLE_CLIENT_ID || "",
     useFirebase: process.env.USE_FIREBASE === 'true',

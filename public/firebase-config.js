@@ -6,11 +6,12 @@
 
 const firebaseConfig = {
   apiKey: "",
-  authDomain: "attendance-hvpp.firebaseapp.com",
-  projectId: "attendance-hvpp",
-  storageBucket: "attendance-hvpp.firebasestorage.app",
-  messagingSenderId: "1052095327914",
-  appId: "1:1052095327914:web:f6c526dfe3dc9526eaaad3"
+  authDomain: "",
+  projectId: "ai-splitwise",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
+  measurementId: "G-QRDKN6TS19"
 };
 
 // Initialize Firebase if loaded
