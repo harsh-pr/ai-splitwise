@@ -74,93 +74,87 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Sign Out Handler (Only in profile dropdown)
-  logoutBtn?.addEventListener("click", () => {
-    logoutUser();
-  });
-
   // ===================================================================
-  // 2. Profile Dropdown Menu (Kokonut style from attendance-tracker)
+  // 2. Profile Dropdown & Split Dropdown Controllers
   // ===================================================================
   const profileDropdownWrapper = document.getElementById("profile-dropdown-wrapper");
   const profilePillTrigger = document.getElementById("profile-pill-trigger");
-  const profileDropdownPanel = document.getElementById("profile-dropdown-panel");
-
-  profilePillTrigger?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const isOpen = profileDropdownWrapper?.classList.contains("open");
-    if (isOpen) {
-      profileDropdownWrapper?.classList.remove("open");
-      profileDropdownPanel?.classList.add("hidden");
-      profilePillTrigger?.setAttribute("aria-expanded", "false");
-    } else {
-      // Close split dropdown if open
-      splitDropdownWrapper?.classList.remove("open");
-      navTabSplit?.setAttribute("aria-expanded", "false");
-
-      profileDropdownWrapper?.classList.add("open");
-      profileDropdownPanel?.classList.remove("hidden");
-      profilePillTrigger?.setAttribute("aria-expanded", "true");
-    }
-  });
-
-  // Profile Action Buttons
-  document.getElementById("menu-open-history-btn")?.addEventListener("click", () => {
-    profileDropdownWrapper?.classList.remove("open");
-    profileDropdownPanel?.classList.add("hidden");
-    openHistoryModal();
-  });
-
-  document.getElementById("menu-open-trip-btn")?.addEventListener("click", () => {
-    profileDropdownWrapper?.classList.remove("open");
-    profileDropdownPanel?.classList.add("hidden");
-    selectCategory('trip', 'Trip Mode (Vacation)');
-    goToStep(2);
-  });
-
-  document.getElementById("menu-reset-split-btn")?.addEventListener("click", () => {
-    profileDropdownWrapper?.classList.remove("open");
-    profileDropdownPanel?.classList.add("hidden");
-    wizardState.settlements.forEach(s => s.paid = false);
-    goToStep(1);
-  });
-
-  // ===================================================================
-  // 3. Navbar Navigation: Home, Split Dropdown, and History
-  // ===================================================================
   const navTabHome = document.getElementById("nav-tab-home");
   const navTabSplit = document.getElementById("nav-tab-split");
   const splitDropdownWrapper = document.getElementById("split-dropdown-wrapper");
   const navTabHistory = document.getElementById("nav-tab-history");
 
-  // Home: Takes user back to selecting category (Step 1)
+  // Profile Dropdown Toggle
+  profilePillTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    splitDropdownWrapper?.classList.remove("open");
+    profileDropdownWrapper?.classList.toggle("open");
+  });
+
+  // Split Dropdown Toggle
+  navTabSplit?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    profileDropdownWrapper?.classList.remove("open");
+    splitDropdownWrapper?.classList.toggle("open");
+  });
+
+  // Home Tab Click
   navTabHome?.addEventListener("click", () => {
     navTabHome.classList.add("active");
     navTabSplit?.classList.remove("active");
     navTabHistory?.classList.remove("active");
     splitDropdownWrapper?.classList.remove("open");
     profileDropdownWrapper?.classList.remove("open");
-    profileDropdownPanel?.classList.add("hidden");
     goToStep(1);
   });
 
-  // Split Dropdown Toggle
-  navTabSplit?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const isOpen = splitDropdownWrapper?.classList.contains("open");
-    if (isOpen) {
-      splitDropdownWrapper?.classList.remove("open");
-      navTabSplit?.setAttribute("aria-expanded", "false");
-    } else {
-      // Close profile dropdown if open
+  // Close dropdowns when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!profileDropdownWrapper?.contains(e.target)) {
       profileDropdownWrapper?.classList.remove("open");
-      profileDropdownPanel?.classList.add("hidden");
-      profilePillTrigger?.setAttribute("aria-expanded", "false");
-
-      splitDropdownWrapper?.classList.add("open");
-      navTabSplit?.setAttribute("aria-expanded", "true");
+    }
+    if (!splitDropdownWrapper?.contains(e.target)) {
+      splitDropdownWrapper?.classList.remove("open");
     }
   });
+
+  // Profile Menu Actions
+  document.getElementById("menu-open-history-btn")?.addEventListener("click", () => {
+    profileDropdownWrapper?.classList.remove("open");
+    window.location.href = "/history.html";
+  });
+
+  document.getElementById("menu-open-trip-btn")?.addEventListener("click", () => {
+    profileDropdownWrapper?.classList.remove("open");
+    selectCategory('trip', 'Trip Mode (Vacation)');
+    goToStep(2);
+  });
+
+  document.getElementById("menu-reset-split-btn")?.addEventListener("click", () => {
+    profileDropdownWrapper?.classList.remove("open");
+    wizardState.settlements.forEach(s => s.paid = false);
+    goToStep(1);
+  });
+
+  // Universal Sign Out
+  function executeSignOut() {
+    sessionStorage.clear();
+    localStorage.removeItem("splitwise_user");
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
+      try {
+        firebase.auth().signOut().catch(() => {}).finally(() => {
+          window.location.href = "/auth.html";
+        });
+        return;
+      } catch (err) {
+        console.warn("Firebase signout error:", err);
+      }
+    }
+    window.location.href = "/auth.html";
+  }
+
+  logoutBtn?.addEventListener("click", executeSignOut);
+  document.getElementById("btn-sign-out")?.addEventListener("click", executeSignOut);
 
   // Category Selection inside Split Dropdown -> Directs to Step 2 (Upload Bill)
   document.querySelectorAll(".split-drop-item").forEach(item => {
@@ -1039,53 +1033,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize Wizard at Step 1
     goToStep(1);
   }
-
-  // ===================================================================
-  // Navigation Dropdowns & Sign Out Controllers
-  // ===================================================================
-  const profileDropdownWrapper = document.getElementById("profile-dropdown-wrapper");
-  const profilePillTrigger = document.getElementById("profile-pill-trigger");
-  const splitDropdownWrapper = document.getElementById("split-dropdown-wrapper");
-  const navTabSplit = document.getElementById("nav-tab-split");
-
-  profilePillTrigger?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    splitDropdownWrapper?.classList.remove("open");
-    profileDropdownWrapper?.classList.toggle("open");
-  });
-
-  navTabSplit?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    profileDropdownWrapper?.classList.remove("open");
-    splitDropdownWrapper?.classList.toggle("open");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!profileDropdownWrapper?.contains(e.target)) {
-      profileDropdownWrapper?.classList.remove("open");
-    }
-    if (!splitDropdownWrapper?.contains(e.target)) {
-      splitDropdownWrapper?.classList.remove("open");
-    }
-  });
-
-  // Universal Sign Out
-  function executeSignOut() {
-    sessionStorage.clear();
-    localStorage.removeItem("splitwise_user");
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
-      try {
-        firebase.auth().signOut().catch(() => {}).finally(() => {
-          window.location.href = "/auth.html";
-        });
-        return;
-      } catch (err) {
-        console.warn("Firebase signout error:", err);
-      }
-    }
-    window.location.href = "/auth.html";
-  }
-
-  document.getElementById("logout-btn")?.addEventListener("click", executeSignOut);
-  document.getElementById("btn-sign-out")?.addEventListener("click", executeSignOut);
 });
