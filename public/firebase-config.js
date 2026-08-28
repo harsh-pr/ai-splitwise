@@ -183,6 +183,37 @@ function updateProfileTotalSettled(bills) {
   }
 }
 
+// Deleted Bill IDs Tombstones to prevent zombie bill resurrection
+function getDeletedBillIds() {
+  try {
+    const raw = localStorage.getItem("splitwise_deleted_bill_ids");
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function addDeletedBillId(billId) {
+  if (!billId) return;
+  try {
+    const deleted = getDeletedBillIds();
+    if (!deleted.includes(billId)) {
+      deleted.push(billId);
+      // Keep up to last 100 deleted IDs
+      if (deleted.length > 100) deleted.shift();
+      localStorage.setItem("splitwise_deleted_bill_ids", JSON.stringify(deleted));
+    }
+  } catch (e) {}
+}
+
+function removeDeletedBillId(billId) {
+  if (!billId) return;
+  try {
+    const deleted = getDeletedBillIds().filter(id => id !== billId);
+    localStorage.setItem("splitwise_deleted_bill_ids", JSON.stringify(deleted));
+  } catch (e) {}
+}
+
 function getLocalBills() {
   try {
     const raw = localStorage.getItem("splitwise_bills_history");
@@ -190,7 +221,8 @@ function getLocalBills() {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
         const DUMMY_IDS = ['dinner-01', 'roadtrip-02', 'grocery-03'];
-        return parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-'));
+        const deletedIds = getDeletedBillIds();
+        return parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-') && !deletedIds.includes(b.id));
       }
     }
   } catch (e) {}
@@ -199,17 +231,24 @@ function getLocalBills() {
 
 function setLocalBills(bills) {
   try {
-    localStorage.setItem("splitwise_bills_history", JSON.stringify(bills));
-    updateProfileTotalSettled(bills);
-    window.dispatchEvent(new CustomEvent('splitwise_bills_updated', { detail: { bills } }));
+    const deletedIds = getDeletedBillIds();
+    const filtered = (Array.isArray(bills) ? bills : []).filter(b => b && b.id && !deletedIds.includes(b.id));
+    localStorage.setItem("splitwise_bills_history", JSON.stringify(filtered));
+    updateProfileTotalSettled(filtered);
+    window.dispatchEvent(new CustomEvent('splitwise_bills_updated', { detail: { bills: filtered } }));
   } catch (e) {}
 }
 
 function mergeBills(primary = [], secondary = []) {
   const map = new Map();
-  primary.forEach(b => { if (b && b.id) map.set(b.id, { ...b }); });
+  const deletedIds = getDeletedBillIds();
+
+  primary.forEach(b => {
+    if (b && b.id && !deletedIds.includes(b.id)) map.set(b.id, { ...b });
+  });
+
   secondary.forEach(b => {
-    if (!b || !b.id) return;
+    if (!b || !b.id || deletedIds.includes(b.id)) return;
     if (!map.has(b.id)) {
       map.set(b.id, { ...b });
     } else {
@@ -219,7 +258,8 @@ function mergeBills(primary = [], secondary = []) {
       if (inT >= exT) map.set(b.id, { ...ex, ...b });
     }
   });
-  const result = Array.from(map.values());
+
+  const result = Array.from(map.values()).filter(b => b && b.id && !deletedIds.includes(b.id));
   result.sort((a, b) => (b.createdAt || b.updatedAt || 0) - (a.createdAt || a.updatedAt || 0));
   return result;
 }
@@ -306,6 +346,8 @@ async function loadUserBills() {
 async function saveBillRecord(bill) {
   if (!bill || !bill.id) return;
 
+  removeDeletedBillId(bill.id);
+
   const uid = getUserId();
   const isGuest = uid === "guest_demo_user" || !uid;
 
@@ -359,34 +401,45 @@ async function saveBillRecord(bill) {
 }
 
 /**
- * Delete Bill Record
+ * Delete Bill Record (Permanent multi-path delete with tombstone protection)
  */
 async function deleteBillRecord(billId) {
   if (!billId) return;
 
+  addDeletedBillId(billId);
+
   const uid = getUserId();
   const isGuest = uid === "guest_demo_user" || !uid;
 
-  // 1. Remove from local cache
+  // 1. Remove from local cache immediately
   const localBills = getLocalBills().filter(b => b.id !== billId);
   setLocalBills(localBills);
   updateProfileTotalSettled(localBills);
 
   if (isGuest) return;
 
-  // 2. Delete from Firestore
+  // 2. Delete across all Firestore paths
   if (db && uid) {
     try {
       const cleanList = JSON.parse(JSON.stringify(localBills));
       await Promise.all([
         billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }),
-        billItemDoc(uid, billId).delete()
+        billItemDoc(uid, billId).delete(),
+        db.collection("history").doc(billId).delete().catch(() => {}),
+        db.collection("bills").doc(billId).delete().catch(() => {})
       ]);
-      console.log(`[Firestore] Deleted bill ${billId} from users/${uid}/bills`);
+      console.log(`[Firestore] Permanently deleted bill ${billId}`);
     } catch (e) {
       console.warn("[Firestore] Delete note:", e);
     }
   }
+
+  // 3. Backup server delete
+  try {
+    fetch(`/api/sync-bills?userId=${encodeURIComponent(uid || '')}&billId=${encodeURIComponent(billId)}`, {
+      method: 'DELETE'
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 /**

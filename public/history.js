@@ -312,6 +312,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.deleteBill = async function(billId) {
     if (!confirm("Are you sure you want to delete this bill from history?")) return;
+    const card = document.getElementById(`card-${billId}`);
+    if (card) {
+      card.style.opacity = '0.3';
+      card.style.pointerEvents = 'none';
+    }
     if (typeof deleteBillRecord === "function") {
       await deleteBillRecord(billId);
     }
