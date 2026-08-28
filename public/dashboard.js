@@ -172,8 +172,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveCurrentBillToHistory() {
-    if (!wizardState.totalAmount || !wizardState.items || wizardState.items.length === 0) return;
+    if (!wizardState.items || wizardState.items.length === 0) return;
     try {
+      if (!wizardState.totalAmount || wizardState.totalAmount === 0) {
+        wizardState.totalAmount = wizardState.items.reduce((sum, i) => sum + (Number(i.price) || 0), 0) + (Number(wizardState.taxAmount) || 0);
+      }
       if (!wizardState.billId) {
         wizardState.billId = 'bill_' + Date.now();
       }
@@ -185,10 +188,10 @@ document.addEventListener("DOMContentLoaded", () => {
         category: wizardState.category || 'restaurant',
         categoryName: wizardState.categoryName || 'Restaurant & Dining',
         date: wizardState.billDate || new Date().toISOString().split('T')[0],
-        total: wizardState.totalAmount,
-        tax: wizardState.taxAmount || 0,
+        total: Number(wizardState.totalAmount) || 0,
+        tax: Number(wizardState.taxAmount) || 0,
         payer: wizardState.payer || 'Harsh',
-        payerShare: wizardState.payerShare || 0,
+        payerShare: Number(wizardState.payerShare) || 0,
         participants: wizardState.participants || ['Harsh'],
         items: wizardState.items || [],
         settlements: wizardState.settlements || [],

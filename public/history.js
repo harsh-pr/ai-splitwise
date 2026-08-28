@@ -321,20 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderHistory(false);
   };
 
-  // Clear All History Button (Batch Firestore Delete + Local Cache Reset)
-  document.getElementById("clear-all-history-btn")?.addEventListener("click", async () => {
-    if (!confirm("Are you sure you want to permanently delete all bill history from Firebase and start fresh? This cannot be undone.")) return;
-    const btn = document.getElementById("clear-all-history-btn");
-    if (btn) btn.innerHTML = `<i class="ph-bold ph-spinner ph-spin"></i><span>Clearing Firebase...</span>`;
-    
-    if (typeof clearAllUserCloudData === "function") {
-      await clearAllUserCloudData();
-    }
-    
-    if (btn) btn.innerHTML = `<i class="ph-bold ph-trash"></i><span>Clear All History</span>`;
-    await renderHistory(false);
-  });
-
   // 5. Search & Filter Listeners
   historySearchInput?.addEventListener("input", (e) => {
     activeSearchTerm = e.target.value.trim();
