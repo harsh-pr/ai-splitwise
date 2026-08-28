@@ -311,17 +311,20 @@ document.addEventListener("DOMContentLoaded", () => {
       text += `\n`;
     }
 
-    // 2. Individual Settlements Breakdown
+    // 2. Individual Settlements Breakdown with QR links
     if (Array.isArray(bill.settlements) && bill.settlements.length > 0) {
-      text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
+      text += `👥 *INDIVIDUAL SHARES & QR PAYMENT LINKS:*\n`;
       bill.settlements.forEach(s => {
-        text += `• *${s.from}* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
+        const upiUri = `upi://pay?pa=${encodeURIComponent(bill.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(bill.payer || 'SplitWise')}&am=${s.amount}&cu=INR`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUri)}`;
+
+        text += `• *${s.from}:* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Settled' : '⏳ Pending'}]\n`;
+        text += `  📷 Scan QR: ${qrUrl}\n\n`;
       });
-      text += `\n`;
     }
 
     if (bill.upiId) {
-      text += `💳 *Pay via UPI:* \`${bill.upiId}\`\n\n`;
+      text += `💳 *Payer UPI ID:* \`${bill.upiId}\`\n\n`;
     }
 
     text += `✨ _Calculated with SplitWise AI_`;

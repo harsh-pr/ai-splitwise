@@ -600,6 +600,20 @@
           </div>
         </div>
 
+        <!-- UPI QR Code Cards Accessible directly in Step 5 -->
+        <div class="step-5-qr-container glass-panel" id="step-5-qr-container" style="margin-bottom: 24px; padding: 20px;">
+          <div class="step-5-qr-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <i class="ph-bold ph-qr-code text-emerald" style="font-size: 1.3rem;"></i>
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-white); margin: 0;">Payment QR Codes</h3>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Instant individual UPI payment codes</span>
+          </div>
+          <div class="upi-qr-grid" id="step-5-upi-qr-grid">
+            <!-- Populated dynamically by dashboard.js -->
+          </div>
+        </div>
+
         <!-- Friend Settlement Cards (Paid vs Pending) -->
         <div class="friends-settlement-list" id="friends-settlement-list">
           <!-- Dynamically populated by dashboard.js -->

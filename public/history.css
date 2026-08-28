@@ -103,9 +103,9 @@ button,
   gap: 6px;
   padding: 4px 12px;
   border-radius: 100px;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: var(--indigo-400);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--emerald-400);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -208,32 +208,43 @@ button,
 }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
 }
 
-/* Filter and Search Bar */
-.history-filter-bar {
+.stat-val {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-white);
+  line-height: 1.2;
+}
+
+/* ===================================================================
+   3. Search & Filter Bar
+   =================================================================== */
+.history-controls-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 20px;
-  border-radius: 18px;
-  margin-bottom: 28px;
+  padding: 12px 18px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
 .history-search-wrap {
   position: relative;
   flex: 1;
-  min-width: 240px;
+  min-width: 260px;
   display: flex;
   align-items: center;
 }
 
-.search-icon {
+.history-search-wrap i {
   position: absolute;
   left: 14px;
   color: var(--text-muted);
@@ -253,7 +264,8 @@ button,
 }
 
 .history-search-wrap input:focus {
-  border-color: var(--indigo-400);
+  border-color: var(--emerald-400);
+  box-shadow: 0 0 12px var(--emerald-glow);
 }
 
 .clear-search-btn {
@@ -291,9 +303,10 @@ button,
 }
 
 .filter-pill.active {
-  background: var(--indigo-600);
-  border-color: var(--indigo-500);
+  background: var(--emerald-500);
+  border-color: var(--emerald-400);
   color: #fff;
+  box-shadow: 0 0 12px var(--emerald-glow);
 }
 
 .status-select {
@@ -301,7 +314,7 @@ button,
   font-size: 0.82rem;
   font-weight: 600;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(18, 18, 24, 0.9);
   border: 1px solid var(--surface-glass-border);
   color: var(--text-white);
   outline: none;
@@ -510,7 +523,7 @@ button,
 .btn-toggle-expand {
   background: transparent;
   border: none;
-  color: var(--indigo-400);
+  color: var(--emerald-400);
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
@@ -524,7 +537,7 @@ button,
 
 .btn-toggle-expand:hover {
   color: var(--text-white);
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .bill-actions-right {
@@ -546,13 +559,15 @@ button,
 }
 
 .btn-open-dash {
-  background: var(--indigo-600);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--surface-glass-border);
   color: #fff;
-  border: none;
 }
 
 .btn-open-dash:hover {
-  background: var(--indigo-500);
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--emerald-400);
 }
 
 .btn-share-wa {
