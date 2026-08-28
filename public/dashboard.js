@@ -961,6 +961,19 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://wa.me/?text=${summary}`, "_blank");
   });
 
+  // Synchronize cloud bills on dashboard startup and update total settled badge
+  if (typeof loadUserBills === "function") {
+    loadUserBills().then(bills => {
+      if (typeof updateProfileTotalSettled === "function") {
+        updateProfileTotalSettled(bills);
+      }
+    }).catch(err => {
+      console.warn("Could not sync bills on dashboard load:", err);
+    });
+  } else if (typeof updateProfileTotalSettled === "function") {
+    updateProfileTotalSettled(getSavedBills());
+  }
+
   // Check if directed from history.html to load a saved bill
   const activeBillId = localStorage.getItem("splitwise_active_bill_id");
   if (activeBillId) {

@@ -104,6 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statTotalSpend) statTotalSpend.textContent = `₹${totalSpend.toLocaleString()}`;
     if (statTotalSettled) statTotalSettled.textContent = `₹${totalSettled.toLocaleString()}`;
     if (statTotalPending) statTotalPending.textContent = `₹${totalPending.toLocaleString()}`;
+
+    if (typeof updateProfileTotalSettled === "function") {
+      updateProfileTotalSettled(bills);
+    }
   }
 
   // 3. Render Bills Cards

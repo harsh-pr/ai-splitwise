@@ -35,6 +35,22 @@ const firebaseInitPromise = (async function() {
   return null;
 })();
 
+// Helper to reliably get the authenticated Firebase user (waits for async token restoration)
+async function getAuthenticatedFirebaseUser() {
+  await firebaseInitPromise;
+  if (!auth) return null;
+  if (auth.currentUser) return auth.currentUser;
+  
+  return new Promise((resolve) => {
+    const unsub = auth.onAuthStateChanged((u) => {
+      unsub();
+      resolve(u);
+    });
+    // Timeout fallback in case auth state doesn't change within 2s
+    setTimeout(() => resolve(auth.currentUser || null), 2000);
+  });
+}
+
 // Guest User definition for 1-Click Demo mode
 const GUEST_USER = {
   uid: "guest_demo_user",
@@ -103,6 +119,27 @@ function logoutUser() {
 // ─── FIRESTORE MULTI-DEVICE CLOUD SYNC & LOCAL CACHE ──────────────────────────
 
 /**
+ * Dynamically computes and updates the Total Settled amount in the profile dropdown
+ */
+function updateProfileTotalSettled(bills) {
+  let totalSettled = 0;
+  const list = Array.isArray(bills) ? bills : getLocalBills();
+  list.forEach(bill => {
+    if (Array.isArray(bill.settlements)) {
+      bill.settlements.forEach(s => {
+        if (s.paid) {
+          totalSettled += (s.amount || 0);
+        }
+      });
+    }
+  });
+  const badge = document.getElementById("menu-total-settled");
+  if (badge) {
+    badge.textContent = `₹${totalSettled.toLocaleString()}`;
+  }
+}
+
+/**
  * Get active bills from local device storage
  */
 function getLocalBills() {
@@ -127,6 +164,7 @@ function getLocalBills() {
 function setLocalBills(bills) {
   try {
     localStorage.setItem("splitwise_bills_history", JSON.stringify(bills));
+    updateProfileTotalSettled(bills);
   } catch (e) {
     console.warn("Error writing local bills:", e);
   }
@@ -134,38 +172,64 @@ function setLocalBills(bills) {
 
 /**
  * Load user bills: Fetches from Firebase Firestore if authenticated AND not in guest mode,
- * and seamlessly synchronizes with local storage cache.
+ * synchronizes any unsynced local bills to cloud, and returns unified list.
  */
 async function loadUserBills() {
   const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
   if (isGuest) {
-    return getLocalBills();
+    const local = getLocalBills();
+    updateProfileTotalSettled(local);
+    return local;
   }
 
-  await firebaseInitPromise;
-  const user = auth?.currentUser;
+  const user = await getAuthenticatedFirebaseUser();
 
   // If user is authenticated in Firebase and NOT in guest mode, load from Firestore
   if (user && db && !isGuest) {
     try {
       const snapshot = await db.collection("users").doc(user.uid).collection("bills").orderBy("createdAt", "desc").get();
       const cloudBills = [];
+      const cloudIds = new Set();
+      
       snapshot.forEach(doc => {
         const data = doc.data();
         cloudBills.push({ id: doc.id, ...data });
+        cloudIds.add(doc.id);
       });
+
+      // Two-way sync: If local storage has bills created before/offline, push them to Firestore
+      const localBills = getLocalBills();
+      for (const localBill of localBills) {
+        if (localBill && localBill.id && !cloudIds.has(localBill.id)) {
+          try {
+            await db.collection("users").doc(user.uid).collection("bills").doc(localBill.id).set(localBill, { merge: true });
+            cloudBills.push(localBill);
+            cloudIds.add(localBill.id);
+          } catch (syncErr) {
+            console.warn("[Firestore] Could not sync local bill to cloud:", syncErr);
+          }
+        }
+      }
+
+      // Sort newest first
+      cloudBills.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
       // Update local storage cache
       setLocalBills(cloudBills);
+      updateProfileTotalSettled(cloudBills);
       return cloudBills;
     } catch (err) {
       console.warn("[Firestore] Failed to fetch bills from cloud, falling back to local cache:", err);
-      return getLocalBills();
+      const local = getLocalBills();
+      updateProfileTotalSettled(local);
+      return local;
     }
   }
 
   // Fallback to local storage
-  return getLocalBills();
+  const local = getLocalBills();
+  updateProfileTotalSettled(local);
+  return local;
 }
 
 /**
@@ -185,14 +249,15 @@ async function saveBillRecord(bill) {
     localBills.unshift(bill);
   }
   setLocalBills(localBills);
+  updateProfileTotalSettled(localBills);
 
   // 2. Only if authenticated and NOT guest, persist to Firebase Firestore
   if (!isGuest) {
-    await firebaseInitPromise;
-    const user = auth?.currentUser;
+    const user = await getAuthenticatedFirebaseUser();
     if (user && db) {
       try {
         const billData = {
+          id: bill.id,
           title: bill.title || "Bill Split",
           category: bill.category || "restaurant",
           categoryName: bill.categoryName || "Restaurant & Dining",
@@ -227,11 +292,11 @@ async function deleteBillRecord(billId) {
   // 1. Remove from local cache
   const localBills = getLocalBills().filter(b => b.id !== billId);
   setLocalBills(localBills);
+  updateProfileTotalSettled(localBills);
 
   // 2. Only if authenticated and NOT guest, delete from Firebase Firestore
   if (!isGuest) {
-    await firebaseInitPromise;
-    const user = auth?.currentUser;
+    const user = await getAuthenticatedFirebaseUser();
     if (user && db) {
       try {
         await db.collection("users").doc(user.uid).collection("bills").doc(billId).delete();
@@ -257,12 +322,12 @@ async function updateBillSettlement(billId, settlements) {
   if (target) {
     target.settlements = settlements;
     setLocalBills(localBills);
+    updateProfileTotalSettled(localBills);
   }
 
   // 2. Only if authenticated and NOT guest, update in Firestore
   if (!isGuest) {
-    await firebaseInitPromise;
-    const user = auth?.currentUser;
+    const user = await getAuthenticatedFirebaseUser();
     if (user && db) {
       try {
         await db.collection("users").doc(user.uid).collection("bills").doc(billId).update({
