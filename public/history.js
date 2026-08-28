@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div class="flex-align-center gap-2">
                         <strong class="${s.paid ? 'text-emerald' : 'text-rose'}">₹${s.amount}</strong>
                         <span style="font-size: 0.72rem; color: ${s.paid ? 'var(--emerald-400)' : 'var(--rose-400)'};">
-                          ${s.paid ? `(Paid ${s.utr ? `Ref #${s.utr}` : ''})` : '(Pending)'}
+                          ${s.paid ? '(Paid)' : '(Pending)'}
                         </span>
                       </div>
                     </div>
@@ -295,18 +295,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const bill = bills.find(b => b.id === billId);
     if (!bill) return;
 
-    let text = `⚡ *SplitWise AI Summary: ${bill.title}*\n`;
-    text += `💰 Total Bill: ₹${bill.total}\n`;
-    text += `👤 Paid Upfront by: ${bill.payer}\n\n`;
-    text += `*Settlements Breakdown:*\n`;
+    let text = `🧾 *SPLITWISE AI - DETAILED BILL BREAKDOWN*\n`;
+    text += `📌 *Expense:* ${bill.title || 'Bill Split'}\n`;
+    text += `📅 *Date:* ${bill.date || new Date().toLocaleDateString()}\n`;
+    text += `💰 *Total Bill:* ₹${bill.total}\n`;
+    text += `👤 *Payer:* ${bill.payer} (Paid Full Bill Upfront)\n\n`;
 
-    if (bill.settlements && bill.settlements.length > 0) {
-      bill.settlements.forEach(s => {
-        text += `• ${s.from}: ₹${s.amount} - ${s.paid ? '✅ Paid' : '⏳ Pending'}\n`;
+    // 1. Detailed Dish Allocations (Who ate what)
+    if (Array.isArray(bill.items) && bill.items.length > 0) {
+      text += `🍽️ *ITEMIZED DISHES & WHO ATE WHAT:*\n`;
+      bill.items.forEach(it => {
+        const assignedNames = Array.isArray(it.assigned) && it.assigned.length > 0 ? it.assigned.join(", ") : "Everyone";
+        text += `• ${it.name} - ₹${it.price}\n  ↳ Shared by: ${assignedNames}\n`;
       });
+      text += `\n`;
     }
 
-    text += `\nPay your share via UPI!`;
+    // 2. Individual Settlements Breakdown
+    if (Array.isArray(bill.settlements) && bill.settlements.length > 0) {
+      text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
+      bill.settlements.forEach(s => {
+        text += `• *${s.from}* owes ${s.to || bill.payer}: *₹${s.amount}* [${s.paid ? '✅ Paid' : '⏳ Pending'}]\n`;
+      });
+      text += `\n`;
+    }
+
+    if (bill.upiId) {
+      const upiLink = `upi://pay?pa=${encodeURIComponent(bill.upiId)}&pn=${encodeURIComponent(bill.payer)}&cu=INR`;
+      text += `💳 *PAY VIA UPI:* \`${bill.upiId}\`\n`;
+      text += `⚡ *1-Tap Pay Link:* ${upiLink}\n\n`;
+    }
+
+    text += `✨ _Calculated with SplitWise AI_`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 

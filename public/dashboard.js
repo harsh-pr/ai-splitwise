@@ -293,7 +293,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update Progress Indicators
     const pct = targetStep * 20;
-    if (wizardProgressFill) wizardProgressFill.style.width = `${pct}%`;
+    if (wizardProgressFill) {
+      wizardProgressFill.style.width = `${pct}%`;
+      wizardProgressFill.style.height = `${pct}%`;
+    }
     if (sidebarPctPill) sidebarPctPill.textContent = `${pct}% Done`;
     if (stepsCountLabel) stepsCountLabel.textContent = `Step ${targetStep} of 5 Completed`;
 
@@ -902,14 +905,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="upi-friend-name">${s.from}</span>
           <span class="upi-friend-amount">₹${s.amount}</span>
           <div class="qr-code-frame">
-            <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" loading="lazy">
+            <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
           </div>
-          <div class="upi-card-actions">
-            <button class="btn-qr-action" onclick="copyUpiLink('${upiUri}')">
-              <i class="ph-bold ph-copy"></i> Copy
-            </button>
-            <button class="btn-qr-action" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}')">
-              <i class="ph-bold ph-whatsapp-logo"></i> WhatsApp
+          <div class="upi-card-actions" style="grid-template-columns: 1fr;">
+            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}', 'qr-img-${idx}')">
+              <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
             </button>
           </div>
         </div>
@@ -917,15 +917,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
-  window.copyUpiLink = function(link) {
-    navigator.clipboard.writeText(link).then(() => {
-      alert("UPI payment link copied to clipboard!");
-    });
-  };
+  window.shareWhatsApp = async function(name, amt, upi, imgId) {
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${amt}&cu=INR`;
+    const textMsg = `👋 Hi *${name}*!\n💰 Your share for *${wizardState.categoryName}* is *₹${amt}*.\n\n💳 *Pay via UPI ID:* \`${upi}\`\n⚡ *1-Tap Pay Link:* ${upiUri}\n\n📷 Scan the QR code image or tap the link above to pay instantly via Google Pay, PhonePe, or Paytm!`;
 
-  window.shareWhatsApp = function(name, amt, upi) {
-    const msg = encodeURIComponent(`Hi ${name}! Your share for ${wizardState.categoryName} is ₹${amt}. Pay via UPI: ${upi}`);
-    window.open(`https://wa.me/?text=${msg}`, "_blank");
+    // Try Web Share API with QR image file
+    try {
+      const img = document.getElementById(imgId);
+      if (img && navigator.canShare) {
+        const response = await fetch(img.src);
+        const blob = await response.blob();
+        const file = new File([blob], `UPI_QR_${name}_₹${amt}.png`, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `UPI Payment QR - ₹${amt}`,
+            text: textMsg,
+            files: [file]
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("[Share API] File share notice:", e);
+    }
+
+    // Direct WhatsApp Web / App share fallback
+    window.open(`https://wa.me/?text=${encodeURIComponent(textMsg)}`, "_blank");
   };
 
   document.getElementById("step-4-back-btn")?.addEventListener("click", () => goToStep(3));
@@ -1002,7 +1019,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <strong>${s.from}</strong>
               <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
                 <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
-                ${s.paid ? `Payment Settled ${s.utr ? `(Ref #${s.utr})` : ''}` : 'Payment Pending'}
+                ${s.paid ? 'Payment Settled' : 'Payment Pending'}
               </span>
             </div>
           </div>
@@ -1027,11 +1044,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (wizardState.settlements[idx]) {
       const s = wizardState.settlements[idx];
       s.paid = !s.paid;
-      if (s.paid && !s.utr) {
-        s.utr = generateRandomUtr();
+      if (s.paid) {
         s.verifiedAt = new Date().toLocaleTimeString();
         playPaymentChime();
-        showPaymentToast(s.from, s.amount, s.utr);
+        showPaymentToast(s.from, s.amount);
       }
       saveCurrentBillToHistory();
       renderSettlementTracker();
@@ -1058,7 +1074,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {}
   }
 
-  function showPaymentToast(friendName, amount, utr) {
+  function showPaymentToast(friendName, amount) {
     const container = document.getElementById("payment-toast-container");
     if (!container) return;
 
@@ -1071,7 +1087,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="toast-content">
         <strong>Payment Recorded!</strong>
         <span>₹${amount.toLocaleString()} received from <strong>${friendName}</strong></span>
-        <span class="utr-info-pill">UPI Ref: #${utr}</span>
       </div>
     `;
     container.appendChild(toast);
