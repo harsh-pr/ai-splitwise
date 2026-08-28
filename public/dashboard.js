@@ -69,8 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (menuGuestBox) menuGuestBox.style.display = "none";
     }
   } else {
-    // If no session exists, start as Guest Demo for instant testing
-    loginAsGuest("Harsh Prasad");
+    // If no session exists, redirect to auth page
+    window.location.href = "/auth.html";
     return;
   }
 

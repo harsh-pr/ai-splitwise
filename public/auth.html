@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Sign In & Register - SplitWise AI</title>
-  <meta name="description" content="Sign in or create an account for SplitWise AI. Powered by Google Gemini and Java Debt Engine.">
-  <meta name="theme-color" content="#0b0f19">
+  <meta name="description" content="Sign in or create an account for SplitWise AI. Powered by Google Gemini Multimodal Vision and smart debt optimization.">
+  <meta name="theme-color" content="#09090b">
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -18,33 +18,31 @@
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <!-- Firebase App & Auth SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="/firebase-config.js?v=3.0"></script>
+  <script src="/firebase-config.js?v=4.0"></script>
 
-  <link rel="stylesheet" href="/landing.css?v=3.0">
-  <link rel="stylesheet" href="/auth.css?v=3.0">
+  <link rel="stylesheet" href="/auth.css?v=4.0">
 </head>
-<body class="dark-theme auth-page-body">
-  <!-- Background Glow Orbs -->
-  <div class="glow-mesh" aria-hidden="true">
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
+<body class="auth-page-body">
+  <!-- Ambient Background Glows (Non-Blue) -->
+  <div class="ambient-mesh" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
   </div>
 
   <div class="auth-wrapper">
     <!-- Top Back to Home Nav -->
     <header class="auth-header">
       <a href="/" class="brand-logo">
-        <div class="logo-icon-wrapper">
+        <div class="logo-icon">
           <i class="ph-bold ph-receipt"></i>
-          <span class="sparkle-dot"></span>
         </div>
-        <span class="brand-name">SplitWise<span class="gradient-text">.AI</span></span>
+        <span>SplitWise<span class="gradient-text">.AI</span></span>
       </a>
       <a href="/" class="back-home-link">
         <i class="ph-bold ph-arrow-left"></i>
@@ -54,19 +52,19 @@
 
     <!-- Main Auth Card -->
     <main class="auth-card-container">
-      <div class="auth-card glass-panel">
+      <div class="auth-card">
         
         <!-- Quick Guest Demo Launcher (Matches 1-Click Demo) -->
         <div class="guest-banner">
           <div class="guest-banner-text">
             <div class="guest-pill">
-              <span class="badge-pulse"></span>
+              <i class="ph-fill ph-sparkle"></i>
               <span>Evaluator & Guest Mode</span>
             </div>
             <h4>Want to test the app right now?</h4>
             <p>Skip signup and jump straight into the live interactive splitting wizard.</p>
           </div>
-          <button class="btn btn-gradient w-full guest-cta-btn" id="guest-login-btn">
+          <button class="btn-guest-cta" id="guest-login-btn">
             <i class="ph-fill ph-lightning"></i>
             <span>Continue as Guest / 1-Click Demo</span>
           </button>
@@ -89,8 +87,8 @@
         </div>
 
         <!-- Google Sign-In Button -->
-        <button class="btn btn-google w-full" id="google-auth-btn">
-          <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+        <button class="btn-google" id="google-auth-btn">
+          <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
@@ -98,10 +96,6 @@
           </svg>
           <span>Continue with Google</span>
         </button>
-
-        <div class="auth-divider-sub">
-          <span>or with email</span>
-        </div>
 
         <!-- Auth Form -->
         <form class="auth-form" id="auth-form" autocomplete="on">
@@ -125,9 +119,9 @@
 
           <!-- Password Field -->
           <div class="form-group">
-            <div class="label-row">
+            <div class="label-row" style="display:flex; justify-content:space-between; align-items:center;">
               <label for="auth-password">Password</label>
-              <a href="#" class="forgot-link hidden" id="forgot-password-btn">Forgot?</a>
+              <a href="#" class="forgot-link hidden" id="forgot-password-btn" style="font-size:0.78rem; color:var(--emerald-400);">Forgot?</a>
             </div>
             <div class="input-wrap">
               <i class="ph-bold ph-lock input-icon"></i>
@@ -138,9 +132,9 @@
             </div>
           </div>
 
-          <!-- Password Safety Checklist (Sign Up Only, matching attendance-tracker) -->
+          <!-- Password Safety Checklist (Sign Up Only) -->
           <div class="pwd-requirements-box hidden" id="pwd-requirements-box">
-            <div class="req-title">Password Security Requirements:</div>
+            <div class="req-header">Password Requirements:</div>
             <div class="req-item" id="req-len">
               <i class="ph-bold ph-circle"></i> <span>At least 8 characters</span>
             </div>
@@ -158,19 +152,14 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary w-full auth-submit-btn" id="auth-submit-btn">
+          <button type="submit" class="btn-submit" id="auth-submit-btn">
             <span id="submit-btn-text">Sign In</span>
-            <i class="ph-bold ph-arrow-right"></i>
           </button>
         </form>
-
-        <div class="auth-footer-note">
-          <span>By continuing, you agree to SplitWise AI's terms and privacy standards.</span>
-        </div>
       </div>
     </main>
   </div>
 
-  <script src="/auth.js?v=3.0"></script>
+  <script src="/auth.js?v=4.0"></script>
 </body>
 </html>
