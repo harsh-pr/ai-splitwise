@@ -1185,6 +1185,130 @@ document.addEventListener("DOMContentLoaded", () => {
     goToStep(1);
   });
 
+  async function generateGroupQrCanvasBlob(bill) {
+    const unpaid = (bill.settlements || []).filter(s => !s.paid && Number(s.amount) > 0);
+    if (!unpaid || unpaid.length === 0) return null;
+
+    const N = unpaid.length;
+    const cols = Math.min(N, 3);
+    const rows = Math.ceil(N / cols);
+    const cardWidth = 260;
+    const cardHeight = 310;
+    const padding = 28;
+    const gap = 20;
+    const headerHeight = 110;
+    const footerHeight = 44;
+
+    const width = padding * 2 + cols * cardWidth + (cols - 1) * gap;
+    const height = headerHeight + rows * cardHeight + (rows - 1) * gap + footerHeight;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    // Draw Dark Obsidian Background
+    ctx.fillStyle = "#0d0d12";
+    ctx.fillRect(0, 0, width, height);
+
+    // Subtle background mesh glow
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, "rgba(16, 185, 129, 0.08)");
+    grad.addColorStop(1, "rgba(6, 182, 212, 0.03)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Header
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#10b981";
+    ctx.font = "bold 15px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.fillText("SPLITWISE AI • GROUP PAYMENT QR CODES", width / 2, 38);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    const billTitle = (bill.title || bill.categoryName || "Bill Split").toUpperCase();
+    ctx.fillText(`${billTitle}  •  TOTAL: ₹${bill.total || bill.totalAmount || 0}`, width / 2, 68);
+
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = "500 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.fillText(`Payer: ${bill.payer || 'Harsh'}  •  UPI ID: ${bill.upiId || 'harsh@okhdfcbank'}`, width / 2, 92);
+
+    // Preload all QR Images
+    const loadedImages = await Promise.all(unpaid.map(s => {
+      return new Promise(resolve => {
+        const upiUri = `upi://pay?pa=${encodeURIComponent(bill.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(bill.payer || 'SplitWise')}&am=${s.amount}&cu=INR`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(upiUri)}`;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve({ img, s });
+        img.onerror = () => resolve({ img: null, s });
+        img.src = qrUrl;
+      });
+    }));
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // Draw QR Cards
+    loadedImages.forEach((item, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const cardX = padding + col * (cardWidth + gap);
+      const cardY = headerHeight + row * (cardHeight + gap);
+
+      roundRect(cardX, cardY, cardWidth, cardHeight, 16);
+      ctx.fillStyle = "#181822";
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.stroke();
+
+      const qrBoxSize = 180;
+      const qrBoxX = cardX + (cardWidth - qrBoxSize) / 2;
+      const qrBoxY = cardY + 20;
+
+      roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 10);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      if (item.img) {
+        ctx.drawImage(item.img, qrBoxX + 6, qrBoxY + 6, qrBoxSize - 12, qrBoxSize - 12);
+      }
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillText(item.s.from, cardX + cardWidth / 2, qrBoxY + qrBoxSize + 32);
+
+      ctx.fillStyle = "#34d399";
+      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillText(`Pay ₹${item.s.amount}`, cardX + cardWidth / 2, qrBoxY + qrBoxSize + 60);
+
+      ctx.fillStyle = "#f43f5e";
+      ctx.font = "600 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillText("⏳ PENDING PAYMENT", cardX + cardWidth / 2, qrBoxY + qrBoxSize + 78);
+    });
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#71717a";
+    ctx.font = "500 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.fillText("✨ Scan your individual QR code with any UPI app (GPay, PhonePe, Paytm, BHIM) to settle your share.", width / 2, height - 16);
+
+    return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  }
+
   document.getElementById("export-summary-btn")?.addEventListener("click", async () => {
     let text = `🧾 *SPLITWISE AI - DETAILED BILL BREAKDOWN*\n`;
     text += `📌 *Expense:* ${wizardState.categoryName || 'Bill Split'}\n`;
@@ -1201,6 +1325,8 @@ document.addEventListener("DOMContentLoaded", () => {
       text += `\n`;
     }
 
+    const unpaidSettlements = (wizardState.settlements || []).filter(s => !s.paid && Number(s.amount) > 0);
+
     if (Array.isArray(wizardState.settlements) && wizardState.settlements.length > 0) {
       text += `👥 *INDIVIDUAL SHARES & BALANCES:*\n`;
       wizardState.settlements.forEach(s => {
@@ -1215,10 +1341,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     text += `✨ _Calculated with SplitWise AI_`;
 
-    const upiUri = `upi://pay?pa=${encodeURIComponent(wizardState.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${wizardState.totalAmount}&cu=INR`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUri)}`;
+    // Only attach multi-QR composite image if there are UNPAID friends!
+    if (unpaidSettlements.length > 0) {
+      const groupQrBlob = await generateGroupQrCanvasBlob(wizardState);
+      if (groupQrBlob && navigator.canShare) {
+        try {
+          const file = new File([groupQrBlob], `Group_Payment_QRs_${wizardState.category || 'bill'}.png`, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: `Bill Summary - ${wizardState.categoryName}`,
+              text: text,
+              files: [file]
+            });
+            return;
+          }
+        } catch (e) {
+          console.warn("[Web Share API]", e);
+        }
+      }
 
-    await shareWithQrImage(`Bill Summary - ${wizardState.categoryName || 'SplitWise'}`, text, qrUrl, `SplitWise_${wizardState.category || 'Bill'}_Summary.png`);
+      if (groupQrBlob && navigator.clipboard && window.ClipboardItem) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': groupQrBlob })]);
+        } catch (e) {
+          console.warn("[Clipboard Copy Error]", e);
+        }
+      }
+    }
+
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   });
 
   // ===================================================================
