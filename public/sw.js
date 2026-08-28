@@ -1,9 +1,10 @@
 /**
- * SplitWise AI - Progressive Web App Service Worker
- * Handles offline caching, asset pre-caching, and instant loading.
+ * SplitWise AI - Progressive Web App Service Worker (v3.0)
+ * Network-First strategy ensures users always get the latest live code
+ * without needing Ctrl+Shift+R or clearing browser cache.
  */
 
-const CACHE_NAME = 'splitwise-ai-v2.5';
+const CACHE_NAME = 'splitwise-ai-v3.0';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -27,24 +28,25 @@ const PRECACHE_ASSETS = [
   '/icons/apple-touch-icon.png'
 ];
 
-// Install Event: Pre-cache core app shell
+// Install Event: Pre-cache assets and immediately activate
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('[PWA SW] Pre-caching core application assets...');
+      console.log('[PWA SW v3.0] Pre-caching application assets...');
       return cache.addAll(PRECACHE_ASSETS);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate Event: Clean up outdated cache versions
+// Activate Event: Wipe all legacy cache versions immediately
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
           if (key !== CACHE_NAME) {
-            console.log('[PWA SW] Removing old cache version:', key);
+            console.log('[PWA SW v3.0] Purging outdated cache:', key);
             return caches.delete(key);
           }
         })
@@ -53,32 +55,23 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch Event: Cache-First for static assets, Network-First for API routes
+// Fetch Event: Network-First for everything (Fallback to Cache only when offline)
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // For API endpoints, prefer fresh network responses
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
-      })
-    );
+  // Non-GET requests (e.g. POST /api/*) go straight to network
+  if (event.request.method !== 'GET') {
     return;
   }
 
-  // For static assets, use Cache-First with Network fallback
+  // Network-First strategy
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then(networkResponse => {
-        // Cache new static requests dynamically if valid
+    fetch(event.request)
+      .then(networkResponse => {
+        // If valid response, update cache in background
         if (
           networkResponse &&
           networkResponse.status === 200 &&
-          event.request.method === 'GET' &&
           (url.origin === location.origin || url.hostname.includes('fonts.'))
         ) {
           const responseToCache = networkResponse.clone();
@@ -87,12 +80,18 @@ self.addEventListener('fetch', event => {
           });
         }
         return networkResponse;
-      });
-    }).catch(() => {
-      // Fallback for HTML navigation if completely offline
-      if (event.request.headers.get('accept')?.includes('text/html')) {
-        return caches.match('/index.html');
-      }
-    })
+      })
+      .catch(async () => {
+        // Offline Fallback: Serve from cache if network is unavailable
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+
+        // Fallback for page navigations
+        if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('/history.html') || caches.match('/dashboard.html') || caches.match('/index.html');
+        }
+
+        return new Response('Offline - Network unavailable', { status: 503, statusText: 'Offline' });
+      })
   );
 });

@@ -7,6 +7,10 @@
   <meta name="description" content="SplitWise AI Interactive Dashboard. Upload bills, chat with Gemini AI, and generate dynamic UPI QR settlements.">
   <meta name="theme-color" content="#0b0f19">
 
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -20,10 +24,10 @@
   <!-- Firebase Auth SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="/firebase-config.js"></script>
+  <script src="/firebase-config.js?v=3.0"></script>
 
-  <link rel="stylesheet" href="/landing.css?v=1.3">
-  <link rel="stylesheet" href="/dashboard.css?v=1.9">
+  <link rel="stylesheet" href="/landing.css?v=3.0">
+  <link rel="stylesheet" href="/dashboard.css?v=3.0">
 </head>
 <body class="dark-theme dashboard-body">
   <!-- Background Glow Orbs -->
@@ -666,76 +670,9 @@
     </aside>
   </div>
 
-  <!-- Trip Mode Payment Screenshot Verification Modal -->
-  <div class="history-modal-overlay hidden" id="screenshot-verify-modal" aria-hidden="true">
-    <div class="history-modal-box glass-panel screenshot-modal-box">
-      <div class="history-modal-header">
-        <div class="flex-align-center gap-2">
-          <div class="logo-icon-wrapper sm" style="background: rgba(139, 92, 246, 0.2); color: var(--violet-400);">
-            <i class="ph-bold ph-file-image"></i>
-          </div>
-          <div>
-            <h3>Verify Payment Proof</h3>
-            <span class="history-subtitle" id="verify-modal-subtitle">Trip Mode • Automatic Screenshot Verification</span>
-          </div>
-        </div>
-        <button class="history-close-btn" id="screenshot-modal-close" aria-label="Close modal">
-          <i class="ph-bold ph-x"></i>
-        </button>
-      </div>
-
-      <div class="screenshot-modal-body">
-        <div class="verify-target-badge">
-          <span>Verifying Debt for: <strong id="verify-friend-name" class="text-white">Friend</strong></span>
-          <span class="badge-amount-pill" id="verify-expected-amount">₹0</span>
-        </div>
-
-        <div class="screenshot-dropzone" id="screenshot-dropzone">
-          <input type="file" id="screenshot-file-input" accept="image/*" class="hidden">
-          <div class="dropzone-inner" id="screenshot-dropzone-prompt">
-            <i class="ph-bold ph-upload-simple upload-icon-big text-violet"></i>
-            <strong>Upload GPay / PhonePe / Paytm Screenshot</strong>
-            <p>Drop the image here or click to browse / snap with camera</p>
-            <span class="file-hint">JPG, PNG, WebP up to 15MB</span>
-          </div>
-
-          <!-- Scanner Laser Animation -->
-          <div class="scanner-laser-container hidden" id="screenshot-scanner-stage">
-            <div class="laser-beam"></div>
-            <div class="scanner-preview-frame">
-              <img id="screenshot-preview-img" src="" alt="Payment screenshot preview">
-            </div>
-            <p class="scanning-status-text">Gemini 2.5 Flash Verifying Transaction...</p>
-          </div>
-        </div>
-
-        <!-- Verification Result Box -->
-        <div class="verify-result-box hidden" id="verify-result-box">
-          <div class="verify-status-banner success" id="verify-status-banner">
-            <i class="ph-fill ph-check-circle"></i>
-            <span id="verify-result-text">Payment Verified!</span>
-          </div>
-          <div class="verify-details-row">
-            <span>Detected: <strong id="res-detected-amount" class="text-emerald">₹0</strong></span>
-            <span>App: <strong id="res-detected-app" class="text-white">UPI</strong></span>
-            <span>UTR: <strong id="res-detected-utr" class="font-mono text-cyan">4192...</strong></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer-actions">
-        <button class="btn btn-outline" id="btn-cancel-verify">Cancel</button>
-        <button class="btn btn-gradient hidden" id="btn-confirm-verified">
-          <i class="ph-bold ph-check"></i>
-          <span>Confirm & Mark Settled</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Live Payment Notification Toast Container -->
   <div class="payment-toast-container" id="payment-toast-container"></div>
 
-  <script src="/dashboard.js?v=1.9"></script>
+  <script src="/dashboard.js?v=3.0"></script>
 </body>
 </html>
