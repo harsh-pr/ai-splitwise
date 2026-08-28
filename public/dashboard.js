@@ -603,6 +603,8 @@ document.addEventListener("DOMContentLoaded", () => {
     wizardState.settlements = newSettlements;
   }
 
+  let editingItemIdx = -1;
+
   function renderItemsEditor() {
     if (editorBillTotal) editorBillTotal.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
     if (editorTaxVal) editorTaxVal.textContent = `₹${wizardState.taxAmount.toLocaleString()}`;
@@ -611,27 +613,129 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sidePeopleCount) sidePeopleCount.textContent = `${wizardState.participants.length} Friends`;
     if (sideTransfersCount) sideTransfersCount.textContent = `${wizardState.settlements.length} Transfers`;
 
-    // Shimmer effect
-    skeletonItems?.classList.remove("hidden");
-    if (parsedItemsList) parsedItemsList.innerHTML = "";
+    if (!parsedItemsList) return;
 
-    setTimeout(() => {
-      skeletonItems?.classList.add("hidden");
-      if (parsedItemsList) {
-        parsedItemsList.innerHTML = wizardState.items.map(item => `
-          <div class="item-edit-row">
+    if (wizardState.items.length === 0) {
+      parsedItemsList.innerHTML = `
+        <div class="p-4 text-center text-muted text-sm">
+          No items added yet. Click <strong>+ Add Item</strong> above or upload a bill.
+        </div>
+      `;
+      return;
+    }
+
+    parsedItemsList.innerHTML = wizardState.items.map((item, idx) => {
+      const isEditing = (editingItemIdx === idx);
+      const assignedList = (item.assigned && item.assigned.length > 0) ? item.assigned : [wizardState.payer];
+
+      if (isEditing) {
+        return `
+          <div class="item-edit-row editing" id="item-row-${idx}">
             <div class="item-edit-left">
-              <span class="dish-name">${item.name}</span>
+              <input type="text" class="item-name-input" id="edit-name-${idx}" value="${item.name}" placeholder="Dish name...">
               <div class="dish-chips-group">
-                ${(item.assigned || [wizardState.participants[0] || 'You (Harsh)']).map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
+                ${assignedList.map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
               </div>
             </div>
-            <span class="dish-price-tag">₹${item.price}</span>
+            <div class="item-edit-right">
+              <span>₹</span>
+              <input type="number" class="item-price-input" id="edit-price-${idx}" value="${item.price}" min="0" step="1">
+              <button type="button" class="btn-item-action" onclick="saveItemEdit(${idx})" title="Save Edit">
+                <i class="ph-bold ph-check text-emerald"></i>
+              </button>
+              <button type="button" class="btn-item-action" onclick="cancelItemEdit()" title="Cancel">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
           </div>
-        `).join("");
+        `;
       }
-    }, 300);
+
+      return `
+        <div class="item-edit-row" id="item-row-${idx}">
+          <div class="item-edit-left">
+            <span class="dish-name" title="Click edit icon to rename">${item.name}</span>
+            <div class="dish-chips-group">
+              ${assignedList.map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
+            </div>
+          </div>
+          <div class="item-edit-right">
+            <span class="dish-price-tag">₹${item.price}</span>
+            <button type="button" class="btn-item-action" onclick="startItemEdit(${idx})" title="Edit dish name or price">
+              <i class="ph-bold ph-pencil-simple"></i>
+            </button>
+            <button type="button" class="btn-item-action delete" onclick="deleteDishItem(${idx})" title="Delete item">
+              <i class="ph-bold ph-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
   }
+
+  window.startItemEdit = function(idx) {
+    editingItemIdx = idx;
+    renderItemsEditor();
+    setTimeout(() => {
+      document.getElementById(`edit-name-${idx}`)?.focus();
+    }, 50);
+  };
+
+  window.cancelItemEdit = function() {
+    editingItemIdx = -1;
+    renderItemsEditor();
+  };
+
+  window.saveItemEdit = function(idx) {
+    const nameInput = document.getElementById(`edit-name-${idx}`);
+    const priceInput = document.getElementById(`edit-price-${idx}`);
+
+    if (nameInput && nameInput.value.trim()) {
+      wizardState.items[idx].name = nameInput.value.trim();
+    }
+    if (priceInput && !isNaN(Number(priceInput.value))) {
+      wizardState.items[idx].price = Math.max(0, Number(priceInput.value));
+    }
+
+    editingItemIdx = -1;
+    wizardState.totalAmount = wizardState.items.reduce((sum, i) => sum + (Number(i.price) || 0), 0) + (Number(wizardState.taxAmount) || 0);
+    recalculateSettlements();
+    renderItemsEditor();
+    saveCurrentBillToHistory();
+    addChatMessage(`✓ Updated ${wizardState.items[idx].name} (₹${wizardState.items[idx].price}). Recomputed bill balances.`, false);
+  };
+
+  window.deleteDishItem = function(idx) {
+    if (idx < 0 || idx >= wizardState.items.length) return;
+    const removedName = wizardState.items[idx].name;
+    wizardState.items.splice(idx, 1);
+    editingItemIdx = -1;
+
+    wizardState.totalAmount = wizardState.items.reduce((sum, i) => sum + (Number(i.price) || 0), 0) + (Number(wizardState.taxAmount) || 0);
+    recalculateSettlements();
+    renderItemsEditor();
+    saveCurrentBillToHistory();
+    addChatMessage(`✓ Removed "${removedName}" from bill. Recalculated total to ₹${wizardState.totalAmount}.`, false);
+  };
+
+  document.getElementById("btn-add-dish-item")?.addEventListener("click", () => {
+    const newItem = {
+      id: Date.now(),
+      name: `Custom Item ${wizardState.items.length + 1}`,
+      price: 100,
+      assigned: [wizardState.payer || 'Harsh']
+    };
+    wizardState.items.push(newItem);
+    editingItemIdx = wizardState.items.length - 1;
+
+    wizardState.totalAmount = wizardState.items.reduce((sum, i) => sum + (Number(i.price) || 0), 0) + (Number(wizardState.taxAmount) || 0);
+    recalculateSettlements();
+    renderItemsEditor();
+    saveCurrentBillToHistory();
+    setTimeout(() => {
+      document.getElementById(`edit-name-${editingItemIdx}`)?.focus();
+    }, 50);
+  });
 
   // Handle Free-Form Chat Prompts
   function addChatMessage(text, isUser = false) {

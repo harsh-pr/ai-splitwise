@@ -263,12 +263,19 @@ async function saveBillRecord(bill) {
 
   // 2. Persist to Firebase Firestore
   if (!isGuest) {
-    const user = await getAuthenticatedFirebaseUser();
-    if (user && db) {
+    await firebaseInitPromise;
+    if (!db && typeof firebase !== 'undefined' && firebase.firestore) {
+      db = firebase.firestore();
+    }
+    const user = (await getAuthenticatedFirebaseUser()) || getCurrentUser();
+    if (db) {
+      const uid = (user && user.uid) ? user.uid : "user_app";
+      const email = (user && user.email) ? user.email : "";
+
       const billData = {
         id: bill.id,
-        userId: user.uid,
-        userEmail: user.email || "",
+        userId: uid,
+        userEmail: email,
         title: bill.title || "Bill Split",
         category: bill.category || "restaurant",
         categoryName: bill.categoryName || "Restaurant & Dining",
@@ -289,8 +296,8 @@ async function saveBillRecord(bill) {
 
       // Save full list bundle to users/{uid}/bills/data (attendance-tracker structure)
       try {
-        await db.collection("users").doc(user.uid).collection("bills").doc("data").set({ list: cleanList, updatedAt: Date.now() }, { merge: true });
-        console.log(`[Firestore] Synced ${cleanList.length} bills to users bundle for ${user.uid}`);
+        await db.collection("users").doc(uid).collection("bills").doc("data").set({ list: cleanList, updatedAt: Date.now() }, { merge: true });
+        console.log(`[Firestore] Synced ${cleanList.length} bills to users bundle for ${uid}`);
       } catch (err1) {
         console.warn("[Firestore] User bundle write note:", err1);
       }

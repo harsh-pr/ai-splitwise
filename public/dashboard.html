@@ -352,8 +352,19 @@
 
           <!-- Active Scanning Overlay with Laser Beam -->
           <div class="scanner-stage hidden" id="scanner-stage">
-            <div class="scanner-laser-line"></div>
-            <img src="/icons/icon-192.png" alt="Bill Preview" class="scanner-preview-img" id="scanner-preview-img">
+            <div class="receipt-scan-card" id="receipt-scan-card">
+              <div class="receipt-scan-header">
+                <i class="ph-duotone ph-receipt"></i>
+                <span>Receipt Analysis</span>
+              </div>
+              <div class="receipt-scan-body">
+                <div class="scan-skeleton-line w-75"></div>
+                <div class="scan-skeleton-line w-90"></div>
+                <div class="scan-skeleton-line w-60"></div>
+                <div class="scan-skeleton-line w-80"></div>
+              </div>
+              <div class="scanner-laser-line"></div>
+            </div>
             <div class="scanner-overlay-status">
               <div class="spinner-circle-wheel"></div>
               <span>Gemini Vision OCR analyzing dishes & taxes...</span>
@@ -453,7 +464,12 @@
           <!-- Right: Live Parsed Dish Items with Allocation Badges -->
           <div class="items-editor-box glass-panel">
             <div class="editor-header">
-              <h3>Extracted Line Items</h3>
+              <div class="flex-align-center gap-2">
+                <h3>Extracted Line Items</h3>
+                <button type="button" class="btn-add-item-sm" id="btn-add-dish-item" title="Add missing dish or expense">
+                  <i class="ph-bold ph-plus"></i> Add Item
+                </button>
+              </div>
               <span class="items-total-pill" id="editor-bill-total">₹0</span>
             </div>
 

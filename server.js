@@ -323,7 +323,7 @@ app.post('/api/split-chat', async (req, res) => {
       });
     }
 
-    const sysPrompt = `You are SplitWise AI's intelligent split allocation engine.
+    const sysPrompt = `You are SplitWise AI's intelligent expense and split management engine.
 Receipt line items: ${JSON.stringify(items)}
 Current participants: ${JSON.stringify(participants)}
 User instruction: "${prompt}"
@@ -331,22 +331,23 @@ User instruction: "${prompt}"
 CRITICAL RULES:
 1. AUTOMATIC PARTICIPANT DISCOVERY:
    - If the user mentions ANY names (e.g., "Shreya", "Mansi", "Sara", "Harsh", etc.) or says "add X, Y and Z to friends list", AUTOMATICALLY include them in "updatedParticipants".
-   - NEVER say someone is not on the list! Always welcome and add them immediately.
-   - If user asks to remove someone, remove them from "updatedParticipants".
+   - If user asks to remove a person (e.g. "remove Aarav"), remove them from "updatedParticipants".
 
-2. NEVER DELETE ANY ITEMS (ABSOLUTE MANDATE):
-   - "updatedItems" MUST contain EVERY SINGLE item from the input "Receipt line items" array (exact same count, same ids, same prices).
-   - NEVER drop, omit, or delete any dish or item!
-   - If an item was not mentioned in the prompt, PRESERVE its existing assigned list unchanged.
-   - Match item names leniently (e.g. "butter naan" matches "Butter Naan", "chicken kabuli" matches "Chicken Kabuli", etc.).
+2. ITEM & PRICE EDITING (MANUAL / AI ASSISTED):
+   - If the user asks to change or correct an item's price (e.g., "change butter naan price to 250", "chicken is 400 not 380"): update that item's "price" in "updatedItems".
+   - If the user asks to rename a dish (e.g., "rename chicken to Chicken Tikka Masala"): update the item's "name".
+   - If the user asks to add an item (e.g., "add 2 Cokes for 80", "we also had dessert for 150"): insert a new item into "updatedItems" with an appropriate name, numeric price, and assigned array.
+   - If the user asks to remove/delete an item (e.g., "remove mineral water", "delete the dessert"): omit that item from "updatedItems".
+   - For all other unmentioned items, PRESERVE their name, price, and current assigned array unchanged.
 
-3. "EVERYONE" / "ALL":
-   - When user says "everyone got mineral water" or "split fries with all", assign all names currently in "updatedParticipants" to that item.
+3. DISH SPLITTING & ALLOCATION:
+   - Assign dishes to the specified individuals (e.g., "Harsh and Sara had naan").
+   - When user says "everyone had X" or "split Y with all", assign all names in "updatedParticipants" to that item.
 
 4. RESPONSE FORMAT:
 Respond STRICTLY with raw JSON matching this schema:
 {
-  "assistantMessage": "Friendly 1-2 sentence confirmation of who got what and any new friends added",
+  "assistantMessage": "Friendly 1-2 sentence confirmation of the split allocation, price correction, or item edit",
   "updatedParticipants": ["Name 1", "Name 2"],
   "updatedItems": [
     { "id": 1, "name": "Item Name", "price": 100, "assigned": ["Name 1"] }
@@ -361,42 +362,24 @@ Respond STRICTLY with raw JSON matching this schema:
     const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
-    // SAFETY GUARANTEE 1: Merge participants so no names are lost
     let mergedParticipants = Array.isArray(participants) ? [...participants] : [];
-    if (Array.isArray(parsed.updatedParticipants)) {
-      parsed.updatedParticipants.forEach(p => {
-        const trimmed = typeof p === 'string' ? p.trim() : '';
-        if (trimmed && !mergedParticipants.some(existing => existing.toLowerCase() === trimmed.toLowerCase())) {
-          mergedParticipants.push(trimmed);
-        }
-      });
+    if (Array.isArray(parsed.updatedParticipants) && parsed.updatedParticipants.length > 0) {
+      mergedParticipants = parsed.updatedParticipants.map(p => typeof p === 'string' ? p.trim() : p).filter(Boolean);
     }
 
-    // SAFETY GUARANTEE 2: Ensure 100% of original items are preserved!
-    const returnedItemsMap = new Map();
-    if (Array.isArray(parsed.updatedItems)) {
-      parsed.updatedItems.forEach(item => {
-        if (item.id !== undefined) returnedItemsMap.set(String(item.id), item);
-        if (item.name) returnedItemsMap.set(item.name.toLowerCase().trim(), item);
-      });
+    let finalItems = items;
+    if (Array.isArray(parsed.updatedItems) && parsed.updatedItems.length > 0) {
+      finalItems = parsed.updatedItems.map((item, idx) => ({
+        id: item.id || (idx + 1),
+        name: String(item.name || `Item ${idx + 1}`).trim(),
+        price: Number(item.price) || 0,
+        assigned: Array.isArray(item.assigned) && item.assigned.length > 0 ? item.assigned : [mergedParticipants[0] || 'Harsh']
+      }));
     }
-
-    const finalItems = items.map(orig => {
-      const match = returnedItemsMap.get(String(orig.id)) || returnedItemsMap.get(orig.name.toLowerCase().trim());
-      if (match && Array.isArray(match.assigned) && match.assigned.length > 0) {
-        // Map assigned names so they match standard casing in mergedParticipants
-        const cleanAssigned = match.assigned.map(name => {
-          const found = mergedParticipants.find(p => p.toLowerCase() === name.toLowerCase());
-          return found || name;
-        });
-        return { ...orig, assigned: cleanAssigned };
-      }
-      return orig;
-    });
 
     return res.json({
-      assistantMessage: parsed.assistantMessage || `Updated assignments for your items!`,
-      updatedParticipants: mergedParticipants.length > 0 ? mergedParticipants : ['You (Harsh)'],
+      assistantMessage: parsed.assistantMessage || `Updated your split and line items!`,
+      updatedParticipants: mergedParticipants.length > 0 ? mergedParticipants : ['Harsh'],
       updatedItems: finalItems
     });
   } catch (err) {

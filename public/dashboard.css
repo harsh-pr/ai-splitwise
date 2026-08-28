@@ -2467,3 +2467,168 @@ a:active,
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(0, 0, 0, 0.2);
 }
+
+/* Redesigned Step 2 Minimalist Receipt Scanner */
+.receipt-scan-card {
+  position: relative;
+  width: 220px;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(16, 185, 129, 0.15);
+  margin: 0 auto 16px auto;
+  overflow: hidden;
+}
+
+.receipt-scan-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+  color: #10b981;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.receipt-scan-header i {
+  font-size: 1.2rem;
+}
+
+.receipt-scan-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.scan-skeleton-line {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.scan-skeleton-line.w-75 { width: 75%; }
+.scan-skeleton-line.w-90 { width: 90%; }
+.scan-skeleton-line.w-60 { width: 60%; }
+.scan-skeleton-line.w-80 { width: 80%; }
+
+.scanner-laser-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #10b981, #34d399, transparent);
+  box-shadow: 0 0 14px #10b981;
+  animation: scanLaserAnim 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes scanLaserAnim {
+  0% { top: 0; }
+  100% { top: calc(100% - 3px); }
+}
+
+/* + Add Item & Inline Item Editing Controls */
+.btn-add-item-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-add-item-sm:hover {
+  background: rgba(16, 185, 129, 0.24);
+  border-color: #10b981;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.item-edit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.item-edit-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.item-edit-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.item-edit-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-item-action {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.85rem;
+}
+
+.btn-item-action:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-item-action.delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.item-name-input {
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.item-price-input {
+  background: #09090b;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  width: 75px;
+  text-align: right;
+}
