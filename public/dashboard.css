@@ -42,6 +42,20 @@
   border-radius: 12px;
 }
 
+a,
+a:hover,
+a:focus,
+a:active,
+.dash-tab,
+.split-drop-item,
+.brand-logo,
+.profile-action-btn,
+.profile-menu-link,
+.split-drop-item *,
+.dash-tab * {
+  text-decoration: none !important;
+}
+
 .dash-tab {
   display: inline-flex;
   align-items: center;
@@ -57,6 +71,7 @@
   transition: all var(--transition-fast);
   font-family: inherit;
   white-space: nowrap;
+  text-decoration: none !important;
 }
 
 .dash-tab:hover {

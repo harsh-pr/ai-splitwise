@@ -352,18 +352,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Sign Out
-  document.getElementById("btn-sign-out")?.addEventListener("click", () => {
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-      firebase.auth().signOut().then(() => {
-        sessionStorage.clear();
-        window.location.href = "/auth.html";
-      });
-    } else {
-      sessionStorage.clear();
-      window.location.href = "/auth.html";
+  // Universal Sign Out
+  function executeHistorySignOut() {
+    sessionStorage.clear();
+    localStorage.removeItem("splitwise_user");
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
+      try {
+        firebase.auth().signOut().catch(() => {}).finally(() => {
+          window.location.href = "/auth.html";
+        });
+        return;
+      } catch (err) {
+        console.warn("Firebase signout error:", err);
+      }
     }
-  });
+    window.location.href = "/auth.html";
+  }
+
+  document.getElementById("btn-sign-out")?.addEventListener("click", executeHistorySignOut);
+  document.getElementById("logout-btn")?.addEventListener("click", executeHistorySignOut);
 
   // Initial Render
   renderHistory();

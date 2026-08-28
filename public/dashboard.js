@@ -1039,4 +1039,53 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize Wizard at Step 1
     goToStep(1);
   }
+
+  // ===================================================================
+  // Navigation Dropdowns & Sign Out Controllers
+  // ===================================================================
+  const profileDropdownWrapper = document.getElementById("profile-dropdown-wrapper");
+  const profilePillTrigger = document.getElementById("profile-pill-trigger");
+  const splitDropdownWrapper = document.getElementById("split-dropdown-wrapper");
+  const navTabSplit = document.getElementById("nav-tab-split");
+
+  profilePillTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    splitDropdownWrapper?.classList.remove("open");
+    profileDropdownWrapper?.classList.toggle("open");
+  });
+
+  navTabSplit?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    profileDropdownWrapper?.classList.remove("open");
+    splitDropdownWrapper?.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!profileDropdownWrapper?.contains(e.target)) {
+      profileDropdownWrapper?.classList.remove("open");
+    }
+    if (!splitDropdownWrapper?.contains(e.target)) {
+      splitDropdownWrapper?.classList.remove("open");
+    }
+  });
+
+  // Universal Sign Out
+  function executeSignOut() {
+    sessionStorage.clear();
+    localStorage.removeItem("splitwise_user");
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth) {
+      try {
+        firebase.auth().signOut().catch(() => {}).finally(() => {
+          window.location.href = "/auth.html";
+        });
+        return;
+      } catch (err) {
+        console.warn("Firebase signout error:", err);
+      }
+    }
+    window.location.href = "/auth.html";
+  }
+
+  document.getElementById("logout-btn")?.addEventListener("click", executeSignOut);
+  document.getElementById("btn-sign-out")?.addEventListener("click", executeSignOut);
 });

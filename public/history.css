@@ -2,6 +2,21 @@
    SplitWise AI - Dedicated History Page Styles
    =================================================================== */
 
+a,
+a:hover,
+a:focus,
+a:active,
+button,
+.dash-tab,
+.split-drop-item,
+.brand-logo,
+.profile-menu-link,
+.profile-action-btn,
+.split-drop-item *,
+.dash-tab * {
+  text-decoration: none !important;
+}
+
 .history-page-main {
   padding-top: 100px;
   padding-bottom: 80px;
