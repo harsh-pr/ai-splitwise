@@ -319,13 +319,13 @@ document.addEventListener("DOMContentLoaded", () => {
     box.setAttribute("data-person", personName);
     box.innerHTML = `
       <div class="user-breakdown-header">
-        <div class="flex-align-center gap-2">
+        <div class="user-breakdown-person-info">
           <div class="breakdown-avatar">${personName.charAt(0)}</div>
-          <div>
-            <div class="flex-align-center gap-2">
-              <strong>${personName} ${personName === bill.payer ? '(Payer)' : ''}</strong>
-              <span class="settle-items-badge" style="font-size: 0.68rem; font-weight: 700; color: var(--emerald-400); background: rgba(16, 185, 129, 0.12); padding: 1px 6px; border-radius: 100px;">
-                ${assignedItems.length} ${assignedItems.length === 1 ? 'dish' : 'dishes'}
+          <div class="user-breakdown-title-wrap">
+            <div class="user-breakdown-name-row">
+              <strong class="user-breakdown-name">${personName} ${personName === bill.payer ? '(Payer)' : ''}</strong>
+              <span class="user-breakdown-dish-badge">
+                <i class="ph-bold ph-fork-knife"></i> ${assignedItems.length} ${assignedItems.length === 1 ? 'dish' : 'dishes'}
               </span>
             </div>
             <span class="breakdown-status-tag ${isPaid ? 'paid' : 'pending'}">
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </span>
           </div>
         </div>
-        <button class="btn-close-breakdown" onclick="closeHistoryBreakdown('${billId}')">
+        <button class="btn-close-breakdown" onclick="closeHistoryBreakdown('${billId}')" title="Close breakdown">
           <i class="ph-bold ph-x"></i>
         </button>
       </div>

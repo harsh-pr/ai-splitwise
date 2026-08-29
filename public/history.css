@@ -696,11 +696,18 @@ button,
   padding-bottom: 10px;
   border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
   margin-bottom: 10px;
+  gap: 12px;
+}
+
+.user-breakdown-person-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .breakdown-avatar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(16, 185, 129, 0.2);
   color: var(--emerald-400);
@@ -709,12 +716,49 @@ button,
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.user-breakdown-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-breakdown-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.user-breakdown-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-white);
+  line-height: 1.2;
+}
+
+.user-breakdown-dish-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--emerald-400);
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 1px 7px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .breakdown-status-tag {
-  display: block;
-  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
   font-weight: 600;
   margin-top: 1px;
 }
