@@ -119,57 +119,72 @@ function loginAsGuest(customName = "Guest Evaluator") {
 }
 
 function logoutUser() {
-  sessionStorage.clear();
-  localStorage.removeItem("splitwise_user");
-  localStorage.removeItem("is_guest_mode");
-  localStorage.removeItem("is_guest_session");
-  localStorage.removeItem("guest_display_name");
-  localStorage.removeItem("splitwise_active_bill_id");
-  localStorage.removeItem(LAST_ACTIVE_KEY);
-
-  if (auth) {
-    auth.signOut().catch(() => { }).finally(() => {
-      window.location.href = "/auth.html";
-    });
-    return;
+  clearAllSessionData();
+  const isAuthPage = window.location.pathname.endsWith("auth.html") || window.location.pathname === "/auth.html";
+  if (!isAuthPage) {
+    window.location.replace("/auth.html");
   }
-  window.location.href = "/auth.html";
 }
 
 // ─── 15-MINUTE INACTIVITY ON WEBSITE CLOSE AUTO-LOGOUT SYSTEM ─────────────────
 // Closes website > 15 mins -> auto logout on next open.
-// Active, idle, or background open tabs -> STAY logged in.
+// Active, idle, or background open tabs -> STAY logged in via continuous heartbeat.
 
 const AUTO_LOGOUT_DURATION_MS = 15 * 60 * 1000; // 15 Minutes (900,000 ms)
 const LAST_ACTIVE_KEY = "splitwise_last_active_timestamp";
 
-function checkSessionTimeoutOnLoad() {
-  const isAuthPage = window.location.pathname.endsWith("auth.html") || window.location.pathname === "/auth.html";
-  if (isAuthPage) return false;
-
-  const user = getCurrentUser();
-  if (!user) return false;
-
-  const lastActiveStr = localStorage.getItem(LAST_ACTIVE_KEY);
-  if (lastActiveStr) {
+function isSessionExpired() {
+  try {
+    const lastActiveStr = localStorage.getItem(LAST_ACTIVE_KEY);
+    if (!lastActiveStr) return false;
     const lastActive = parseInt(lastActiveStr, 10);
-    const now = Date.now();
-    if (!isNaN(lastActive) && (now - lastActive) > AUTO_LOGOUT_DURATION_MS) {
-      console.warn("[Session Security] Website was closed for over 15 minutes. Automatically logging out.");
-      localStorage.removeItem(LAST_ACTIVE_KEY);
-      logoutUser();
+    if (isNaN(lastActive) || lastActive <= 0) return false;
+    return (Date.now() - lastActive) > AUTO_LOGOUT_DURATION_MS;
+  } catch (e) {
+    return false;
+  }
+}
+
+function clearAllSessionData() {
+  try {
+    sessionStorage.clear();
+    localStorage.removeItem("splitwise_user");
+    localStorage.removeItem("is_guest_mode");
+    localStorage.removeItem("is_guest_session");
+    localStorage.removeItem("guest_display_name");
+    localStorage.removeItem("splitwise_active_bill_id");
+    localStorage.removeItem(LAST_ACTIVE_KEY);
+  } catch (e) { }
+
+  if (auth) {
+    try {
+      auth.signOut().catch(() => { });
+    } catch (e) { }
+  }
+}
+
+function enforceSessionSecurity() {
+  if (isSessionExpired()) {
+    console.warn("[Session Security] Website was closed for over 15 minutes. Automatically logging out.");
+    clearAllSessionData();
+
+    const pathname = (window.location.pathname || "").toLowerCase();
+    const isAuthPage = pathname.endsWith("auth.html") || pathname === "/auth.html" || pathname === "/auth";
+    if (!isAuthPage) {
+      window.location.replace("/auth.html");
       return true;
     }
+    return true;
   }
-
-  // Update last active timestamp immediately
-  recordActiveTimestamp();
   return false;
 }
 
 function recordActiveTimestamp() {
   try {
-    localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
+    const user = getCurrentUser();
+    if (user) {
+      localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
+    }
   } catch (e) { }
 }
 
@@ -177,8 +192,12 @@ function recordActiveTimestamp() {
 function initSessionHeartbeat() {
   recordActiveTimestamp();
 
-  // Heartbeat every 5 seconds while page exists
-  setInterval(recordActiveTimestamp, 5000);
+  // Heartbeat every 5 seconds while tab exists
+  setInterval(() => {
+    if (getCurrentUser()) {
+      recordActiveTimestamp();
+    }
+  }, 5000);
 
   // Also record on user interaction and visibility change
   window.addEventListener("focus", recordActiveTimestamp, { passive: true });
@@ -192,10 +211,29 @@ function initSessionHeartbeat() {
   window.addEventListener("beforeunload", recordActiveTimestamp, { passive: true });
 }
 
+// Listen to Firebase auth state changes to catch async user restores
+if (auth) {
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      if (isSessionExpired()) {
+        console.warn("[Session Security] Firebase Auth user restored but session expired (> 15 mins). Logging out.");
+        clearAllSessionData();
+        const pathname = (window.location.pathname || "").toLowerCase();
+        const isAuthPage = pathname.endsWith("auth.html") || pathname === "/auth.html" || pathname === "/auth";
+        if (!isAuthPage) {
+          window.location.replace("/auth.html");
+        }
+      } else {
+        recordActiveTimestamp();
+      }
+    }
+  });
+}
+
 // Run the timeout check immediately upon script evaluation
 if (typeof window !== "undefined") {
-  const timedOut = checkSessionTimeoutOnLoad();
-  if (!timedOut) {
+  const expired = enforceSessionSecurity();
+  if (!expired) {
     initSessionHeartbeat();
   }
 }

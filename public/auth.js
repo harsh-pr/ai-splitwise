@@ -5,6 +5,14 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // If session expired (> 15 mins closed), clear all credentials and stay on login
+  if (typeof isSessionExpired === 'function' && isSessionExpired()) {
+    if (typeof clearAllSessionData === 'function') {
+      clearAllSessionData();
+    }
+    return;
+  }
+
   // If user is already authenticated or active guest, navigate directly to dashboard
   if (getCurrentUser()) {
     window.location.href = "/dashboard.html";

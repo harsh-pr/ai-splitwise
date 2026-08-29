@@ -5,6 +5,11 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Enforce 15-minute closed-website security check
+  if (typeof enforceSessionSecurity === 'function' && enforceSessionSecurity()) {
+    return;
+  }
+
   // Auth Guard: If not logged in and not guest, redirect to /auth.html
   const user = getCurrentUser();
   if (!user) {

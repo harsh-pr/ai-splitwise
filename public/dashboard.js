@@ -35,6 +35,11 @@ const categoryIconMap = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Enforce 15-minute closed-website security check
+  if (typeof enforceSessionSecurity === 'function' && enforceSessionSecurity()) {
+    return;
+  }
+
   // ===================================================================
   // 1. Auth Guard & User Profile Setup (attendance-tracker style)
   // ===================================================================
