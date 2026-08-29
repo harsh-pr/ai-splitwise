@@ -2590,17 +2590,16 @@ a:active,
 
 .steps-checklist,
 .sidebar-summary-box {
+  display: none !important;
   max-height: 0;
   opacity: 0;
   overflow: hidden;
   transform: translateX(10px);
-  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
   width: 100%;
 }
 
 .steps-checklist {
-  display: flex;
   flex-direction: column;
   gap: 12px;
 }
@@ -2662,7 +2661,6 @@ a:active,
   border: 1px solid var(--surface-glass-border);
   border-radius: 12px;
   padding: 14px;
-  display: flex;
   flex-direction: column;
   gap: 8px;
 }
@@ -2728,7 +2726,7 @@ a:active,
 
   .wizard-sidebar:hover .vertical-segments,
   .wizard-sidebar:focus-within .vertical-segments {
-    display: none;
+    display: none !important;
   }
 
   .wizard-sidebar:hover .wizard-progress-bar-container,
@@ -2766,6 +2764,7 @@ a:active,
 
   .wizard-sidebar:hover .steps-checklist,
   .wizard-sidebar:focus-within .steps-checklist {
+    display: flex !important;
     max-height: 500px;
     opacity: 1;
     transform: translateX(0);
@@ -2775,6 +2774,7 @@ a:active,
 
   .wizard-sidebar:hover .sidebar-summary-box,
   .wizard-sidebar:focus-within .sidebar-summary-box {
+    display: flex !important;
     max-height: 500px;
     opacity: 1;
     transform: translateX(0);
@@ -2803,6 +2803,15 @@ a:active,
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     display: block;
     height: auto;
+  }
+
+  .steps-checklist,
+  .sidebar-summary-box {
+    display: flex !important;
+    max-height: none;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
   }
 
   .sidebar-header {
