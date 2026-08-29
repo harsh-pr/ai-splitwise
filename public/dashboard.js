@@ -1332,6 +1332,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return {
       name,
+      itemsCount: assignedItems.length,
       items: assignedItems,
       itemsSubtotal: Math.round(itemsSubtotal),
       taxShare,
@@ -1342,8 +1343,12 @@ document.addEventListener("DOMContentLoaded", () => {
   window.toggleBreakdownDrawer = function(drawerId, e) {
     if (e) e.stopPropagation();
     const drawer = document.getElementById(drawerId);
+    const caret = document.getElementById(`caret-${drawerId}`);
     if (drawer) {
       drawer.classList.toggle("hidden");
+      if (caret) {
+        caret.style.transform = drawer.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+      }
     }
   };
 
@@ -1415,37 +1420,52 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="settle-person-info">
             <div class="settle-avatar" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); border: 2px solid var(--emerald-400);">${(wizardState.payer || 'Harsh').charAt(0)}</div>
             <div class="settle-name-wrap">
-              <strong>${wizardState.payer || 'Harsh'} (You) <i class="ph-bold ph-caret-down" style="font-size: 0.75rem; margin-left: 4px; color: var(--text-muted);"></i></strong>
+              <div class="settle-title-line">
+                <strong>${wizardState.payer || 'Harsh'} (You)</strong>
+                <span class="settle-items-badge"><i class="ph-bold ph-fork-knife"></i> ${payerBreakdown.itemsCount} ${payerBreakdown.itemsCount === 1 ? 'dish' : 'dishes'}</span>
+                <i class="ph-bold ph-caret-down settle-caret" id="caret-payer-breakdown-drawer"></i>
+              </div>
               <span class="settle-status-badge badge-paid">
                 <i class="ph-bold ph-shield-check"></i>
                 Payer • Paid ₹${wizardState.totalAmount.toLocaleString()} Upfront
               </span>
             </div>
           </div>
-          <div class="settle-amount-col">
-            <span class="settle-amount" style="font-size: 0.85rem; color: var(--text-muted);">Own Share: ₹${(wizardState.payerShare || 0).toLocaleString()}</span>
-          </div>
-          <div style="font-size: 0.78rem; font-weight: 700; color: var(--emerald-400); display: flex; align-items: center; gap: 4px;">
-            <i class="ph-bold ph-check"></i> Paid Full Bill
+
+          <div class="settle-right-cluster">
+            <div class="settle-amount-col">
+              <span class="settle-label">Own Share</span>
+              <span class="settle-amount">₹${(wizardState.payerShare || 0).toLocaleString()}</span>
+            </div>
+            <div class="settle-paid-indicator">
+              <i class="ph-bold ph-check-circle"></i> Paid Full Bill
+            </div>
           </div>
         </div>
 
         <div class="settle-breakdown-drawer hidden" id="payer-breakdown-drawer">
-          <div style="font-size: 0.72rem; font-weight: 700; color: var(--emerald-400); margin-bottom: 4px; text-transform: uppercase;">
-            🍽️ Dishes & Consumption Breakdown
+          <div class="breakdown-drawer-header">
+            <span>🍽️ Dishes & Consumption Breakdown (${payerBreakdown.itemsCount} ${payerBreakdown.itemsCount === 1 ? 'Dish' : 'Dishes'})</span>
           </div>
           ${payerBreakdown.items.length > 0 ? payerBreakdown.items.map(it => `
             <div class="user-dish-row">
-              <span>${it.name} <small style="color: var(--text-muted);">(${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== payerBreakdown.name).join(', ')}` : 'Sole order'})</small></span>
-              <strong>₹${it.shareAmount.toLocaleString()}</strong>
+              <div class="dish-name-portion">
+                <span class="dish-title">${it.name}</span>
+                <small class="dish-sub">${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== payerBreakdown.name).join(', ')} (1 of ${it.sharedWith.length} shares)` : 'Sole order'}${it.qty > 1 ? ` • ${it.qty} Qty @ ₹${it.rate}` : ''}</small>
+              </div>
+              <strong class="dish-share-price">₹${it.shareAmount.toLocaleString()}</strong>
             </div>
           `).join('') : '<div class="user-dish-row"><span>No individual items assigned.</span><strong>₹0</strong></div>'}
           ${payerBreakdown.taxShare > 0 ? `
-            <div class="user-dish-row" style="color: var(--text-body);">
+            <div class="user-dish-row tax-row">
               <span>Proportional GST & Service Taxes</span>
               <strong>₹${payerBreakdown.taxShare.toLocaleString()}</strong>
             </div>
           ` : ''}
+          <div class="user-dish-row total-row">
+            <span>Total Personal Share (${payerBreakdown.itemsCount} ${payerBreakdown.itemsCount === 1 ? 'dish' : 'dishes'})</span>
+            <strong class="text-emerald">₹${payerBreakdown.grandTotal.toLocaleString()}</strong>
+          </div>
         </div>
       </div>
     `;
@@ -1466,7 +1486,11 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="settle-person-info">
                 <div class="settle-avatar">${s.from.charAt(0)}</div>
                 <div class="settle-name-wrap">
-                  <strong>${s.from} <i class="ph-bold ph-caret-down" style="font-size: 0.75rem; margin-left: 4px; color: var(--text-muted);"></i></strong>
+                  <div class="settle-title-line">
+                    <strong>${s.from}</strong>
+                    <span class="settle-items-badge"><i class="ph-bold ph-fork-knife"></i> ${friendBreakdown.itemsCount} ${friendBreakdown.itemsCount === 1 ? 'dish' : 'dishes'}</span>
+                    <i class="ph-bold ph-caret-down settle-caret" id="caret-friend-breakdown-drawer-${idx}"></i>
+                  </div>
                   <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
                     <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
                     ${s.paid ? 'Payment Settled' : 'Payment Pending'}
@@ -1474,33 +1498,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
               </div>
 
-              <div class="settle-amount-col">
-                <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
-              </div>
+              <div class="settle-right-cluster">
+                <div class="settle-amount-col">
+                  <span class="settle-label">Amount Owed</span>
+                  <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
+                </div>
 
-              <div class="flex-align-center gap-2" onclick="event.stopPropagation()">
-                <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
-                  ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
-                </button>
+                <div class="flex-align-center gap-2" onclick="event.stopPropagation()">
+                  <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
+                    ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
+                  </button>
+                </div>
               </div>
             </div>
 
             <div class="settle-breakdown-drawer hidden" id="friend-breakdown-drawer-${idx}">
-              <div style="font-size: 0.72rem; font-weight: 700; color: var(--emerald-400); margin-bottom: 4px; text-transform: uppercase;">
-                🍽️ ${s.from}'s Itemized Order
+              <div class="breakdown-drawer-header">
+                <span>🍽️ ${s.from}'s Itemized Order (${friendBreakdown.itemsCount} ${friendBreakdown.itemsCount === 1 ? 'Dish' : 'Dishes'})</span>
               </div>
               ${friendBreakdown.items.length > 0 ? friendBreakdown.items.map(it => `
                 <div class="user-dish-row">
-                  <span>${it.name} <small style="color: var(--text-muted);">(${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== s.from).join(', ')}` : 'Sole order'})</small></span>
-                  <strong>₹${it.shareAmount.toLocaleString()}</strong>
+                  <div class="dish-name-portion">
+                    <span class="dish-title">${it.name}</span>
+                    <small class="dish-sub">${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== s.from).join(', ')} (1 of ${it.sharedWith.length} shares)` : 'Sole order'}${it.qty > 1 ? ` • ${it.qty} Qty @ ₹${it.rate}` : ''}</small>
+                  </div>
+                  <strong class="dish-share-price">₹${it.shareAmount.toLocaleString()}</strong>
                 </div>
               `).join('') : '<div class="user-dish-row"><span>Split equally across bill.</span><strong>₹' + s.amount + '</strong></div>'}
               ${friendBreakdown.taxShare > 0 ? `
-                <div class="user-dish-row" style="color: var(--text-body);">
+                <div class="user-dish-row tax-row">
                   <span>Proportional GST & Service Taxes</span>
                   <strong>₹${friendBreakdown.taxShare.toLocaleString()}</strong>
                 </div>
               ` : ''}
+              <div class="user-dish-row total-row">
+                <span>Total Debt Balance (${friendBreakdown.itemsCount} ${friendBreakdown.itemsCount === 1 ? 'dish' : 'dishes'})</span>
+                <strong class="text-emerald">₹${s.amount.toLocaleString()}</strong>
+              </div>
             </div>
           </div>
         `;

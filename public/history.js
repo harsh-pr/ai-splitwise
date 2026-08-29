@@ -322,7 +322,12 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="flex-align-center gap-2">
           <div class="breakdown-avatar">${personName.charAt(0)}</div>
           <div>
-            <strong>${personName} ${personName === bill.payer ? '(Payer)' : ''}</strong>
+            <div class="flex-align-center gap-2">
+              <strong>${personName} ${personName === bill.payer ? '(Payer)' : ''}</strong>
+              <span class="settle-items-badge" style="font-size: 0.68rem; font-weight: 700; color: var(--emerald-400); background: rgba(16, 185, 129, 0.12); padding: 1px 6px; border-radius: 100px;">
+                ${assignedItems.length} ${assignedItems.length === 1 ? 'dish' : 'dishes'}
+              </span>
+            </div>
             <span class="breakdown-status-tag ${isPaid ? 'paid' : 'pending'}">
               ${isPaid ? '✓ Paid / Settled' : '⏳ Pending Payment'}
             </span>
@@ -352,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ` : ''}
 
         <div class="breakdown-item-row total-row">
-          <span>Total Individual Share</span>
+          <span>Total Individual Share (${assignedItems.length} ${assignedItems.length === 1 ? 'dish' : 'dishes'})</span>
           <strong class="text-emerald">₹${grandTotal.toLocaleString()}</strong>
         </div>
       </div>

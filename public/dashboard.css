@@ -2165,17 +2165,21 @@ a:active,
 
 .prog-track {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 100px;
   overflow: hidden;
+  position: relative;
 }
 
 .prog-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--indigo-500), var(--emerald-400));
+  height: 100% !important;
+  background: linear-gradient(90deg, #10b981, #34d399) !important;
   border-radius: 100px;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+  min-width: 0;
+  display: block;
 }
 
 .step-5-qr-container {
@@ -2187,7 +2191,7 @@ a:active,
 .friends-settlement-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .settle-row-card {
@@ -2218,71 +2222,65 @@ a:active,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-}
-
-.settle-breakdown-drawer {
-  width: 100%;
-  margin-top: 4px;
-  padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.settle-breakdown-drawer.hidden {
-  display: none !important;
-}
-
-.user-dish-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.user-dish-row strong {
-  color: var(--text-white);
-  font-family: var(--font-mono);
 }
 
 .settle-person-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .settle-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #fff;
+  flex-shrink: 0;
 }
 
-.settle-name-wrap strong {
-  display: block;
-  font-size: 0.86rem;
+.settle-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settle-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settle-title-line strong {
+  font-size: 0.9rem;
   color: var(--text-white);
 }
 
-.settle-name-wrap span {
-  font-size: 0.74rem;
+.settle-items-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--emerald-400);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 1px 6px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.settle-caret {
+  font-size: 0.76rem;
   color: var(--text-muted);
+  transition: transform 0.2s ease;
 }
 
 .settle-status-badge {
@@ -2293,6 +2291,7 @@ a:active,
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 100px;
+  width: fit-content;
 }
 
 .badge-pending {
@@ -2307,21 +2306,50 @@ a:active,
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
+.settle-right-cluster {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
 .settle-amount-col {
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.settle-label {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .settle-amount {
   display: block;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-white);
   font-family: var(--font-mono);
+  line-height: 1.1;
+}
+
+.settle-paid-indicator {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--emerald-400);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
 }
 
 .btn-toggle-paid {
-  padding: 5px 12px;
-  font-size: 0.76rem;
+  padding: 6px 14px;
+  font-size: 0.78rem;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
@@ -2329,6 +2357,7 @@ a:active,
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-heading);
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .btn-toggle-paid:hover {
@@ -2341,8 +2370,86 @@ a:active,
   color: var(--emerald-400);
 }
 
+.settle-breakdown-drawer {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.settle-breakdown-drawer.hidden {
+  display: none !important;
+}
+
+.breakdown-drawer-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--emerald-400);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-dish-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  gap: 10px;
+}
+
+.dish-name-portion {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dish-title {
+  color: var(--text-white);
+  font-weight: 600;
+}
+
+.dish-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.dish-share-price {
+  color: var(--text-white);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.user-dish-row.tax-row {
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  margin-top: 2px;
+  padding-top: 6px;
+}
+
+.user-dish-row.total-row {
+  border-top: 1px solid rgba(16, 185, 129, 0.3);
+  margin-top: 4px;
+  padding-top: 8px;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--text-white);
+  background: rgba(16, 185, 129, 0.06);
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
 /* ===================================================================
-   RIGHT COLUMN: Minimal Vertical Progress Tab & Expandable Summary
+   RIGHT COLUMN: Compact Vertical Progress Pill & Expandable Summary
    =================================================================== */
 .wizard-sidebar {
   position: fixed;
@@ -2351,17 +2458,17 @@ a:active,
   transform: translateY(-50%);
   transform-origin: right center;
   z-index: 95;
-  width: 48px;
+  width: 44px;
   height: auto;
-  min-height: 155px;
+  min-height: auto;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-sticky-panel {
   position: relative;
   top: 0;
-  padding: 14px 6px;
-  border-radius: 16px 0 0 16px;
+  padding: 8px 4px;
+  border-radius: 14px 0 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-right: none;
   background: rgba(13, 13, 18, 0.94);
@@ -2374,8 +2481,8 @@ a:active,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 100%;
+  gap: 5px;
+  height: auto;
   box-sizing: border-box;
 }
 
@@ -2383,7 +2490,7 @@ a:active,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 0;
   width: 100%;
 }
@@ -2395,7 +2502,7 @@ a:active,
 }
 
 .sidebar-mini-icon {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   display: block;
   color: var(--emerald-400);
 }
@@ -2409,12 +2516,12 @@ a:active,
 }
 
 .pct-pill {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 800;
   color: var(--emerald-400);
   background: rgba(16, 185, 129, 0.15);
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 2px 4px;
+  border-radius: 4px;
   white-space: nowrap !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -2456,15 +2563,16 @@ a:active,
 .vertical-segments {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
   justify-content: center;
-  margin: 2px auto 0;
+  margin: 0;
+  padding: 0;
 }
 
 .seg-dot {
   width: 4px;
-  height: 8px;
+  height: 6px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.18);
   transition: all 0.25s ease;
@@ -2473,16 +2581,7 @@ a:active,
 .seg-dot.active {
   background: var(--emerald-400);
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
-  height: 12px;
-}
-  background: rgba(255, 255, 255, 0.12);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.seg-dot.active {
-  background: var(--emerald-400);
-  box-shadow: 0 0 8px var(--emerald-glow);
-  height: 10px;
+  height: 8px;
 }
 
 .steps-count-label {
