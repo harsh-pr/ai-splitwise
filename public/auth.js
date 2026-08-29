@@ -1,7 +1,6 @@
 /**
  * SplitWise AI - Client Authentication Logic
  * Supports Firebase Email/Password, Google Sign-In, and 1-Click Guest Evaluator Demo.
- * Matches password safety rules from attendance-tracker.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -102,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pwdEyeIcon.className = isPassword ? "ph-bold ph-eye-slash" : "ph-bold ph-eye";
   });
 
-  // Real-time password validation (Matching attendance-tracker)
+  // Real-time password validation
   function validatePassword(pwd) {
     const hasLen = pwd.length >= 8;
     const hasUp = /[A-Z]/.test(pwd);

@@ -37,7 +37,7 @@ const GUEST_USER = {
   photoURL: null
 };
 
-// Helper to get active user ID (matching attendance-tracker getUserId pattern)
+// Helper to get active user ID
 function getUserId() {
   const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
   if (isGuest) return "guest_demo_user";
@@ -367,12 +367,8 @@ function mergeBills(primary = [], secondary = []) {
   return result;
 }
 
-// ─── ATTENDANCE-TRACKER FIRESTORE SERVICE ─────────────────────────────────────
+// ─── FIRESTORE CLOUD SERVICE ─────────────────────────────────────
 
-/**
- * References matching attendance-tracker pattern:
- * users/{uid}/bills/data -> contains { list: [...] }
- */
 function billsDataDoc(uid) {
   return db.collection("users").doc(uid).collection("bills").doc("data");
 }
@@ -479,7 +475,7 @@ async function saveBillRecord(bill) {
     return;
   }
 
-  // 2. Persist to Firebase Firestore (attendance-tracker direct setDoc)
+  // 2. Persist to Firebase Firestore
   if (db && uid) {
     updateCloudSyncBadge('syncing');
     try {

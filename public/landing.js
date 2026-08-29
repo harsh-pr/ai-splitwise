@@ -1,7 +1,6 @@
 /**
  * SplitWise AI - Minimalist Landing Page Logic
- * Features 1-click Demo session initialization (matching attendance-tracker pattern)
- * and streamlined auth navigation.
+ * Features 1-click Demo session initialization and streamlined auth navigation.
  */
 
 // Service Worker Registration for PWA
@@ -17,7 +16,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// 1-Click Demo Launcher (Matching attendance-tracker guest mode)
+// 1-Click Demo Launcher
 function startDemoSession() {
   sessionStorage.setItem("is_guest_session", "true");
   localStorage.setItem("is_guest_mode", "true");

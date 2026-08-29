@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===================================================================
-  // 1. Auth Guard & User Profile Setup (attendance-tracker style)
+  // 1. Auth Guard & User Profile Setup
   // ===================================================================
   const user = getCurrentUser();
   const userAvatarInner = document.getElementById("user-avatar-initial") || document.getElementById("user-avatar-inner");
@@ -292,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
           <div class="msg-body">
             <p>Ready to itemize your <strong>${catName}</strong> bill!</p>
-            <p>Tell me who ordered what (e.g. <em>"${currentName} and Rohan had pizza, Neha got pasta"</em>) or add friends above.</p>
+            <p>Tell me who ordered what (e.g. <em>"${currentName} and Sarthak had pizza, Hrudayesh and Rigved got pasta"</em>) or add friends above.</p>
           </div>
         </div>
       `;
@@ -568,7 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
                     <div class="msg-body">
                       <p>I've extracted <strong>${wizardState.items.length} items</strong> totaling <strong class="text-white">₹${(data.total || wizardState.totalAmount).toLocaleString()}</strong> from your ${data.restaurantName || 'receipt'}!</p>
-                      <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"${currentPayer} ate butter naan, Shreya ate chicken, everyone got water"</em>), or add friends using the bar above.</p>
+                      <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"${currentPayer} ate butter naan, Sarthak ate pizza, Hrudayesh and Rigved got pasta"</em>), or add friends using the bar above.</p>
                     </div>
                   </div>
                 `;

@@ -379,8 +379,8 @@ User instruction: "${prompt}"
 
 CRITICAL RULES:
 1. AUTOMATIC PARTICIPANT DISCOVERY:
-   - If the user mentions ANY names (e.g., "Shreya", "Mansi", "Sara", "Harsh", etc.) or says "add X, Y and Z to friends list", AUTOMATICALLY include them in "updatedParticipants".
-   - If user asks to remove a person (e.g. "remove Aarav"), remove them from "updatedParticipants".
+   - If the user mentions ANY names (e.g., "Sarthak", "Hrudayesh", "Rigved", "Harsh", etc.) or says "add X, Y and Z to friends list", AUTOMATICALLY include them in "updatedParticipants".
+   - If user asks to remove a person (e.g. "remove Sarthak"), remove them from "updatedParticipants".
 
 2. ITEM & PRICE EDITING (MANUAL / AI ASSISTED):
    - If the user asks to change or correct an item's price (e.g., "change butter naan price to 250", "chicken is 400 not 380"): update that item's "price" in "updatedItems".
@@ -390,7 +390,7 @@ CRITICAL RULES:
    - For all other unmentioned items, PRESERVE their name, price, and current assigned array unchanged.
 
 3. DISH SPLITTING & ALLOCATION:
-   - Assign dishes to the specified individuals (e.g., "Harsh and Sara had naan").
+   - Assign dishes to the specified individuals (e.g., "Harsh and Sarthak had naan").
    - When user says "everyone had X" or "split Y with all", assign all names in "updatedParticipants" to that item.
 
 4. RESPONSE FORMAT:
@@ -506,20 +506,20 @@ app.get('/api/demo-receipts', (req, res) => {
       tax: 250,
       tip: 150,
       currency: '₹',
-      participants: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'],
+      participants: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'],
       items: [
-        { name: 'Woodfired Truffle Pizza', price: 850, assignedTo: ['You (Harsh)', 'Aarav'] },
-        { name: 'Creamy Pesto Penne', price: 650, assignedTo: ['Neha'] },
-        { name: 'Peri Peri Loaded Fries', price: 420, assignedTo: ['You (Harsh)', 'Aarav', 'Neha', 'Rohan'] },
-        { name: 'Sizzling Brownie Sundae', price: 380, assignedTo: ['Rohan', 'Neha'] },
-        { name: 'Craft Mocktails (x3)', price: 750, assignedTo: ['You (Harsh)', 'Aarav', 'Rohan'] }
+        { name: 'Woodfired Truffle Pizza', price: 850, assignedTo: ['You (Harsh)', 'Sarthak'] },
+        { name: 'Creamy Pesto Penne', price: 650, assignedTo: ['Hrudayesh'] },
+        { name: 'Peri Peri Loaded Fries', price: 420, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'] },
+        { name: 'Sizzling Brownie Sundae', price: 380, assignedTo: ['Rigved', 'Hrudayesh'] },
+        { name: 'Craft Mocktails (x3)', price: 750, assignedTo: ['You (Harsh)', 'Sarthak', 'Rigved'] }
       ],
       aiConfidence: '98.6%',
       payer: 'You (Harsh)',
       settlements: [
-        { from: 'Aarav', to: 'You (Harsh)', amount: 1005 },
-        { from: 'Neha', to: 'You (Harsh)', amount: 1105 },
-        { from: 'Rohan', to: 'You (Harsh)', amount: 940 }
+        { from: 'Sarthak', to: 'You (Harsh)', amount: 1005 },
+        { from: 'Hrudayesh', to: 'You (Harsh)', amount: 1105 },
+        { from: 'Rigved', to: 'You (Harsh)', amount: 940 }
       ]
     },
     {
@@ -530,19 +530,19 @@ app.get('/api/demo-receipts', (req, res) => {
       tax: 600,
       tip: 0,
       currency: '₹',
-      participants: ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'],
+      participants: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'],
       items: [
-        { name: 'Highway Tolls & Fuel', price: 4200, assignedTo: ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'] },
-        { name: 'Beachside Seafood Platter', price: 3200, assignedTo: ['You (Harsh)', 'Siddharth', 'Pooja'] },
-        { name: 'Snacks & Cold Drinks', price: 1800, assignedTo: ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'] },
-        { name: 'Parking & Entry Passes', price: 600, assignedTo: ['You (Harsh)', 'Siddharth', 'Pooja', 'Ananya'] }
+        { name: 'Highway Tolls & Fuel', price: 4200, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'] },
+        { name: 'Beachside Seafood Platter', price: 3200, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh'] },
+        { name: 'Snacks & Cold Drinks', price: 1800, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'] },
+        { name: 'Parking & Entry Passes', price: 600, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'] }
       ],
       aiConfidence: '99.1%',
-      payer: 'Siddharth',
+      payer: 'Sarthak',
       settlements: [
-        { from: 'You (Harsh)', to: 'Siddharth', amount: 2550 },
-        { from: 'Pooja', to: 'Siddharth', amount: 2550 },
-        { from: 'Ananya', to: 'Siddharth', amount: 1500 }
+        { from: 'You (Harsh)', to: 'Sarthak', amount: 2550 },
+        { from: 'Hrudayesh', to: 'Sarthak', amount: 2550 },
+        { from: 'Rigved', to: 'Sarthak', amount: 1500 }
       ]
     }
   ]);
@@ -559,7 +559,7 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`====================================================`);
     console.log(`  SplitWise AI server running on http://localhost:${PORT}`);
     console.log(`  Gemini Vision API: ${process.env.GEMINI_API_KEY ? 'Active (gemini-2.5-flash)' : 'Missing API Key'}`);
-    console.log(`  Firebase Project: ${process.env.FIREBASE_PROJECT_ID || 'attendance-hvpp'}`);
+    console.log(`  Firebase Sync: ${process.env.USE_FIREBASE === 'true' ? 'Enabled' : 'Local / Dual-Sync Mode'}`);
     console.log(`====================================================`);
   });
 }
