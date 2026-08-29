@@ -426,14 +426,38 @@ button {
 
 .window-dots {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 7px;
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  transition: all var(--trans-fast);
+  cursor: pointer;
+}
+
+.dot-red {
+  background: #ff5f56;
+  box-shadow: 0 0 8px rgba(255, 95, 86, 0.45);
+  border: 1px solid rgba(224, 68, 62, 0.6);
+}
+
+.dot-yellow {
+  background: #ffbd2e;
+  box-shadow: 0 0 8px rgba(255, 189, 46, 0.45);
+  border: 1px solid rgba(222, 161, 35, 0.6);
+}
+
+.dot-green {
+  background: #27c93f;
+  box-shadow: 0 0 8px rgba(39, 201, 63, 0.45);
+  border: 1px solid rgba(26, 171, 46, 0.6);
+}
+
+.dot:hover {
+  transform: scale(1.18);
 }
 
 .preview-tag {

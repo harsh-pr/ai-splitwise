@@ -500,7 +500,7 @@ app.get('/api/demo-receipts', (req, res) => {
   res.json([
     {
       id: 'dinner',
-      title: 'Friday Bistro Dinner & Mocktails',
+      title: 'Friday Punjabi Dhaba Feast',
       date: '2026-08-26',
       totalAmount: 3450,
       tax: 250,
@@ -508,11 +508,11 @@ app.get('/api/demo-receipts', (req, res) => {
       currency: '₹',
       participants: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'],
       items: [
-        { name: 'Woodfired Truffle Pizza', price: 850, assignedTo: ['You (Harsh)', 'Sarthak'] },
-        { name: 'Creamy Pesto Penne', price: 650, assignedTo: ['Hrudayesh'] },
-        { name: 'Peri Peri Loaded Fries', price: 420, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'] },
-        { name: 'Sizzling Brownie Sundae', price: 380, assignedTo: ['Rigved', 'Hrudayesh'] },
-        { name: 'Craft Mocktails (x3)', price: 750, assignedTo: ['You (Harsh)', 'Sarthak', 'Rigved'] }
+        { name: 'Butter Chicken & Garlic Naan', price: 850, assignedTo: ['You (Harsh)', 'Sarthak'] },
+        { name: 'Hyderabadi Veg Dum Biryani', price: 650, assignedTo: ['Hrudayesh'] },
+        { name: 'Tandoori Platter & Paneer Tikka', price: 420, assignedTo: ['You (Harsh)', 'Sarthak', 'Hrudayesh', 'Rigved'] },
+        { name: 'Gulab Jamun with Rabdi (x2)', price: 380, assignedTo: ['Rigved', 'Hrudayesh'] },
+        { name: 'Mango Lassi & Masala Chaas (x3)', price: 750, assignedTo: ['You (Harsh)', 'Sarthak', 'Rigved'] }
       ],
       aiConfidence: '98.6%',
       payer: 'You (Harsh)',
