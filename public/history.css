@@ -679,6 +679,126 @@ button,
   transform: scale(1.08);
 }
 
+/* User-Wise Itemized Breakdown Drawer */
+.history-user-breakdown-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 14px;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+.user-breakdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  margin-bottom: 10px;
+}
+
+.breakdown-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--emerald-400);
+  border: 1.5px solid var(--emerald-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.breakdown-status-tag {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.breakdown-status-tag.paid {
+  color: var(--emerald-400);
+}
+
+.breakdown-status-tag.pending {
+  color: var(--rose-400);
+}
+
+.btn-close-breakdown {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-close-breakdown:hover {
+  color: var(--rose-400);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.breakdown-items-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.breakdown-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 0.8rem;
+  color: var(--text-body);
+}
+
+.breakdown-item-row strong {
+  font-family: var(--font-mono);
+  color: var(--text-white);
+}
+
+.item-name-text {
+  display: block;
+  font-weight: 600;
+  color: var(--text-white);
+}
+
+.item-shared-info {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.breakdown-item-row.tax-row {
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  margin-top: 2px;
+  padding-top: 6px;
+  color: var(--text-muted);
+}
+
+.breakdown-item-row.total-row {
+  border-top: 1px solid rgba(16, 185, 129, 0.3);
+  margin-top: 4px;
+  padding-top: 8px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-white);
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
 /* Responsive Media Queries */
 @media (max-width: 900px) {
   .history-stats-grid {

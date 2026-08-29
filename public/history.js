@@ -190,22 +190,25 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>
 
-          <!-- Participants & Payer Row -->
+          <!-- Participants & Payer Row (Click any name to expand user-wise breakdown) -->
           <div class="bill-participants-row">
-            <span class="payer-tag-pill">
-              <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'Harsh'}
+            <span class="payer-tag-pill" onclick="toggleHistoryUserBreakdown('${bill.id}', '${bill.payer || 'Harsh'}', event)" style="cursor: pointer;" title="Click to view what ${bill.payer || 'Harsh'} ordered">
+              <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'Harsh'} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
             </span>
             ${(bill.participants || []).map(p => {
               const settlement = (bill.settlements || []).find(s => s.from === p);
               const isPaid = settlement ? settlement.paid : (p === bill.payer);
               return `
-                <span class="friend-status-chip ${isPaid ? 'is-paid' : 'is-pending'}">
+                <span class="friend-status-chip ${isPaid ? 'is-paid' : 'is-pending'}" onclick="toggleHistoryUserBreakdown('${bill.id}', '${p}', event)" style="cursor: pointer;" title="Click to view what ${p} ordered">
                   <i class="ph-bold ${isPaid ? 'ph-check-circle' : 'ph-clock'}"></i>
-                  ${p}
+                  ${p} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
                 </span>
               `;
             }).join("")}
           </div>
+
+          <!-- Dynamic User-Wise Itemized Breakdown Box -->
+          <div class="history-user-breakdown-box hidden" id="user-breakdown-box-${bill.id}"></div>
 
           <!-- Expandable Breakdown Drawer -->
           <div class="bill-expand-drawer" id="drawer-${bill.id}">
@@ -269,7 +272,101 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
-  // 4. Action Handlers
+  // 4. User-Wise Breakdown on Name Click
+  window.toggleHistoryUserBreakdown = function(billId, personName, event) {
+    if (event) event.stopPropagation();
+    const box = document.getElementById(`user-breakdown-box-${billId}`);
+    if (!box) return;
+
+    // If already showing this person, toggle off
+    if (!box.classList.contains("hidden") && box.getAttribute("data-person") === personName) {
+      box.classList.add("hidden");
+      return;
+    }
+
+    const allBills = getAllBills();
+    const bill = allBills.find(b => b.id === billId);
+    if (!bill) return;
+
+    const assignedItems = [];
+    let itemsSubtotal = 0;
+    let allItemsTotal = 0;
+
+    (bill.items || []).forEach(it => {
+      const assigned = (it.assigned && it.assigned.length > 0) ? it.assigned : [bill.payer || 'Harsh'];
+      allItemsTotal += (Number(it.price) || 0);
+      if (assigned.includes(personName)) {
+        const share = Math.round(((Number(it.price) || 0) / assigned.length) * 100) / 100;
+        itemsSubtotal += share;
+        assignedItems.push({
+          name: it.name,
+          totalPrice: it.price,
+          sharedWith: assigned,
+          shareAmount: share
+        });
+      }
+    });
+
+    const taxAmount = Number(bill.tax) || 0;
+    let taxShare = 0;
+    if (allItemsTotal > 0 && taxAmount > 0) {
+      taxShare = Math.round((itemsSubtotal / allItemsTotal) * taxAmount);
+    }
+    const grandTotal = Math.round(itemsSubtotal + taxShare);
+    const settlement = (bill.settlements || []).find(s => s.from === personName);
+    const isPaid = settlement ? settlement.paid : (personName === bill.payer);
+
+    box.setAttribute("data-person", personName);
+    box.innerHTML = `
+      <div class="user-breakdown-header">
+        <div class="flex-align-center gap-2">
+          <div class="breakdown-avatar">${personName.charAt(0)}</div>
+          <div>
+            <strong>${personName} ${personName === bill.payer ? '(Payer)' : ''}</strong>
+            <span class="breakdown-status-tag ${isPaid ? 'paid' : 'pending'}">
+              ${isPaid ? '✓ Paid / Settled' : '⏳ Pending Payment'}
+            </span>
+          </div>
+        </div>
+        <button class="btn-close-breakdown" onclick="closeHistoryBreakdown('${billId}')">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="breakdown-items-table">
+        ${assignedItems.length > 0 ? assignedItems.map(it => `
+          <div class="breakdown-item-row">
+            <div>
+              <span class="item-name-text">${it.name}</span>
+              <small class="item-shared-info">${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== personName).join(', ')} (${it.sharedWith.length} people)` : 'Sole order'}</small>
+            </div>
+            <strong>₹${it.shareAmount.toLocaleString()}</strong>
+          </div>
+        `).join('') : '<div class="breakdown-item-row"><span>Split equally across general bill.</span><strong>₹' + grandTotal + '</strong></div>'}
+
+        ${taxShare > 0 ? `
+          <div class="breakdown-item-row tax-row">
+            <span>Proportional GST & Taxes</span>
+            <strong>₹${taxShare.toLocaleString()}</strong>
+          </div>
+        ` : ''}
+
+        <div class="breakdown-item-row total-row">
+          <span>Total Individual Share</span>
+          <strong class="text-emerald">₹${grandTotal.toLocaleString()}</strong>
+        </div>
+      </div>
+    `;
+
+    box.classList.remove("hidden");
+  };
+
+  window.closeHistoryBreakdown = function(billId) {
+    const box = document.getElementById(`user-breakdown-box-${billId}`);
+    if (box) box.classList.add("hidden");
+  };
+
+  // 5. Action Handlers
   window.toggleBillDrawer = function(billId) {
     const drawer = document.getElementById(`drawer-${billId}`);
     const btn = document.getElementById(`expand-btn-${billId}`);

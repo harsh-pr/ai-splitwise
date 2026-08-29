@@ -737,6 +737,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let editingItemIdx = -1;
 
+  function ensureItemFields(item) {
+    if (!item.qty) {
+      const match = item.name.match(/\(x(\d+)\)/i);
+      item.qty = match ? parseInt(match[1]) : 1;
+    }
+    if (!item.rate) {
+      item.rate = item.qty > 1 ? Math.round((Number(item.price) / item.qty) * 100) / 100 : Number(item.price);
+    }
+    if (!item.price) {
+      item.price = Math.round(item.qty * item.rate * 100) / 100;
+    }
+  }
+
   function renderItemsEditor() {
     if (editorBillTotal) editorBillTotal.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
     if (editorTaxVal) editorTaxVal.textContent = `₹${wizardState.taxAmount.toLocaleString()}`;
@@ -757,27 +770,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     parsedItemsList.innerHTML = wizardState.items.map((item, idx) => {
+      ensureItemFields(item);
       const isEditing = (editingItemIdx === idx);
       const assignedList = (item.assigned && item.assigned.length > 0) ? item.assigned : [wizardState.payer];
 
       if (isEditing) {
         return `
           <div class="item-edit-row editing" id="item-row-${idx}">
-            <div class="item-edit-left">
-              <input type="text" class="item-name-input" id="edit-name-${idx}" value="${item.name}" placeholder="Dish name...">
-              <div class="dish-chips-group">
-                ${assignedList.map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
+            <div class="item-edit-full-form">
+              <div class="edit-inputs-row">
+                <input type="text" class="item-name-input" id="edit-name-${idx}" value="${item.name}" placeholder="Item description...">
               </div>
-            </div>
-            <div class="item-edit-right">
-              <span>₹</span>
-              <input type="number" class="item-price-input" id="edit-price-${idx}" value="${item.price}" min="0" step="1">
-              <button type="button" class="btn-item-action" onclick="saveItemEdit(${idx})" title="Save Edit">
-                <i class="ph-bold ph-check text-emerald"></i>
-              </button>
-              <button type="button" class="btn-item-action" onclick="cancelItemEdit()" title="Cancel">
-                <i class="ph-bold ph-x"></i>
-              </button>
+              <div class="edit-calc-grid">
+                <div class="calc-input-group">
+                  <label>Qty</label>
+                  <input type="number" id="edit-qty-${idx}" value="${item.qty || 1}" min="1" step="1" oninput="recalcItemNet(${idx}, 'qty')">
+                </div>
+                <div class="calc-input-group">
+                  <label>Rate (₹)</label>
+                  <input type="number" id="edit-rate-${idx}" value="${item.rate || item.price}" min="0" step="0.5" oninput="recalcItemNet(${idx}, 'rate')">
+                </div>
+                <div class="calc-input-group">
+                  <label>Net Value (₹)</label>
+                  <input type="number" id="edit-price-${idx}" value="${item.price}" min="0" step="1" oninput="recalcItemNet(${idx}, 'net')">
+                </div>
+                <div class="edit-btn-actions">
+                  <button type="button" class="btn-item-action" onclick="saveItemEdit(${idx})" title="Save item">
+                    <i class="ph-bold ph-check text-emerald"></i>
+                  </button>
+                  <button type="button" class="btn-item-action" onclick="cancelItemEdit()" title="Cancel">
+                    <i class="ph-bold ph-x"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -786,14 +811,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return `
         <div class="item-edit-row" id="item-row-${idx}">
           <div class="item-edit-left">
-            <span class="dish-name" title="Click edit icon to rename">${item.name}</span>
+            <div class="dish-name-row">
+              <span class="dish-name" title="Click edit icon to adjust">${item.name}</span>
+              <span class="dish-qty-rate-badge">${item.qty || 1} × ₹${item.rate || item.price}</span>
+            </div>
             <div class="dish-chips-group">
               ${assignedList.map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
             </div>
           </div>
           <div class="item-edit-right">
             <span class="dish-price-tag">₹${item.price}</span>
-            <button type="button" class="btn-item-action" onclick="startItemEdit(${idx})" title="Edit dish name or price">
+            <button type="button" class="btn-item-action" onclick="startItemEdit(${idx})" title="Edit quantity, rate or dish">
               <i class="ph-bold ph-pencil-simple"></i>
             </button>
             <button type="button" class="btn-item-action delete" onclick="deleteDishItem(${idx})" title="Delete item">
@@ -804,6 +832,25 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }).join("");
   }
+
+  window.recalcItemNet = function(idx, field) {
+    const qtyInput = document.getElementById(`edit-qty-${idx}`);
+    const rateInput = document.getElementById(`edit-rate-${idx}`);
+    const priceInput = document.getElementById(`edit-price-${idx}`);
+    if (!qtyInput || !rateInput || !priceInput) return;
+
+    let qty = Math.max(1, parseInt(qtyInput.value) || 1);
+    let rate = Math.max(0, parseFloat(rateInput.value) || 0);
+    let price = Math.max(0, parseFloat(priceInput.value) || 0);
+
+    if (field === 'qty' || field === 'rate') {
+      price = Math.round(qty * rate * 100) / 100;
+      priceInput.value = price;
+    } else if (field === 'net') {
+      rate = Math.round((price / qty) * 100) / 100;
+      rateInput.value = rate;
+    }
+  };
 
   window.startItemEdit = function(idx) {
     editingItemIdx = idx;
@@ -820,21 +867,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.saveItemEdit = function(idx) {
     const nameInput = document.getElementById(`edit-name-${idx}`);
+    const qtyInput = document.getElementById(`edit-qty-${idx}`);
+    const rateInput = document.getElementById(`edit-rate-${idx}`);
     const priceInput = document.getElementById(`edit-price-${idx}`);
 
     if (nameInput && nameInput.value.trim()) {
       wizardState.items[idx].name = nameInput.value.trim();
     }
-    if (priceInput && !isNaN(Number(priceInput.value))) {
-      wizardState.items[idx].price = Math.max(0, Number(priceInput.value));
-    }
+    const qty = Math.max(1, parseInt(qtyInput?.value) || 1);
+    const rate = Math.max(0, parseFloat(rateInput?.value) || 0);
+    const price = Math.max(0, parseFloat(priceInput?.value) || (qty * rate));
+
+    wizardState.items[idx].qty = qty;
+    wizardState.items[idx].rate = rate;
+    wizardState.items[idx].price = price;
 
     editingItemIdx = -1;
     wizardState.totalAmount = wizardState.items.reduce((sum, i) => sum + (Number(i.price) || 0), 0) + (Number(wizardState.taxAmount) || 0);
     recalculateSettlements();
     renderItemsEditor();
     saveCurrentBillToHistory();
-    addChatMessage(`✓ Updated ${wizardState.items[idx].name} (₹${wizardState.items[idx].price}). Recomputed bill balances.`, false);
+    addChatMessage(`✓ Updated ${wizardState.items[idx].name} (${qty} × ₹${rate} = ₹${price}). Recomputed split balances.`, false);
   };
 
   window.deleteDishItem = function(idx) {
@@ -854,6 +907,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const newItem = {
       id: Date.now(),
       name: `Custom Item ${wizardState.items.length + 1}`,
+      qty: 1,
+      rate: 100,
       price: 100,
       assigned: [wizardState.payer || 'Harsh']
     };
@@ -1226,6 +1281,53 @@ document.addEventListener("DOMContentLoaded", () => {
   const trackerProgFill = document.getElementById("tracker-prog-fill");
   const trackerProgressLabel = document.getElementById("tracker-progress-label");
 
+  function getUserBreakdown(personName) {
+    const name = normalizePersonName(personName);
+    const assignedItems = [];
+    let itemsSubtotal = 0;
+    let allItemsTotal = 0;
+
+    wizardState.items.forEach(it => {
+      const assigned = (it.assigned && it.assigned.length > 0) ? it.assigned.map(normalizePersonName) : [wizardState.payer];
+      allItemsTotal += (Number(it.price) || 0);
+      if (assigned.includes(name)) {
+        const share = Math.round(((Number(it.price) || 0) / assigned.length) * 100) / 100;
+        itemsSubtotal += share;
+        assignedItems.push({
+          name: it.name,
+          totalPrice: it.price,
+          qty: it.qty || 1,
+          rate: it.rate || it.price,
+          sharedWith: assigned,
+          shareAmount: share
+        });
+      }
+    });
+
+    const taxAmount = Number(wizardState.taxAmount) || 0;
+    let taxShare = 0;
+    if (allItemsTotal > 0 && taxAmount > 0) {
+      taxShare = Math.round((itemsSubtotal / allItemsTotal) * taxAmount);
+    }
+    const grandTotal = Math.round(itemsSubtotal + taxShare);
+
+    return {
+      name,
+      items: assignedItems,
+      itemsSubtotal: Math.round(itemsSubtotal),
+      taxShare,
+      grandTotal
+    };
+  }
+
+  window.toggleBreakdownDrawer = function(drawerId, e) {
+    if (e) e.stopPropagation();
+    const drawer = document.getElementById(drawerId);
+    if (drawer) {
+      drawer.classList.toggle("hidden");
+    }
+  };
+
   function renderSettlementTracker() {
     if (trackerTotalBill) trackerTotalBill.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
 
@@ -1243,7 +1345,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (trackerCollectedAmt) trackerCollectedAmt.textContent = `₹${collected.toLocaleString()}`;
     if (trackerPendingAmt) trackerPendingAmt.textContent = `₹${pending.toLocaleString()}`;
     if (trackerProgressPct) trackerProgressPct.textContent = `${pct}%`;
-    if (trackerProgFill) trackerProgFill.style.width = `${pct}%`;
+    if (trackerProgFill) {
+      trackerProgFill.style.width = `${pct}%`;
+    }
     if (trackerProgressLabel) trackerProgressLabel.textContent = `₹${collected.toLocaleString()} of ₹${totalToCollect.toLocaleString()} settled`;
 
     // 1. Populate Step 5 Payment QR Codes
@@ -1284,29 +1388,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!friendsSettlementList) return;
 
-    // 2. Payer summary card at the top
+    // 2. Payer summary card at the top with interactive dish breakdown
+    const payerBreakdown = getUserBreakdown(wizardState.payer || 'Harsh');
     let html = `
-      <div class="settle-row-card paid" id="payer-summary-card">
-        <div class="settle-person-info">
-          <div class="settle-avatar" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); border: 2px solid var(--emerald-400);">${(wizardState.payer || 'Harsh').charAt(0)}</div>
-          <div class="settle-name-wrap">
-            <strong>${wizardState.payer || 'Harsh'} (You)</strong>
-            <span class="settle-status-badge badge-paid">
-              <i class="ph-bold ph-shield-check"></i>
-              Payer • Paid ₹${wizardState.totalAmount.toLocaleString()} Upfront
-            </span>
+      <div class="settle-row-card paid" id="payer-summary-card" onclick="toggleBreakdownDrawer('payer-breakdown-drawer', event)" title="Click to expand dishes eaten">
+        <div class="settle-row-main">
+          <div class="settle-person-info">
+            <div class="settle-avatar" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); border: 2px solid var(--emerald-400);">${(wizardState.payer || 'Harsh').charAt(0)}</div>
+            <div class="settle-name-wrap">
+              <strong>${wizardState.payer || 'Harsh'} (You) <i class="ph-bold ph-caret-down" style="font-size: 0.75rem; margin-left: 4px; color: var(--text-muted);"></i></strong>
+              <span class="settle-status-badge badge-paid">
+                <i class="ph-bold ph-shield-check"></i>
+                Payer • Paid ₹${wizardState.totalAmount.toLocaleString()} Upfront
+              </span>
+            </div>
+          </div>
+          <div class="settle-amount-col">
+            <span class="settle-amount" style="font-size: 0.85rem; color: var(--text-muted);">Own Share: ₹${(wizardState.payerShare || 0).toLocaleString()}</span>
+          </div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--emerald-400); display: flex; align-items: center; gap: 4px;">
+            <i class="ph-bold ph-check"></i> Paid Full Bill
           </div>
         </div>
-        <div class="settle-amount-col">
-          <span class="settle-amount" style="font-size: 0.85rem; color: var(--text-muted);">Own Share: ₹${(wizardState.payerShare || 0).toLocaleString()}</span>
-        </div>
-        <div style="font-size: 0.78rem; font-weight: 700; color: var(--emerald-400); display: flex; align-items: center; gap: 4px;">
-          <i class="ph-bold ph-check"></i> Paid Full Bill
+
+        <div class="settle-breakdown-drawer hidden" id="payer-breakdown-drawer">
+          <div style="font-size: 0.72rem; font-weight: 700; color: var(--emerald-400); margin-bottom: 4px; text-transform: uppercase;">
+            🍽️ Dishes & Consumption Breakdown
+          </div>
+          ${payerBreakdown.items.length > 0 ? payerBreakdown.items.map(it => `
+            <div class="user-dish-row">
+              <span>${it.name} <small style="color: var(--text-muted);">(${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== payerBreakdown.name).join(', ')}` : 'Sole order'})</small></span>
+              <strong>₹${it.shareAmount.toLocaleString()}</strong>
+            </div>
+          `).join('') : '<div class="user-dish-row"><span>No individual items assigned.</span><strong>₹0</strong></div>'}
+          ${payerBreakdown.taxShare > 0 ? `
+            <div class="user-dish-row" style="color: var(--text-body);">
+              <span>Proportional GST & Service Taxes</span>
+              <strong>₹${payerBreakdown.taxShare.toLocaleString()}</strong>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
 
-    // 3. Individual friend settlement cards (clean, without fake UPI Ref ID)
+    // 3. Individual friend settlement cards with interactive dish breakdown
     if (wizardState.settlements.length === 0) {
       html += `
         <div class="p-6 text-center text-muted" style="border: 1px dashed var(--surface-glass-border); border-radius: 12px; margin-top: 10px;">
@@ -1314,34 +1439,67 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
     } else {
-      html += wizardState.settlements.map((s, idx) => `
-        <div class="settle-row-card ${s.paid ? 'paid' : ''}" id="settle-card-${idx}">
-          <div class="settle-person-info">
-            <div class="settle-avatar">${s.from.charAt(0)}</div>
-            <div class="settle-name-wrap">
-              <strong>${s.from}</strong>
-              <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
-                <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
-                ${s.paid ? 'Payment Settled' : 'Payment Pending'}
-              </span>
+      html += wizardState.settlements.map((s, idx) => {
+        const friendBreakdown = getUserBreakdown(s.from);
+        return `
+          <div class="settle-row-card ${s.paid ? 'paid' : ''}" id="settle-card-${idx}" onclick="toggleBreakdownDrawer('friend-breakdown-drawer-${idx}', event)" title="Click to expand ${s.from}'s dishes">
+            <div class="settle-row-main">
+              <div class="settle-person-info">
+                <div class="settle-avatar">${s.from.charAt(0)}</div>
+                <div class="settle-name-wrap">
+                  <strong>${s.from} <i class="ph-bold ph-caret-down" style="font-size: 0.75rem; margin-left: 4px; color: var(--text-muted);"></i></strong>
+                  <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
+                    <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
+                    ${s.paid ? 'Payment Settled' : 'Payment Pending'}
+                  </span>
+                </div>
+              </div>
+
+              <div class="settle-amount-col">
+                <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
+              </div>
+
+              <div class="flex-align-center gap-2" onclick="event.stopPropagation()">
+                <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
+                  ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
+                </button>
+              </div>
+            </div>
+
+            <div class="settle-breakdown-drawer hidden" id="friend-breakdown-drawer-${idx}">
+              <div style="font-size: 0.72rem; font-weight: 700; color: var(--emerald-400); margin-bottom: 4px; text-transform: uppercase;">
+                🍽️ ${s.from}'s Itemized Order
+              </div>
+              ${friendBreakdown.items.length > 0 ? friendBreakdown.items.map(it => `
+                <div class="user-dish-row">
+                  <span>${it.name} <small style="color: var(--text-muted);">(${it.sharedWith.length > 1 ? `Shared with ${it.sharedWith.filter(p => p !== s.from).join(', ')}` : 'Sole order'})</small></span>
+                  <strong>₹${it.shareAmount.toLocaleString()}</strong>
+                </div>
+              `).join('') : '<div class="user-dish-row"><span>Split equally across bill.</span><strong>₹' + s.amount + '</strong></div>'}
+              ${friendBreakdown.taxShare > 0 ? `
+                <div class="user-dish-row" style="color: var(--text-body);">
+                  <span>Proportional GST & Service Taxes</span>
+                  <strong>₹${friendBreakdown.taxShare.toLocaleString()}</strong>
+                </div>
+              ` : ''}
             </div>
           </div>
-
-          <div class="settle-amount-col">
-            <span class="settle-amount">₹${s.amount.toLocaleString()}</span>
-          </div>
-
-          <div class="flex-align-center gap-2">
-            <button class="btn-toggle-paid" onclick="togglePaymentStatus(${idx})">
-              ${s.paid ? '<i class="ph-bold ph-check"></i> Settled' : 'Mark as Paid'}
-            </button>
-          </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
     }
 
     friendsSettlementList.innerHTML = html;
   }
+
+  // Bind right sidebar checklist items for quick jump navigation
+  document.querySelectorAll(".checklist-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const step = parseInt(item.getAttribute("data-step"));
+      if (step && step >= 1 && step <= 5) {
+        goToStep(step);
+      }
+    });
+  });
 
   window.togglePaymentStatus = function(idx) {
     if (wizardState.settlements[idx]) {
