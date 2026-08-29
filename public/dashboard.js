@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Default UPI ID System
+  // Default UPI ID System (Persisted in localStorage)
   function getDefaultUpiId() {
     return localStorage.getItem("splitwise_default_upi") || "harsh@okhdfcbank";
   }
@@ -137,11 +137,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const cleanUpi = newUpi.trim().toLowerCase();
     localStorage.setItem("splitwise_default_upi", cleanUpi);
-    wizardState.upiId = cleanUpi;
+    
+    // Update Profile dropdown display
     const menuUpiVal = document.getElementById("menu-upi-val");
     if (menuUpiVal) menuUpiVal.textContent = cleanUpi;
-    const step4UpiInput = document.getElementById("step-4-upi-input");
-    if (step4UpiInput) step4UpiInput.value = cleanUpi;
+    
+    // Update active wizard UPI if not custom
+    wizardState.upiId = cleanUpi;
+    
+    // Update Step 4 inputs and displays
+    const upiDisplayId = document.getElementById("upi-display-id");
+    const upiCustomInput = document.getElementById("upi-custom-input");
+    if (upiDisplayId) upiDisplayId.textContent = cleanUpi;
+    if (upiCustomInput) upiCustomInput.value = cleanUpi;
+    
+    if (wizardState.step === 4) {
+      renderUpiCards();
+    }
     return true;
   }
 
@@ -155,9 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const menuUpiVal = document.getElementById("menu-upi-val");
 
   // Load saved default UPI on startup
-  const initialUpi = getDefaultUpiId();
-  if (menuUpiVal) menuUpiVal.textContent = initialUpi;
-  wizardState.upiId = initialUpi;
+  const initialDefaultUpi = getDefaultUpiId();
+  if (menuUpiVal) menuUpiVal.textContent = initialDefaultUpi;
+  wizardState.upiId = initialDefaultUpi;
 
   btnEditUpi?.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -175,9 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const val = customUpiInput?.value;
     if (setDefaultUpiId(val)) {
       closeUpiModal();
-      if (typeof renderUpiQrGrid === "function" && wizardState.step === 4) {
-        renderUpiQrGrid();
-      }
     }
   });
 
@@ -247,7 +256,14 @@ document.addEventListener("DOMContentLoaded", () => {
     wizardState.participants = [currentName];
     wizardState.items = [];
     wizardState.settlements = [];
+    wizardState.upiId = getDefaultUpiId();
     wizardState.billDate = new Date().toISOString().split('T')[0];
+
+    // Reset Step 4 UPI UI
+    const upiDisplayId = document.getElementById("upi-display-id");
+    const upiCustomInput = document.getElementById("upi-custom-input");
+    if (upiDisplayId) upiDisplayId.textContent = wizardState.upiId;
+    if (upiCustomInput) upiCustomInput.value = wizardState.upiId;
 
     // Reset Dropzone UI
     if (dropzoneIdle) dropzoneIdle.classList.remove("hidden");
@@ -299,6 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
         participants: wizardState.participants || ['Harsh'],
         items: wizardState.items || [],
         settlements: wizardState.settlements || [],
+        upiId: wizardState.upiId || getDefaultUpiId(),
         status: isSettled ? 'Settled' : 'Pending',
         statusClass: isSettled ? 'badge-paid' : 'badge-pending',
         updatedAt: Date.now()
@@ -330,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidePeopleCount = document.getElementById("side-people-count");
   const sideTransfersCount = document.getElementById("side-transfers-count");
 
-  // Step Navigation Function
+  // Step Navigation Function (No unwanted screen jumping or auto-scrolling)
   function goToStep(targetStep) {
     if (targetStep < 1 || targetStep > 5) return;
     wizardState.step = targetStep;
@@ -383,6 +400,14 @@ document.addEventListener("DOMContentLoaded", () => {
       renderItemsEditor();
       saveCurrentBillToHistory();
     } else if (targetStep === 4) {
+      // Ensure Step 4 loads the active UPI ID (default from profile or custom)
+      const activeUpi = wizardState.upiId || getDefaultUpiId();
+      wizardState.upiId = activeUpi;
+      const upiDisplayId = document.getElementById("upi-display-id");
+      const upiCustomInput = document.getElementById("upi-custom-input");
+      if (upiDisplayId) upiDisplayId.textContent = activeUpi;
+      if (upiCustomInput) upiCustomInput.value = activeUpi;
+
       recalculateSettlements();
       saveCurrentBillToHistory();
       renderUpiCards();
@@ -391,9 +416,6 @@ document.addEventListener("DOMContentLoaded", () => {
       saveCurrentBillToHistory();
       renderSettlementTracker();
     }
-
-    // Smooth scroll to top of wizard stage
-    document.getElementById("wizard-stage")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // ===================================================================
@@ -457,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   uploadDropzone?.addEventListener("dragover", (e) => {
     e.preventDefault();
-    uploadDropzone.style.borderColor = "var(--emerald-400)";
+    uploadDropzone.style.borderColor = "var(--indigo-400)";
   });
 
   uploadDropzone?.addEventListener("dragleave", () => {
@@ -931,19 +953,39 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("step-3-next-btn")?.addEventListener("click", () => goToStep(4));
 
   // ===================================================================
-  // STEP 4: Dynamic UPI QR Code Generation
+  // STEP 4: Dynamic UPI QR Code Generation & Custom Account Override
   // ===================================================================
   const upiQrGrid = document.getElementById("upi-qr-grid");
   const upiDisplayId = document.getElementById("upi-display-id");
   const upiCustomInput = document.getElementById("upi-custom-input");
   const saveUpiBtn = document.getElementById("save-upi-btn");
 
-  saveUpiBtn?.addEventListener("click", () => {
-    const custom = upiCustomInput.value.trim();
-    if (custom) {
-      wizardState.upiId = custom;
-      if (upiDisplayId) upiDisplayId.textContent = custom;
-      renderUpiCards();
+  // Save/Override UPI ID for this specific split
+  function applyStep4CustomUpi() {
+    const custom = upiCustomInput?.value.trim();
+    if (!custom || !custom.includes("@")) {
+      alert("Please enter a valid UPI ID (e.g. name@okhdfcbank or 9876543210@paytm)");
+      return;
+    }
+    const cleanUpi = custom.toLowerCase();
+    wizardState.upiId = cleanUpi;
+    if (upiDisplayId) upiDisplayId.textContent = cleanUpi;
+    renderUpiCards();
+    saveCurrentBillToHistory();
+
+    if (saveUpiBtn) {
+      const origHtml = saveUpiBtn.innerHTML;
+      saveUpiBtn.innerHTML = `<i class="ph-bold ph-check text-emerald"></i><span>Updated!</span>`;
+      setTimeout(() => { saveUpiBtn.innerHTML = origHtml; }, 1800);
+    }
+  }
+
+  saveUpiBtn?.addEventListener("click", applyStep4CustomUpi);
+
+  upiCustomInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyStep4CustomUpi();
     }
   });
 
@@ -958,8 +1000,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const currentUpi = wizardState.upiId || getDefaultUpiId();
+
     upiQrGrid.innerHTML = wizardState.settlements.map((s, idx) => {
-      const upiUri = `upi://pay?pa=${encodeURIComponent(wizardState.upiId)}&pn=SplitWise&am=${s.amount}&cu=INR`;
+      const upiUri = `upi://pay?pa=${encodeURIComponent(currentUpi)}&pn=SplitWise&am=${s.amount}&cu=INR`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
 
       return `
@@ -971,7 +1015,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
           </div>
           <div class="upi-card-actions" style="grid-template-columns: 1fr;">
-            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}', 'qr-img-${idx}')">
+            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${currentUpi}', 'qr-img-${idx}')">
               <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
             </button>
           </div>
@@ -981,9 +1025,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function generateSinglePersonQrCardBlob(name, amount, upiId, payerName, billTitle) {
-    const upi = upiId || getDefaultUpiId();
-    const payer = payerName || 'SplitWise';
-    const title = (billTitle || 'Bill Split').toUpperCase();
+    const upi = wizardState.upiId || upiId || getDefaultUpiId();
+    const payer = payerName || wizardState.payer || 'SplitWise';
+    const title = (billTitle || wizardState.categoryName || 'Bill Split').toUpperCase();
     const amt = Number(amount) || 0;
 
     const width = 360;
@@ -1088,7 +1132,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.shareWhatsApp = async function(name, amt, upi, imgId) {
-    const upiId = upi || getDefaultUpiId();
+    const upiId = wizardState.upiId || upi || getDefaultUpiId();
     let text = `👋 *Hi ${name}!* Here is your share for *${wizardState.categoryName}*:\n\n`;
     text += `💰 *Your Amount:* ₹${amt}\n`;
     text += `💳 *Pay via UPI ID:* \`${upiId}\`\n\n`;
@@ -1168,42 +1212,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (trackerProgFill) trackerProgFill.style.width = `${pct}%`;
     if (trackerProgressLabel) trackerProgressLabel.textContent = `₹${collected.toLocaleString()} of ₹${totalToCollect.toLocaleString()} settled`;
 
-    // 1. Render UPI QR Codes in Step 5 as well so they are always accessible
-    const step5QrGrid = document.getElementById("step-5-upi-qr-grid");
-    if (step5QrGrid) {
-      if (wizardState.settlements.length === 0) {
-        step5QrGrid.innerHTML = `
-          <div class="p-4 text-center text-muted" style="grid-column: 1 / -1;">
-            No outstanding balances to collect.
-          </div>
-        `;
-      } else {
-        step5QrGrid.innerHTML = wizardState.settlements.map((s, idx) => {
-          const upiUri = `upi://pay?pa=${encodeURIComponent(wizardState.upiId || 'harsh@okhdfcbank')}&pn=${encodeURIComponent(wizardState.payer || 'SplitWise')}&am=${s.amount}&cu=INR`;
-          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
-
-          return `
-            <div class="upi-card" id="step5-upi-card-${idx}">
-              <div class="upi-card-avatar">${s.from.charAt(0)}</div>
-              <span class="upi-friend-name">${s.from}</span>
-              <span class="upi-friend-amount">₹${s.amount}</span>
-              <div class="qr-code-frame">
-                <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="step5-qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
-              </div>
-              <div class="upi-card-actions" style="grid-template-columns: 1fr;">
-                <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${wizardState.upiId}', 'step5-qr-img-${idx}')">
-                  <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
-                </button>
-              </div>
-            </div>
-          `;
-        }).join("");
-      }
-    }
-
     if (!friendsSettlementList) return;
 
-    // 2. Payer summary card at the top
+    // 1. Payer summary card at the top
     let html = `
       <div class="settle-row-card paid" id="payer-summary-card">
         <div class="settle-person-info">
@@ -1225,7 +1236,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    // 3. Individual friend settlement cards
+    // 2. Individual friend settlement cards
     if (wizardState.settlements.length === 0) {
       html += `
         <div class="p-6 text-center text-muted" style="border: 1px dashed var(--surface-glass-border); border-radius: 12px; margin-top: 10px;">
@@ -1241,7 +1252,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <strong>${s.from}</strong>
               <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
                 <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
-                ${s.paid ? 'Payment Settled' : 'Payment Pending'}
+                ${s.paid ? `Payment Settled ${s.utr ? `(Ref #${s.utr})` : ''}` : 'Payment Pending'}
               </span>
             </div>
           </div>
@@ -1266,56 +1277,60 @@ document.addEventListener("DOMContentLoaded", () => {
     if (wizardState.settlements[idx]) {
       const s = wizardState.settlements[idx];
       s.paid = !s.paid;
-      if (s.paid) {
+      if (s.paid && !s.utr) {
+        s.utr = generateRandomUtr();
         s.verifiedAt = new Date().toLocaleTimeString();
-      } else {
-        delete s.verifiedAt;
+        playPaymentChime();
+        showPaymentToast(s.from, s.amount, s.utr);
       }
-      renderSettlementTracker();
       saveCurrentBillToHistory();
-
-      // Broadcast update to real-time Cloud
-      if (typeof updateCloudBillSettlements === "function") {
-        updateCloudBillSettlements(wizardState.billId, wizardState.settlements);
-      }
+      renderSettlementTracker();
     }
   };
 
-  // Web Audio Synthesizer: Crisp Bank Success Chime (Zero external mp3 needed!)
+  // Web Audio Synthesizer: Crisp Bank Success Chime
   function playPaymentChime() {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
       osc.type = "sine";
       osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.1); // A5
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.5);
-    } catch(e) {
-      // Audio not permitted or supported
-    }
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {}
   }
 
-  function showPaymentToast(fromName, amount, utr) {
+  function showPaymentToast(friendName, amount, utr) {
+    const container = document.getElementById("payment-toast-container");
+    if (!container) return;
+
     const toast = document.createElement("div");
-    toast.className = "payment-toast glass-panel";
+    toast.className = "payment-toast";
     toast.innerHTML = `
-      <div class="toast-icon"><i class="ph-fill ph-check-circle"></i></div>
-      <div class="toast-body">
-        <strong>${fromName} Paid ₹${amount}!</strong>
-        <span>Live settlement synced via Cloud</span>
+      <div class="toast-icon-wrap">
+        <i class="ph-fill ph-check-circle"></i>
+      </div>
+      <div class="toast-content">
+        <strong>Payment Recorded!</strong>
+        <span>₹${amount.toLocaleString()} received from <strong>${friendName}</strong></span>
+        <span class="utr-info-pill">UPI Ref: #${utr}</span>
       </div>
     `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add("show"), 50);
+    container.appendChild(toast);
+
     setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 400);
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(15px)';
+      toast.style.transition = 'all 0.3s';
+      setTimeout(() => toast.remove(), 300);
     }, 4500);
   }
 
@@ -1330,7 +1345,9 @@ document.addEventListener("DOMContentLoaded", () => {
     goToStep(1);
   });
 
+  // Step 5: WhatsApp Detailed Summary Share
   document.getElementById("export-summary-btn")?.addEventListener("click", async () => {
+    const activeUpi = wizardState.upiId || getDefaultUpiId();
     let text = `🧾 *SPLITWISE AI - DETAILED BILL BREAKDOWN*\n`;
     text += `📌 *Expense:* ${wizardState.categoryName || 'Bill Split'}\n`;
     text += `📅 *Date:* ${new Date().toLocaleDateString()}\n`;
@@ -1356,8 +1373,8 @@ document.addEventListener("DOMContentLoaded", () => {
       text += `\n`;
     }
 
-    if (wizardState.upiId) {
-      text += `💳 *Payer UPI ID:* \`${wizardState.upiId}\`\n\n`;
+    if (activeUpi) {
+      text += `💳 *Payer UPI ID:* \`${activeUpi}\`\n\n`;
     }
 
     text += `✨ _Calculated with SplitWise AI_`;
@@ -1365,7 +1382,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Only generate & attach separate images if there are UNPAID friends!
     if (unpaidSettlements.length > 0) {
       const files = await Promise.all(unpaidSettlements.map(async s => {
-        const blob = await generateSinglePersonQrCardBlob(s.from, s.amount, wizardState.upiId, wizardState.payer, wizardState.categoryName);
+        const blob = await generateSinglePersonQrCardBlob(s.from, s.amount, activeUpi, wizardState.payer, wizardState.categoryName);
         return new File([blob], `UPI_QR_${s.from}_Rs${s.amount}.png`, { type: "image/png" });
       }));
 
@@ -1386,7 +1403,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (files.length > 0 && navigator.clipboard && window.ClipboardItem) {
         try {
-          const firstBlob = await generateSinglePersonQrCardBlob(unpaidSettlements[0].from, unpaidSettlements[0].amount, wizardState.upiId, wizardState.payer, wizardState.categoryName);
+          const firstBlob = await generateSinglePersonQrCardBlob(unpaidSettlements[0].from, unpaidSettlements[0].amount, activeUpi, wizardState.payer, wizardState.categoryName);
           await navigator.clipboard.write([new ClipboardItem({ 'image/png': firstBlob })]);
         } catch (e) {
           console.warn("[Clipboard Copy Error]", e);
@@ -1423,7 +1440,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (wizardState.step === 5 && wizardState.billId) {
         const matching = cloudBills.find(b => b.id === wizardState.billId);
         if (matching && matching.settlements) {
-          // Check if any settlement was newly marked paid
           matching.settlements.forEach(remoteS => {
             const localS = wizardState.settlements.find(s => s.from === remoteS.from);
             if (localS && !localS.paid && remoteS.paid) {
@@ -1456,6 +1472,13 @@ document.addEventListener("DOMContentLoaded", () => {
       wizardState.participants = found.participants || ['Harsh'];
       wizardState.items = found.items || [];
       wizardState.settlements = found.settlements || [];
+      wizardState.upiId = found.upiId || getDefaultUpiId();
+
+      const upiDisplayId = document.getElementById("upi-display-id");
+      const upiCustomInput = document.getElementById("upi-custom-input");
+      if (upiDisplayId) upiDisplayId.textContent = wizardState.upiId;
+      if (upiCustomInput) upiCustomInput.value = wizardState.upiId;
+
       recalculateSettlements();
       renderItemsEditor();
       renderParticipantsChips();
