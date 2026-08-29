@@ -990,38 +990,72 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function renderUpiCards() {
-    if (!upiQrGrid) return;
-    if (wizardState.settlements.length === 0) {
-      upiQrGrid.innerHTML = `
-        <div class="p-6 text-center text-muted" style="grid-column: 1 / -1;">
-          No outstanding debts! All items are assigned to the payer.
-        </div>
-      `;
-      return;
-    }
-
     const currentUpi = wizardState.upiId || getDefaultUpiId();
 
-    upiQrGrid.innerHTML = wizardState.settlements.map((s, idx) => {
-      const upiUri = `upi://pay?pa=${encodeURIComponent(currentUpi)}&pn=SplitWise&am=${s.amount}&cu=INR`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
+    if (upiQrGrid) {
+      if (wizardState.settlements.length === 0) {
+        upiQrGrid.innerHTML = `
+          <div class="p-6 text-center text-muted" style="grid-column: 1 / -1;">
+            No outstanding debts! All items are assigned to the payer.
+          </div>
+        `;
+      } else {
+        upiQrGrid.innerHTML = wizardState.settlements.map((s, idx) => {
+          const upiUri = `upi://pay?pa=${encodeURIComponent(currentUpi)}&pn=SplitWise&am=${s.amount}&cu=INR`;
+          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
 
-      return `
-        <div class="upi-card" id="upi-card-${idx}">
-          <div class="upi-card-avatar">${s.from.charAt(0)}</div>
-          <span class="upi-friend-name">${s.from}</span>
-          <span class="upi-friend-amount">₹${s.amount}</span>
-          <div class="qr-code-frame">
-            <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
+          return `
+            <div class="upi-card" id="upi-card-${idx}">
+              <div class="upi-card-avatar">${s.from.charAt(0)}</div>
+              <span class="upi-friend-name">${s.from}</span>
+              <span class="upi-friend-amount">₹${s.amount}</span>
+              <div class="qr-code-frame">
+                <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
+              </div>
+              <div class="upi-card-actions" style="grid-template-columns: 1fr;">
+                <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${currentUpi}', 'qr-img-${idx}')">
+                  <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    const step5QrGrid = document.getElementById("step-5-upi-qr-grid");
+    if (step5QrGrid) {
+      const unpaid = wizardState.settlements.filter(s => !s.paid && s.amount > 0);
+      if (unpaid.length === 0) {
+        step5QrGrid.innerHTML = `
+          <div class="p-4 text-center text-muted" style="grid-column: 1 / -1; font-size: 0.84rem;">
+            <i class="ph-bold ph-check-circle text-emerald" style="font-size: 1.2rem; display: block; margin-bottom: 4px;"></i>
+            All debts are marked as settled! No QR codes pending.
           </div>
-          <div class="upi-card-actions" style="grid-template-columns: 1fr;">
-            <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${currentUpi}', 'qr-img-${idx}')">
-              <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
-            </button>
-          </div>
-        </div>
-      `;
-    }).join("");
+        `;
+      } else {
+        step5QrGrid.innerHTML = unpaid.map((s, idx) => {
+          const upiUri = `upi://pay?pa=${encodeURIComponent(currentUpi)}&pn=SplitWise&am=${s.amount}&cu=INR`;
+          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
+
+          return `
+            <div class="upi-card" id="step5-upi-card-${idx}">
+              <div class="upi-card-avatar">${s.from.charAt(0)}</div>
+              <span class="upi-friend-name">${s.from}</span>
+              <span class="upi-friend-amount">₹${s.amount}</span>
+              <div class="qr-code-frame">
+                <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="step5-qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
+              </div>
+              <div class="upi-card-actions" style="grid-template-columns: 1fr;">
+                <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${currentUpi}', 'step5-qr-img-${idx}')">
+                  <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
   }
 
   async function generateSinglePersonQrCardBlob(name, amount, upiId, payerName, billTitle) {
@@ -1212,9 +1246,45 @@ document.addEventListener("DOMContentLoaded", () => {
     if (trackerProgFill) trackerProgFill.style.width = `${pct}%`;
     if (trackerProgressLabel) trackerProgressLabel.textContent = `₹${collected.toLocaleString()} of ₹${totalToCollect.toLocaleString()} settled`;
 
+    // 1. Populate Step 5 Payment QR Codes
+    const step5QrGrid = document.getElementById("step-5-upi-qr-grid");
+    const currentUpi = wizardState.upiId || getDefaultUpiId();
+    if (step5QrGrid) {
+      const unpaid = wizardState.settlements.filter(s => !s.paid && s.amount > 0);
+      if (unpaid.length === 0) {
+        step5QrGrid.innerHTML = `
+          <div class="p-4 text-center text-muted" style="grid-column: 1 / -1; font-size: 0.84rem;">
+            <i class="ph-bold ph-check-circle text-emerald" style="font-size: 1.2rem; display: block; margin-bottom: 4px;"></i>
+            All debts are marked as settled! No QR codes pending.
+          </div>
+        `;
+      } else {
+        step5QrGrid.innerHTML = unpaid.map((s, idx) => {
+          const upiUri = `upi://pay?pa=${encodeURIComponent(currentUpi)}&pn=SplitWise&am=${s.amount}&cu=INR`;
+          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(upiUri)}`;
+
+          return `
+            <div class="upi-card" id="step5-upi-card-${idx}">
+              <div class="upi-card-avatar">${s.from.charAt(0)}</div>
+              <span class="upi-friend-name">${s.from}</span>
+              <span class="upi-friend-amount">₹${s.amount}</span>
+              <div class="qr-code-frame">
+                <img src="${qrApiUrl}" alt="UPI QR for ${s.from}" id="step5-qr-img-${idx}" crossOrigin="anonymous" loading="lazy">
+              </div>
+              <div class="upi-card-actions" style="grid-template-columns: 1fr;">
+                <button class="btn-qr-action" style="width: 100%; justify-content: center; background: rgba(16, 185, 129, 0.15); color: var(--emerald-400); border-color: rgba(16, 185, 129, 0.3);" onclick="shareWhatsApp('${s.from}', ${s.amount}, '${currentUpi}', 'step5-qr-img-${idx}')">
+                  <i class="ph-bold ph-whatsapp-logo"></i> Share on WhatsApp
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
     if (!friendsSettlementList) return;
 
-    // 1. Payer summary card at the top
+    // 2. Payer summary card at the top
     let html = `
       <div class="settle-row-card paid" id="payer-summary-card">
         <div class="settle-person-info">
@@ -1236,7 +1306,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    // 2. Individual friend settlement cards
+    // 3. Individual friend settlement cards (clean, without fake UPI Ref ID)
     if (wizardState.settlements.length === 0) {
       html += `
         <div class="p-6 text-center text-muted" style="border: 1px dashed var(--surface-glass-border); border-radius: 12px; margin-top: 10px;">
@@ -1252,7 +1322,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <strong>${s.from}</strong>
               <span class="settle-status-badge ${s.paid ? 'badge-paid' : 'badge-pending'}">
                 <i class="ph-bold ${s.paid ? 'ph-check-circle' : 'ph-clock'}"></i>
-                ${s.paid ? `Payment Settled ${s.utr ? `(Ref #${s.utr})` : ''}` : 'Payment Pending'}
+                ${s.paid ? 'Payment Settled' : 'Payment Pending'}
               </span>
             </div>
           </div>
@@ -1277,11 +1347,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (wizardState.settlements[idx]) {
       const s = wizardState.settlements[idx];
       s.paid = !s.paid;
-      if (s.paid && !s.utr) {
-        s.utr = generateRandomUtr();
+      if (s.paid) {
         s.verifiedAt = new Date().toLocaleTimeString();
         playPaymentChime();
-        showPaymentToast(s.from, s.amount, s.utr);
+        showPaymentToast(s.from, s.amount);
       }
       saveCurrentBillToHistory();
       renderSettlementTracker();
@@ -1308,7 +1377,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {}
   }
 
-  function showPaymentToast(friendName, amount, utr) {
+  function showPaymentToast(friendName, amount) {
     const container = document.getElementById("payment-toast-container");
     if (!container) return;
 
@@ -1321,7 +1390,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="toast-content">
         <strong>Payment Recorded!</strong>
         <span>₹${amount.toLocaleString()} received from <strong>${friendName}</strong></span>
-        <span class="utr-info-pill">UPI Ref: #${utr}</span>
       </div>
     `;
     container.appendChild(toast);
@@ -1444,7 +1512,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const localS = wizardState.settlements.find(s => s.from === remoteS.from);
             if (localS && !localS.paid && remoteS.paid) {
               playPaymentChime();
-              showPaymentToast(remoteS.from, remoteS.amount, remoteS.utr || generateRandomUtr());
+              showPaymentToast(remoteS.from, remoteS.amount);
             }
           });
 
