@@ -1,6 +1,5 @@
 /**
  * SplitWise AI - Firebase Configuration & Real-Time Cloud Sync
- * Patterned directly after the attendance-tracker Firestore architecture:
  * - Synchronous SDK initialization for instant startup (zero network waterfalls)
  * - Atomic document persistence at users/{uid}/bills/data
  * - Subcollection synchronization at users/{uid}/bills/{billId}
@@ -42,17 +41,17 @@ const GUEST_USER = {
 function getUserId() {
   const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
   if (isGuest) return "guest_demo_user";
-  
+
   if (auth && auth.currentUser) {
     return auth.currentUser.uid;
   }
-  
+
   const stored = localStorage.getItem("splitwise_user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
       if (parsed && parsed.uid) return parsed.uid;
-    } catch (e) {}
+    } catch (e) { }
   }
   return null;
 }
@@ -79,7 +78,7 @@ function getCurrentUser() {
     try {
       const parsed = JSON.parse(stored);
       if (parsed) return parsed;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return null;
@@ -109,12 +108,13 @@ async function getAuthenticatedFirebaseUser() {
 
 function loginAsGuest(customName = "Guest Evaluator") {
   if (auth) {
-    try { auth.signOut().catch(() => {}); } catch (e) {}
+    try { auth.signOut().catch(() => { }); } catch (e) { }
   }
   sessionStorage.setItem("is_guest_session", "true");
   sessionStorage.setItem("guest_display_name", customName);
   localStorage.setItem("is_guest_mode", "true");
   localStorage.setItem("splitwise_user", JSON.stringify({ ...GUEST_USER, displayName: customName }));
+  recordActiveTimestamp();
   window.location.href = "/dashboard.html";
 }
 
@@ -125,9 +125,10 @@ function logoutUser() {
   localStorage.removeItem("is_guest_session");
   localStorage.removeItem("guest_display_name");
   localStorage.removeItem("splitwise_active_bill_id");
+  localStorage.removeItem(LAST_ACTIVE_KEY);
 
   if (auth) {
-    auth.signOut().catch(() => {}).finally(() => {
+    auth.signOut().catch(() => { }).finally(() => {
       window.location.href = "/auth.html";
     });
     return;
@@ -135,12 +136,76 @@ function logoutUser() {
   window.location.href = "/auth.html";
 }
 
+// ─── 15-MINUTE INACTIVITY ON WEBSITE CLOSE AUTO-LOGOUT SYSTEM ─────────────────
+// Closes website > 15 mins -> auto logout on next open.
+// Active, idle, or background open tabs -> STAY logged in.
+
+const AUTO_LOGOUT_DURATION_MS = 15 * 60 * 1000; // 15 Minutes (900,000 ms)
+const LAST_ACTIVE_KEY = "splitwise_last_active_timestamp";
+
+function checkSessionTimeoutOnLoad() {
+  const isAuthPage = window.location.pathname.endsWith("auth.html") || window.location.pathname === "/auth.html";
+  if (isAuthPage) return false;
+
+  const user = getCurrentUser();
+  if (!user) return false;
+
+  const lastActiveStr = localStorage.getItem(LAST_ACTIVE_KEY);
+  if (lastActiveStr) {
+    const lastActive = parseInt(lastActiveStr, 10);
+    const now = Date.now();
+    if (!isNaN(lastActive) && (now - lastActive) > AUTO_LOGOUT_DURATION_MS) {
+      console.warn("[Session Security] Website was closed for over 15 minutes. Automatically logging out.");
+      localStorage.removeItem(LAST_ACTIVE_KEY);
+      logoutUser();
+      return true;
+    }
+  }
+
+  // Update last active timestamp immediately
+  recordActiveTimestamp();
+  return false;
+}
+
+function recordActiveTimestamp() {
+  try {
+    localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
+  } catch (e) { }
+}
+
+// Continuous Heartbeat: keeps session alive as long as ANY tab of the website is open (even idle or background)
+function initSessionHeartbeat() {
+  recordActiveTimestamp();
+
+  // Heartbeat every 5 seconds while page exists
+  setInterval(recordActiveTimestamp, 5000);
+
+  // Also record on user interaction and visibility change
+  window.addEventListener("focus", recordActiveTimestamp, { passive: true });
+  window.addEventListener("click", recordActiveTimestamp, { passive: true });
+  window.addEventListener("keydown", recordActiveTimestamp, { passive: true });
+  window.addEventListener("touchstart", recordActiveTimestamp, { passive: true });
+  document.addEventListener("visibilitychange", recordActiveTimestamp, { passive: true });
+
+  // Record precise timestamp when tab is being closed or unloaded
+  window.addEventListener("pagehide", recordActiveTimestamp, { passive: true });
+  window.addEventListener("beforeunload", recordActiveTimestamp, { passive: true });
+}
+
+// Run the timeout check immediately upon script evaluation
+if (typeof window !== "undefined") {
+  const timedOut = checkSessionTimeoutOnLoad();
+  if (!timedOut) {
+    initSessionHeartbeat();
+  }
+}
+
 // ─── UI CLOUD SYNC STATUS PILL ────────────────────────────────────────────────
 
 function updateCloudSyncBadge(status = 'synced') {
   const isGuest = sessionStorage.getItem("is_guest_session") === "true" || localStorage.getItem("is_guest_mode") === "true";
   const badges = document.querySelectorAll(".cloud-sync-pill, .cloud-sync-status, #cloud-sync-pill");
-  
+
   badges.forEach(badge => {
     if (!badge) return;
     if (isGuest) {
@@ -203,7 +268,7 @@ function addDeletedBillId(billId) {
       if (deleted.length > 100) deleted.shift();
       localStorage.setItem("splitwise_deleted_bill_ids", JSON.stringify(deleted));
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function removeDeletedBillId(billId) {
@@ -211,7 +276,7 @@ function removeDeletedBillId(billId) {
   try {
     const deleted = getDeletedBillIds().filter(id => id !== billId);
     localStorage.setItem("splitwise_deleted_bill_ids", JSON.stringify(deleted));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function getLocalBills() {
@@ -225,7 +290,7 @@ function getLocalBills() {
         return parsed.filter(b => b && b.id && !DUMMY_IDS.includes(b.id) && !b.id.startsWith('dinner-') && !b.id.startsWith('roadtrip-') && !b.id.startsWith('grocery-') && !deletedIds.includes(b.id));
       }
     }
-  } catch (e) {}
+  } catch (e) { }
   return [];
 }
 
@@ -236,7 +301,7 @@ function setLocalBills(bills) {
     localStorage.setItem("splitwise_bills_history", JSON.stringify(filtered));
     updateProfileTotalSettled(filtered);
     window.dispatchEvent(new CustomEvent('splitwise_bills_updated', { detail: { bills: filtered } }));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function mergeBills(primary = [], secondary = []) {
@@ -427,8 +492,8 @@ async function deleteBillRecord(billId) {
       await Promise.all([
         billsDataDoc(uid).set({ list: cleanList, updatedAt: Date.now() }),
         billItemDoc(uid, billId).delete(),
-        db.collection("history").doc(billId).delete().catch(() => {}),
-        db.collection("bills").doc(billId).delete().catch(() => {})
+        db.collection("history").doc(billId).delete().catch(() => { }),
+        db.collection("bills").doc(billId).delete().catch(() => { })
       ]);
       console.log(`[Firestore] Permanently deleted bill ${billId}`);
     } catch (e) {
@@ -440,8 +505,8 @@ async function deleteBillRecord(billId) {
   try {
     fetch(`/api/sync-bills?userId=${encodeURIComponent(uid || '')}&billId=${encodeURIComponent(billId)}`, {
       method: 'DELETE'
-    }).catch(() => {});
-  } catch (e) {}
+    }).catch(() => { });
+  } catch (e) { }
 }
 
 /**
@@ -486,10 +551,10 @@ async function updateBillSettlement(billId, settlements) {
  * Listens directly on users/{uid}/bills/data for instant live updates
  */
 function subscribeToUserBills(callback) {
-  if (typeof callback !== 'function' || !db) return () => {};
+  if (typeof callback !== 'function' || !db) return () => { };
 
   const uid = getUserId();
-  if (!uid || uid === 'guest_demo_user') return () => {};
+  if (!uid || uid === 'guest_demo_user') return () => { };
 
   try {
     const unsub = billsDataDoc(uid).onSnapshot((docSnap) => {
@@ -511,7 +576,7 @@ function subscribeToUserBills(callback) {
 
     return unsub;
   } catch (err) {
-    return () => {};
+    return () => { };
   }
 }
 

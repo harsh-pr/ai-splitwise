@@ -236,6 +236,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      if (typeof recordActiveTimestamp === 'function') {
+        recordActiveTimestamp();
+      }
       window.location.href = "/dashboard.html";
     } catch (err) {
       showError(mapFirebaseError(err));
@@ -263,6 +266,9 @@ document.addEventListener("DOMContentLoaded", () => {
         email: user.email,
         photoURL: user.photoURL
       }));
+      if (typeof recordActiveTimestamp === 'function') {
+        recordActiveTimestamp();
+      }
       window.location.href = "/dashboard.html";
     } catch (err) {
       showError(mapFirebaseError(err));
