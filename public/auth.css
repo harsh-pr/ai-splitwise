@@ -27,13 +27,15 @@
 }
 
 body.auth-page-body {
+  height: 100vh;
   min-height: 100vh;
+  max-height: 100vh;
   background-color: var(--bg-black);
   color: var(--text-body);
   font-family: var(--font-main);
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
 }
 
@@ -55,18 +57,18 @@ body.auth-page-body {
 }
 
 .orb-1 {
-  width: 500px;
-  height: 500px;
-  top: -100px;
-  right: -100px;
+  width: 450px;
+  height: 450px;
+  top: -80px;
+  right: -80px;
   background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0) 70%);
 }
 
 .orb-2 {
-  width: 450px;
-  height: 450px;
+  width: 400px;
+  height: 400px;
   bottom: 0;
-  left: -100px;
+  left: -80px;
   background: radial-gradient(circle, rgba(39, 39, 42, 0.5) 0%, rgba(9, 9, 11, 0) 70%);
 }
 
@@ -75,40 +77,43 @@ body.auth-page-body {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   width: 100%;
+  overflow: hidden;
 }
 
 .auth-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 32px;
+  padding: 12px 28px;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 1.25rem;
+  gap: 8px;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-white);
   text-decoration: none !important;
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   background: linear-gradient(135deg, var(--emerald-500), #059669);
   color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
@@ -121,12 +126,12 @@ body.auth-page-body {
 .back-home-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: var(--text-body);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-subtle);
   transition: all var(--trans-fast);
@@ -144,55 +149,57 @@ body.auth-page-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px 48px;
+  padding: 4px 16px 14px;
+  min-height: 0;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 460px;
-  padding: 32px;
+  max-width: 440px;
+  padding: 20px 24px;
   background: var(--bg-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-subtle);
-  border-radius: 20px;
-  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px var(--emerald-glow);
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 25px var(--emerald-glow);
+  box-sizing: border-box;
 }
 
 /* Guest Demo Banner */
 .guest-banner {
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
 }
 
 .guest-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: rgba(16, 185, 129, 0.15);
   color: var(--emerald-400);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 100px;
-  margin-bottom: 8px;
-}
-
-.guest-banner-text h4 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-white);
   margin-bottom: 4px;
 }
 
+.guest-banner-text h4 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 2px;
+}
+
 .guest-banner-text p {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: var(--text-body);
-  margin-bottom: 12px;
-  line-height: 1.45;
+  margin-bottom: 8px;
+  line-height: 1.35;
 }
 
 .btn-guest-cta {
@@ -200,17 +207,17 @@ body.auth-page-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--emerald-500);
   color: #000000;
   font-weight: 700;
-  font-size: 0.92rem;
-  padding: 11px 16px;
-  border-radius: 10px;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: all var(--trans-fast);
-  box-shadow: 0 4px 15px var(--emerald-glow);
+  box-shadow: 0 4px 12px var(--emerald-glow);
 }
 
 .btn-guest-cta:hover {
@@ -223,11 +230,11 @@ body.auth-page-body {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 18px 0;
+  margin: 10px 0;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
 }
 
 .auth-divider::before, .auth-divider::after {
@@ -237,28 +244,28 @@ body.auth-page-body {
 }
 
 .auth-divider span {
-  padding: 0 12px;
+  padding: 0 10px;
 }
 
 /* Tabs */
 .auth-tabs {
   display: flex;
   background: rgba(0, 0, 0, 0.4);
-  padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 3px;
+  border-radius: 10px;
+  margin-bottom: 10px;
   border: 1px solid var(--border-subtle);
 }
 
 .auth-tab-btn {
   flex: 1;
-  padding: 9px 16px;
-  font-size: 0.88rem;
+  padding: 6px 12px;
+  font-size: 0.82rem;
   font-weight: 600;
   background: transparent;
   border: none;
   color: var(--text-body);
-  border-radius: 8px;
+  border-radius: 7px;
   cursor: pointer;
   transition: all var(--trans-fast);
   font-family: inherit;
@@ -267,7 +274,7 @@ body.auth-page-body {
 .auth-tab-btn.active {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-white);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 /* Google Sign-In */
@@ -276,17 +283,17 @@ body.auth-page-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-subtle);
   color: var(--text-heading);
   font-weight: 600;
-  font-size: 0.92rem;
-  padding: 12px 18px;
-  border-radius: 12px;
+  font-size: 0.84rem;
+  padding: 8px 14px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all var(--trans-fast);
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .btn-google:hover {
@@ -300,14 +307,14 @@ body.auth-page-body {
 .auth-alert {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
   background: rgba(244, 63, 94, 0.12);
   border: 1px solid rgba(244, 63, 94, 0.3);
   color: #fb7185;
-  font-size: 0.85rem;
-  margin-bottom: 16px;
+  font-size: 0.78rem;
+  margin-bottom: 8px;
   transition: all var(--trans-fast);
 }
 
@@ -322,7 +329,7 @@ body.auth-page-body {
 }
 
 .forgot-link {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--emerald-400);
   font-weight: 600;
   text-decoration: none !important;
@@ -343,13 +350,13 @@ body.auth-page-body {
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
 .form-group.hidden {
@@ -357,7 +364,7 @@ body.auth-page-body {
 }
 
 .form-group label {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-heading);
 }
@@ -370,40 +377,41 @@ body.auth-page-body {
 
 .input-icon {
   position: absolute;
-  left: 14px;
-  font-size: 1.15rem;
+  left: 11px;
+  font-size: 1.02rem;
   color: var(--text-muted);
   pointer-events: none;
 }
 
 .input-wrap input {
   width: 100%;
-  padding: 12px 42px 12px 42px;
+  padding: 8px 36px 8px 36px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: 9px;
   color: var(--text-white);
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   font-family: inherit;
   outline: none;
   transition: all var(--trans-fast);
+  box-sizing: border-box;
 }
 
 .input-wrap input:focus {
   border-color: var(--emerald-500);
-  box-shadow: 0 0 0 3px var(--emerald-glow);
+  box-shadow: 0 0 0 2px var(--emerald-glow);
   background: rgba(0, 0, 0, 0.5);
 }
 
 .pwd-toggle-btn {
   position: absolute;
-  right: 12px;
+  right: 10px;
   background: none;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
-  font-size: 1.1rem;
+  padding: 2px;
+  font-size: 0.95rem;
 }
 
 .pwd-toggle-btn:hover {
@@ -414,11 +422,11 @@ body.auth-page-body {
 .pwd-requirements-box {
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 9px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
 .pwd-requirements-box.hidden {
@@ -426,24 +434,24 @@ body.auth-page-body {
 }
 
 .req-header {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .req-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
+  gap: 6px;
+  font-size: 0.72rem;
   color: var(--text-muted);
 }
 
 .req-item i {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .req-item.valid {
@@ -457,20 +465,31 @@ body.auth-page-body {
 /* Submit Button */
 .btn-submit {
   width: 100%;
-  padding: 13px;
+  padding: 9px;
   background: var(--emerald-500);
   color: #000;
   font-weight: 700;
-  font-size: 0.95rem;
-  border-radius: 12px;
+  font-size: 0.88rem;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   transition: all var(--trans-fast);
-  box-shadow: 0 4px 18px var(--emerald-glow);
-  margin-top: 6px;
+  box-shadow: 0 4px 14px var(--emerald-glow);
+  margin-top: 2px;
 }
 
 .btn-submit:hover {
   background: var(--emerald-400);
   transform: translateY(-1px);
+}
+
+/* Responsive Fallbacks */
+@media (max-height: 560px) {
+  body.auth-page-body {
+    overflow-y: auto;
+  }
+  .auth-wrapper {
+    min-height: 100vh;
+    height: auto;
+  }
 }
