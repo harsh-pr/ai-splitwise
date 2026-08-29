@@ -265,6 +265,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (upiDisplayId) upiDisplayId.textContent = wizardState.upiId;
     if (upiCustomInput) upiCustomInput.value = wizardState.upiId;
 
+    // Reset Sidebar Summary Display to fresh zero state
+    const sideCategoryName = document.getElementById("side-category-name");
+    const sideTotalBill = document.getElementById("side-total-bill");
+    const sidePeopleCount = document.getElementById("side-people-count");
+    const sideTransfersCount = document.getElementById("side-transfers-count");
+    if (sideCategoryName) sideCategoryName.textContent = catName;
+    if (sideTotalBill) sideTotalBill.textContent = "₹0";
+    if (sidePeopleCount) sidePeopleCount.textContent = `1 (${currentName})`;
+    if (sideTransfersCount) sideTransfersCount.textContent = "0 Transfers";
+
     // Reset Dropzone UI
     if (dropzoneIdle) dropzoneIdle.classList.remove("hidden");
     if (scannerStage) scannerStage.classList.add("hidden");
@@ -282,6 +292,9 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
     }
+
+    if (typeof renderParticipantsChips === "function") renderParticipantsChips();
+    if (typeof renderItemsEditor === "function") renderItemsEditor();
   }
 
   // ===================================================================
@@ -393,6 +406,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
+
+    // Update Running Summary in Sidebar according to current state
+    if (sideCategoryName) sideCategoryName.textContent = wizardState.categoryName || 'Restaurant & Dining';
+    if (sideTotalBill) sideTotalBill.textContent = `₹${(wizardState.totalAmount || 0).toLocaleString()}`;
+    if (sidePeopleCount) sidePeopleCount.textContent = `${wizardState.participants.length} Friends`;
+    if (sideTransfersCount) sideTransfersCount.textContent = `${wizardState.settlements.length} Transfers`;
 
     // Trigger step-specific logic
     if (targetStep === 3) {
