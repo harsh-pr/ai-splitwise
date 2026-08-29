@@ -98,11 +98,11 @@ public class DebtSimplifier {
         System.out.println("==================================================");
 
         List<Transaction> initialDebts = Arrays.asList(
-            new Transaction("Alice", "Bob", 600),
-            new Transaction("Bob", "Charlie", 400),
-            new Transaction("David", "Alice", 700),
-            new Transaction("Charlie", "David", 300),
-            new Transaction("Emma", "Bob", 500)
+            new Transaction("Sarthak", "Harsh", 600),
+            new Transaction("Hrudayesh", "Sarthak", 400),
+            new Transaction("Rigved", "Harsh", 700),
+            new Transaction("Hrudayesh", "Rigved", 300),
+            new Transaction("Sarthak", "Rigved", 500)
         );
 
         System.out.println("\n--- Raw Transactions (" + initialDebts.size() + " transfers) ---");
