@@ -9,7 +9,7 @@
 const firebaseConfig = (typeof window !== 'undefined' && window.__FIREBASE_CONFIG__) ? window.__FIREBASE_CONFIG__ : {
   apiKey: "",
   authDomain: "",
-  projectId: "ai-splitwise",
+  projectId: "",
   storageBucket: "",
   messagingSenderId: "",
   appId: ""
