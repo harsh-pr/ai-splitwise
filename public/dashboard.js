@@ -943,6 +943,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 50);
   });
 
+  // Auto-resize chat textarea
+  if (chatInput) {
+    chatInput.addEventListener("input", () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(110, Math.max(38, chatInput.scrollHeight)) + "px";
+    });
+
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        chatForm?.dispatchEvent(new Event("submit", { cancelable: true }));
+      }
+    });
+  }
+
+  // Quick prompt chips
+  document.querySelectorAll(".prompt-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const promptText = chip.getAttribute("data-prompt") || chip.textContent.trim();
+      if (chatInput) {
+        chatInput.value = promptText;
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(110, Math.max(38, chatInput.scrollHeight)) + "px";
+        chatInput.focus();
+      }
+    });
+  });
+
   // Handle Free-Form Chat Prompts
   function addChatMessage(text, isUser = false) {
     if (!chatMessages) return;
@@ -963,6 +991,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addChatMessage(prompt, true);
     chatInput.value = "";
+    if (chatInput) chatInput.style.height = "auto";
 
     // Show Gemini Thinking bubble
     const thinkingId = "thinking-" + Date.now();
