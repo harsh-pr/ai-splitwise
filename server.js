@@ -107,12 +107,11 @@ app.delete('/api/sync-bills', (req, res) => {
 });
 
 // High-Availability Multi-Model Gemini Waterfall
-// Automatically fails over between active models if any model hits a rate limit or 429 quota
+// Optimized for lightning-fast sub-second responses with automatic failover
 const GEMINI_MODELS = [
-  'gemini-flash-latest',
-  'gemini-3.5-flash',
   'gemini-flash-lite-latest',
-  'gemini-2.5-flash'
+  'gemini-2.5-flash',
+  'gemini-3.5-flash'
 ];
 
 async function callGeminiAPI(contents, generationConfig = { responseMimeType: 'application/json', temperature: 0.1 }) {
@@ -126,12 +125,13 @@ async function callGeminiAPI(contents, generationConfig = { responseMimeType: 'a
       const res = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents, generationConfig })
+        body: JSON.stringify({ contents, generationConfig }),
+        signal: AbortSignal.timeout(10000) // 10s timeout to prevent long hanging
       });
 
       if (res.status === 429 || res.status === 404 || res.status === 503) {
         const errTxt = await res.text();
-        console.warn(`[Gemini Failover] Model ${model} status ${res.status}, falling over to next model in cascade...`);
+        console.warn(`[Gemini Failover] Model ${model} status ${res.status}, falling over to next model...`);
         lastError = new Error(`Model ${model} status ${res.status}: ${errTxt}`);
         continue;
       }
