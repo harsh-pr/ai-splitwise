@@ -6,7 +6,7 @@
  * - Real-time Firestore onSnapshot listeners for instant Mobile <-> PC sync
  */
 
-const firebaseConfig = {
+const firebaseConfig = (typeof window !== 'undefined' && window.__FIREBASE_CONFIG__) ? window.__FIREBASE_CONFIG__ : {
   apiKey: "",
   authDomain: "",
   projectId: "ai-splitwise",
@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 // 1. Synchronous Initialization (Instant - Zero delay)
-if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+if (typeof firebase !== 'undefined' && !firebase.apps.length && firebaseConfig.apiKey) {
   try {
     firebase.initializeApp(firebaseConfig);
   } catch (e) {

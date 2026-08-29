@@ -58,7 +58,7 @@ app.get('/api/config', (req, res) => {
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || "",
       authDomain: process.env.FIREBASE_AUTH_DOMAIN || "",
-      projectId: process.env.FIREBASE_PROJECT_ID || "",
+      projectId: process.env.FIREBASE_PROJECT_ID || "ai-splitwise",
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "",
       messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "",
       appId: process.env.FIREBASE_APP_ID || "",
@@ -68,6 +68,19 @@ app.get('/api/config', (req, res) => {
     useFirebase: process.env.USE_FIREBASE === 'true',
     geminiActive: Boolean(process.env.GEMINI_API_KEY)
   });
+});
+
+// Dynamic Firebase Configuration Script for Client Web Pages (Zero hardcoded secrets in repository)
+app.get('/api/firebase-config.js', (req, res) => {
+  res.type('application/javascript');
+  res.send(`window.__FIREBASE_CONFIG__ = {
+  apiKey: ${JSON.stringify(process.env.FIREBASE_API_KEY || "")},
+  authDomain: ${JSON.stringify(process.env.FIREBASE_AUTH_DOMAIN || "")},
+  projectId: ${JSON.stringify(process.env.FIREBASE_PROJECT_ID || "ai-splitwise")},
+  storageBucket: ${JSON.stringify(process.env.FIREBASE_STORAGE_BUCKET || "")},
+  messagingSenderId: ${JSON.stringify(process.env.FIREBASE_MESSAGING_SENDER_ID || "")},
+  appId: ${JSON.stringify(process.env.FIREBASE_APP_ID || "")}
+};`);
 });
 
 // Backup In-Memory Cloud Sync Store (Dual-channel multi-device persistence)
