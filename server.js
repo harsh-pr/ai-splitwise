@@ -382,25 +382,30 @@ CRITICAL RULES:
    - If the user mentions ANY names (e.g., "Sarthak", "Hrudayesh", "Rigved", "Harsh", etc.) or says "add X, Y and Z to friends list", AUTOMATICALLY include them in "updatedParticipants".
    - If user asks to remove a person (e.g. "remove Sarthak"), remove them from "updatedParticipants".
 
-2. ITEM & PRICE EDITING (MANUAL / AI ASSISTED):
+2. PAYER IDENTIFICATION:
+   - If the user explicitly mentions who paid (e.g. "Sarthak paid", "paid by Hrudayesh", "I paid", "Harsh paid the bill", "Rigved paid for everyone"): set "payer" to that exact person's name.
+   - If the user does not specify who paid, set "payer": null.
+
+3. ITEM & PRICE EDITING (MANUAL / AI ASSISTED):
    - If the user asks to change or correct an item's price (e.g., "change butter naan price to 250", "chicken is 400 not 380"): update that item's "price" in "updatedItems".
    - If the user asks to rename a dish (e.g., "rename chicken to Chicken Tikka Masala"): update the item's "name".
    - If the user asks to add an item (e.g., "add 2 Cokes for 80", "we also had dessert for 150"): insert a new item into "updatedItems" with an appropriate name, numeric price, and assigned array.
    - If the user asks to remove/delete an item (e.g., "remove mineral water", "delete the dessert"): omit that item from "updatedItems".
    - For all other unmentioned items, PRESERVE their name, price, and current assigned array unchanged.
 
-3. DISH SPLITTING & ALLOCATION:
+4. DISH SPLITTING & ALLOCATION:
    - Assign dishes to the specified individuals (e.g., "Harsh and Sarthak had naan").
    - When user says "everyone had X" or "split Y with all", assign all names in "updatedParticipants" to that item.
 
-4. RESPONSE FORMAT:
+5. RESPONSE FORMAT:
 Respond STRICTLY with raw JSON matching this schema:
 {
-  "assistantMessage": "Friendly 1-2 sentence confirmation of the split allocation, price correction, or item edit",
+  "assistantMessage": "Friendly 1-2 sentence confirmation of the split allocation, payer update, or item edit",
   "updatedParticipants": ["Name 1", "Name 2"],
   "updatedItems": [
     { "id": 1, "name": "Item Name", "price": 100, "assigned": ["Name 1"] }
-  ]
+  ],
+  "payer": "Name of person who paid or null"
 }`;
 
     const { text } = await callGeminiAPI([{ parts: [{ text: sysPrompt }] }], {
@@ -422,21 +427,23 @@ Respond STRICTLY with raw JSON matching this schema:
         id: item.id || (idx + 1),
         name: String(item.name || `Item ${idx + 1}`).trim(),
         price: Number(item.price) || 0,
-        assigned: Array.isArray(item.assigned) && item.assigned.length > 0 ? item.assigned : [mergedParticipants[0] || 'Harsh']
+        assigned: Array.isArray(item.assigned) && item.assigned.length > 0 ? item.assigned : [mergedParticipants[0] || 'You']
       }));
     }
 
     return res.json({
       assistantMessage: parsed.assistantMessage || `Updated your split and line items!`,
-      updatedParticipants: mergedParticipants.length > 0 ? mergedParticipants : ['Harsh'],
-      updatedItems: finalItems
+      updatedParticipants: mergedParticipants.length > 0 ? mergedParticipants : ['You'],
+      updatedItems: finalItems,
+      payer: parsed.payer && typeof parsed.payer === 'string' ? parsed.payer.trim() : null
     });
   } catch (err) {
     console.error('Split chat error:', err.message);
     return res.json({
       assistantMessage: `Updated allocations according to prompt: "${req.body.prompt || ''}"`,
-      updatedParticipants: req.body.participants || ['You (Harsh)'],
-      updatedItems: req.body.items || []
+      updatedParticipants: req.body.participants || ['You'],
+      updatedItems: req.body.items || [],
+      payer: null
     });
   }
 });

@@ -14,11 +14,11 @@ const wizardState = {
   isTripMode: false,
   totalAmount: 0,
   taxAmount: 0,
-  payer: 'Harsh',
+  payer: null,
   payerShare: 0,
-  participants: ['Harsh'],
+  participants: [],
   items: [],
-  upiId: 'harsh@okhdfcbank',
+  upiId: '',
   settlements: []
 };
 
@@ -55,9 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logout-btn");
 
   if (user) {
-    const name = user.displayName || "Harsh Prasad";
+    const name = user.displayName || "User";
     const initial = name.charAt(0).toUpperCase();
-    const email = user.email || (user.isGuest ? "guest@splitwise.demo" : "harsh@splitwise.ai");
+    const email = user.email || (user.isGuest ? "guest@splitwise.demo" : "user@splitwise.ai");
 
     if (userAvatarInner) userAvatarInner.textContent = initial;
     if (userDisplayName) userDisplayName.textContent = name;
@@ -65,9 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (menuUserName) menuUserName.textContent = name;
     if (menuUserEmail) menuUserEmail.textContent = email;
 
-    // Set default payer to authenticated user's first name
-    const firstName = name.split(" ")[0] || "Harsh";
-    wizardState.payer = firstName;
+    // Set default participant to authenticated user's first name (no payer by default)
+    const firstName = name.split(" ")[0] || "You";
+    wizardState.payer = null;
     wizardState.participants = [firstName];
 
     if (user.isGuest) {
@@ -550,15 +550,16 @@ document.addEventListener("DOMContentLoaded", () => {
           const json = await res.json();
           if (json.success && json.data) {
             const data = json.data;
-            const currentPayer = wizardState.payer || 'Harsh';
+            const userFirstName = (getCurrentUser()?.displayName || "You").split(" ")[0] || "You";
             if (data.items && data.items.length > 0) {
               wizardState.items = data.items.map((it, idx) => ({
                 id: idx + 1,
                 name: it.name,
                 price: parseFloat(it.price) || 0,
-                assigned: [currentPayer]
+                assigned: [userFirstName]
               }));
-              wizardState.participants = [currentPayer];
+              wizardState.participants = [userFirstName];
+              wizardState.payer = null;
               wizardState.settlements = [];
 
               // Update initial chat greeting
@@ -568,7 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="msg-avatar"><i class="ph-fill ph-sparkle"></i></div>
                     <div class="msg-body">
                       <p>I've extracted <strong>${wizardState.items.length} items</strong> totaling <strong class="text-white">₹${(data.total || wizardState.totalAmount).toLocaleString()}</strong> from your ${data.restaurantName || 'receipt'}!</p>
-                      <p>Who is splitting this bill? Tell me friends' names and who ordered what (e.g. <em>"${currentPayer} ate butter naan, Sarthak ate pizza, Hrudayesh and Rigved got pasta"</em>), or add friends using the bar above.</p>
+                      <p>Who is splitting this bill and who paid? Tell me who paid and who ordered what (e.g. <em>"${userFirstName} paid, Sarthak ate butter naan, Hrudayesh and Rigved got pasta"</em>), or add friends using the bar above.</p>
                     </div>
                   </div>
                 `;
@@ -621,13 +622,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderParticipantsChips() {
     if (!participantsChipsContainer) return;
     participantsChipsContainer.innerHTML = wizardState.participants.map(name => {
-      const isPayer = name === wizardState.payer;
+      const isPayer = Boolean(wizardState.payer && name.toLowerCase() === wizardState.payer.toLowerCase());
       return `
-        <div class="person-chip ${isPayer ? 'is-payer' : ''}" title="${name}">
+        <div class="person-chip ${isPayer ? 'is-payer' : ''}" title="${isPayer ? name + ' (Payer)' : 'Click to set ' + name + ' as Payer'}" onclick="setPayerManual('${name}')">
           <span>👤 ${name}</span>
           ${isPayer ? '<span class="payer-badge-tag">Payer</span>' : ''}
           ${wizardState.participants.length > 1 ? `
-            <button type="button" class="chip-remove-btn" onclick="removeParticipant('${name}')" title="Remove ${name}">
+            <button type="button" class="chip-remove-btn" onclick="event.stopPropagation(); removeParticipant('${name}')" title="Remove ${name}">
               <i class="ph-bold ph-x"></i>
             </button>
           ` : ''}
@@ -635,8 +636,25 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }).join("");
 
+    if (editorPayerName) {
+      editorPayerName.textContent = wizardState.payer ? wizardState.payer : "Not set (mention in chat)";
+      editorPayerName.className = wizardState.payer ? "text-emerald" : "text-muted text-xs";
+    }
     if (sidePeopleCount) sidePeopleCount.textContent = `${wizardState.participants.length} Friends`;
   }
+
+  window.setPayerManual = function(name) {
+    if (!name) return;
+    wizardState.payer = name;
+    if (!wizardState.participants.includes(name)) {
+      wizardState.participants.unshift(name);
+    }
+    renderParticipantsChips();
+    recalculateSettlements();
+    renderItemsEditor();
+    saveCurrentBillToHistory();
+    addChatMessage(`👑 Set <strong>${name}</strong> as the payer for this bill.`, false);
+  };
 
   window.removeParticipant = function(nameToRemove) {
     if (wizardState.participants.length <= 1) {
@@ -652,8 +670,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     if (wizardState.payer === nameToRemove) {
-      wizardState.payer = wizardState.participants[0];
-      if (editorPayerName) editorPayerName.textContent = wizardState.payer;
+      wizardState.payer = null;
+      if (editorPayerName) {
+        editorPayerName.textContent = "Not set (mention in chat)";
+        editorPayerName.className = "text-muted text-xs";
+      }
     }
     renderParticipantsChips();
     renderItemsEditor();
@@ -682,25 +703,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function isCurrentUser(name) {
     if (!name) return false;
-    const currentName = (getCurrentUser()?.displayName || "Harsh").toLowerCase();
+    const user = getCurrentUser();
+    const fullName = (user?.displayName || "").toLowerCase();
+    const firstName = (fullName.split(" ")[0] || "").toLowerCase();
     const s = String(name).toLowerCase().trim();
-    return s === 'harsh' || s === 'you' || s === 'you (harsh)' || s === 'harsh prasad' || s === 'me' || s === 'i' || s === currentName;
+    return s === 'you' || s === 'me' || s === 'i' || (firstName && s === 'you (' + firstName + ')') || (firstName && s === firstName) || (fullName && s === fullName);
   }
 
   function normalizePersonName(name) {
-    if (!name) return wizardState.payer || 'Harsh';
-    if (isCurrentUser(name)) return wizardState.payer || 'Harsh';
+    const userFirstName = (getCurrentUser()?.displayName || "You").split(" ")[0] || "You";
+    if (!name) return userFirstName;
+    if (isCurrentUser(name)) return userFirstName;
     return String(name).trim();
   }
 
   function recalculateSettlements() {
-    const currentPayer = wizardState.payer || 'Harsh';
+    const userFirstName = (getCurrentUser()?.displayName || "You").split(" ")[0] || "You";
+    const currentPayer = wizardState.payer ? normalizePersonName(wizardState.payer) : userFirstName;
+
     // 1. Standardize and deduplicate participants
     wizardState.participants = [...new Set(wizardState.participants.map(normalizePersonName))];
-    if (!wizardState.participants.includes(currentPayer)) {
+    if (wizardState.payer && !wizardState.participants.includes(currentPayer)) {
       wizardState.participants.unshift(currentPayer);
     }
-    wizardState.payer = currentPayer;
 
     const friendTotals = {};
     wizardState.participants.forEach(p => friendTotals[p] = 0);
@@ -708,7 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Sum item allocations
     let allocatedTotal = 0;
     wizardState.items.forEach(item => {
-      let assigned = (item.assigned && item.assigned.length > 0) ? item.assigned.map(normalizePersonName) : [currentPayer];
+      let assigned = (item.assigned && item.assigned.length > 0) ? item.assigned.map(normalizePersonName) : (wizardState.participants.length > 0 ? [wizardState.participants[0]] : [userFirstName]);
       assigned = [...new Set(assigned)];
       item.assigned = assigned;
 
@@ -777,7 +802,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderItemsEditor() {
     if (editorBillTotal) editorBillTotal.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
     if (editorTaxVal) editorTaxVal.textContent = `₹${wizardState.taxAmount.toLocaleString()}`;
-    if (editorPayerName) editorPayerName.textContent = wizardState.payer;
+    if (editorPayerName) {
+      editorPayerName.textContent = wizardState.payer ? wizardState.payer : "Not set (mention in chat)";
+      editorPayerName.className = wizardState.payer ? "text-emerald" : "text-muted text-xs";
+    }
     if (sideTotalBill) sideTotalBill.textContent = `₹${wizardState.totalAmount.toLocaleString()}`;
     if (sidePeopleCount) sidePeopleCount.textContent = `${wizardState.participants.length} Friends`;
     if (sideTransfersCount) sideTransfersCount.textContent = `${wizardState.settlements.length} Transfers`;
@@ -793,10 +821,12 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const defaultAssigned = wizardState.participants.length > 0 ? [wizardState.participants[0]] : [(getCurrentUser()?.displayName || "You").split(" ")[0]];
+
     parsedItemsList.innerHTML = wizardState.items.map((item, idx) => {
       ensureItemFields(item);
       const isEditing = (editingItemIdx === idx);
-      const assignedList = (item.assigned && item.assigned.length > 0) ? item.assigned : [wizardState.payer];
+      const assignedList = (item.assigned && item.assigned.length > 0) ? item.assigned : defaultAssigned;
 
       if (isEditing) {
         return `
@@ -928,13 +958,14 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   document.getElementById("btn-add-dish-item")?.addEventListener("click", () => {
+    const defaultAssigned = wizardState.participants.length > 0 ? [wizardState.participants[0]] : [(getCurrentUser()?.displayName || "You").split(" ")[0]];
     const newItem = {
       id: Date.now(),
       name: `Custom Item ${wizardState.items.length + 1}`,
       qty: 1,
       rate: 100,
       price: 100,
-      assigned: [wizardState.payer || 'Harsh']
+      assigned: defaultAssigned
     };
     wizardState.items.push(newItem);
     editingItemIdx = wizardState.items.length - 1;
@@ -1024,10 +1055,34 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       document.getElementById(thinkingId)?.remove();
 
+      // Payer extraction from API or local regex
+      const userFirstName = (getCurrentUser()?.displayName || "You").split(" ")[0] || "You";
+      if (data.payer) {
+        wizardState.payer = normalizePersonName(data.payer);
+        if (!wizardState.participants.includes(wizardState.payer)) {
+          wizardState.participants.unshift(wizardState.payer);
+        }
+      } else {
+        const matchPayer = prompt.match(/(?:(?:i|me)\s+paid|paid\s+by\s+([A-Za-z]+)|([A-Za-z]+)\s+(?:paid|covered|settled))/i);
+        if (matchPayer) {
+          if (/^(?:i|me)\s+paid/i.test(matchPayer[0])) {
+            wizardState.payer = userFirstName;
+          } else {
+            const rawPayer = matchPayer[1] || matchPayer[2];
+            if (rawPayer) {
+              wizardState.payer = normalizePersonName(rawPayer);
+              if (!wizardState.participants.includes(wizardState.payer)) {
+                wizardState.participants.push(wizardState.payer);
+              }
+            }
+          }
+        }
+      }
+
       if (data.updatedParticipants && Array.isArray(data.updatedParticipants) && data.updatedParticipants.length > 0) {
         wizardState.participants = data.updatedParticipants;
-        renderParticipantsChips();
       }
+      renderParticipantsChips();
 
       if (data.updatedItems && Array.isArray(data.updatedItems)) {
         wizardState.items = data.updatedItems;
@@ -1447,15 +1502,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!friendsSettlementList) return;
 
     // 2. Payer summary card at the top with interactive dish breakdown
-    const payerBreakdown = getUserBreakdown(wizardState.payer || 'Harsh');
+    const userFirstName = (getCurrentUser()?.displayName || "User").split(" ")[0] || "User";
+    const activePayer = wizardState.payer || userFirstName;
+    const payerBreakdown = getUserBreakdown(activePayer);
     let html = `
       <div class="settle-row-card paid" id="payer-summary-card" onclick="toggleBreakdownDrawer('payer-breakdown-drawer', event)" title="Click to expand dishes eaten">
         <div class="settle-row-main">
           <div class="settle-person-info">
-            <div class="settle-avatar" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); border: 2px solid var(--emerald-400);">${(wizardState.payer || 'Harsh').charAt(0)}</div>
+            <div class="settle-avatar" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-400); border: 2px solid var(--emerald-400);">${activePayer.charAt(0).toUpperCase()}</div>
             <div class="settle-name-wrap">
               <div class="settle-title-line">
-                <strong>${wizardState.payer || 'Harsh'} (You)</strong>
+                <strong>${activePayer}${activePayer.toLowerCase() === userFirstName.toLowerCase() ? ' (You)' : ''}</strong>
                 <span class="settle-items-badge"><i class="ph-bold ph-fork-knife"></i> ${payerBreakdown.itemsCount} ${payerBreakdown.itemsCount === 1 ? 'dish' : 'dishes'}</span>
                 <i class="ph-bold ph-caret-down settle-caret" id="caret-payer-breakdown-drawer"></i>
               </div>
@@ -1661,11 +1718,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Step 5: WhatsApp Detailed Summary Share
   document.getElementById("export-summary-btn")?.addEventListener("click", async () => {
     const activeUpi = wizardState.upiId || getDefaultUpiId();
+    const userFirstName = (getCurrentUser()?.displayName || "User").split(" ")[0] || "User";
+    const activePayer = wizardState.payer || userFirstName;
     let text = `🧾 *SPLITWISE AI - DETAILED BILL BREAKDOWN*\n`;
     text += `📌 *Expense:* ${wizardState.categoryName || 'Bill Split'}\n`;
     text += `📅 *Date:* ${new Date().toLocaleDateString()}\n`;
     text += `💰 *Total Bill:* ₹${wizardState.totalAmount}\n`;
-    text += `👑 *Payer:* ${wizardState.payer || 'Harsh'} (Paid Full Bill Upfront)\n\n`;
+    text += `👑 *Payer:* ${activePayer} (Paid Full Bill Upfront)\n\n`;
 
     if (Array.isArray(wizardState.items) && wizardState.items.length > 0) {
       text += `🍽️ *ITEMIZED DISHES & ALLOCATIONS:*\n`;
