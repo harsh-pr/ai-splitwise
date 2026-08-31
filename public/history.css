@@ -456,34 +456,45 @@ button,
 .payer-tag-pill {
   font-size: 0.74rem;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 100px;
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.12);
   color: var(--emerald-400);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--trans-fast);
+}
+
+.payer-tag-pill:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--emerald-400);
 }
 
 .friend-status-chip {
   font-size: 0.74rem;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--surface-glass-border);
-  color: var(--text-body);
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--emerald-400);
+  border: 1px solid rgba(16, 185, 129, 0.28);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  transition: all var(--trans-fast);
 }
 
-.friend-status-chip.is-paid {
-  color: var(--emerald-400);
-  border-color: rgba(16, 185, 129, 0.3);
+.friend-status-chip:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--emerald-400);
 }
 
-.friend-status-chip.is-pending {
-  color: var(--rose-400);
-  border-color: rgba(244, 63, 94, 0.3);
+.settle-status-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Expandable Section */

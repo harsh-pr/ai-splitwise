@@ -197,15 +197,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- Participants & Payer Row (Click any name to expand user-wise breakdown) -->
           <div class="bill-participants-row">
-            <span class="payer-tag-pill" onclick="toggleHistoryUserBreakdown('${bill.id}', '${bill.payer || 'Harsh'}', event)" style="cursor: pointer;" title="Click to view what ${bill.payer || 'Harsh'} ordered">
-              <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'Harsh'} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
+            <span class="payer-tag-pill" onclick="toggleHistoryUserBreakdown('${bill.id}', '${bill.payer || 'User'}', event)" style="cursor: pointer;" title="Click to view what ${bill.payer || 'User'} ordered">
+              <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'User'} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
             </span>
             ${(bill.participants || []).map(p => {
-              const settlement = (bill.settlements || []).find(s => s.from === p);
-              const isPaid = settlement ? settlement.paid : (p === bill.payer);
               return `
-                <span class="friend-status-chip ${isPaid ? 'is-paid' : 'is-pending'}" onclick="toggleHistoryUserBreakdown('${bill.id}', '${p}', event)" style="cursor: pointer;" title="Click to view what ${p} ordered">
-                  <i class="ph-bold ${isPaid ? 'ph-check-circle' : 'ph-clock'}"></i>
+                <span class="friend-status-chip" onclick="toggleHistoryUserBreakdown('${bill.id}', '${p}', event)" style="cursor: pointer;" title="Click to view what ${p} ordered">
+                  <i class="ph-bold ph-user"></i>
                   ${p} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
                 </span>
               `;
@@ -220,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="drawer-grid">
               <!-- Line Items -->
               <div class="drawer-col">
-                <h4>Dish / Line Item Allocations</h4>
+                <h4>Dish Allocations</h4>
                 <div class="drawer-items-list">
                   ${(bill.items && bill.items.length > 0) ? bill.items.map(it => `
                     <div class="drawer-row">
@@ -238,11 +236,8 @@ document.addEventListener("DOMContentLoaded", () => {
                   ${(bill.settlements && bill.settlements.length > 0) ? bill.settlements.map(s => `
                     <div class="drawer-row">
                       <span><strong>${s.from}</strong> owes ${s.to || bill.payer}</span>
-                      <div class="flex-align-center gap-2">
-                        <strong class="${s.paid ? 'text-emerald' : 'text-rose'}">₹${s.amount}</strong>
-                        <span style="font-size: 0.72rem; color: ${s.paid ? 'var(--emerald-400)' : 'var(--rose-400)'};">
-                          ${s.paid ? '(Paid)' : '(Pending)'}
-                        </span>
+                      <div class="settle-status-row">
+                        <strong class="${s.paid ? 'text-emerald' : 'text-rose'}">₹${s.amount}</strong>&nbsp;<span style="font-size: 0.74rem; font-weight: 600; color: ${s.paid ? 'var(--emerald-400)' : 'var(--rose-400)'};">${s.paid ? '(Paid)' : '(Pending)'}</span>
                       </div>
                     </div>
                   `).join("") : '<div class="drawer-row"><span>All settled upfront.</span></div>'}
