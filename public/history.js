@@ -198,8 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- Participants & Payer Row (Click any name to expand user-wise breakdown) -->
           <div class="bill-participants-row">
-            <span class="payer-tag-pill" onclick="toggleHistoryUserBreakdown('${bill.id}', '${bill.payer || 'User'}', event)" style="cursor: pointer;" title="Click to view what ${bill.payer || 'User'} ordered">
-              <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'User'} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
+            <span class="payer-tag-pill" title="Paid by ${bill.payer || 'User'}">
+              <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'User'}
             </span>
             ${(bill.participants || []).map(p => {
               const settlement = (bill.settlements || []).find(s => s.from === p);

@@ -517,13 +517,8 @@ button,
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  cursor: pointer;
-  transition: all var(--trans-fast);
-}
-
-.payer-tag-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.22);
+  cursor: default;
+  user-select: none;
 }
 
 .payer-tag-pill i.ph-shield-check {
