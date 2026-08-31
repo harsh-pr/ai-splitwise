@@ -556,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 id: idx + 1,
                 name: it.name,
                 price: parseFloat(it.price) || 0,
-                assigned: [userFirstName]
+                assigned: []
               }));
               wizardState.participants = [userFirstName];
               wizardState.payer = null;
@@ -733,19 +733,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Sum item allocations
     let allocatedTotal = 0;
     wizardState.items.forEach(item => {
-      let assigned = (item.assigned && item.assigned.length > 0) ? item.assigned.map(normalizePersonName) : (wizardState.participants.length > 0 ? [wizardState.participants[0]] : [userFirstName]);
+      let assigned = (item.assigned && Array.isArray(item.assigned)) ? item.assigned.map(normalizePersonName).filter(Boolean) : [];
       assigned = [...new Set(assigned)];
       item.assigned = assigned;
 
-      const perPerson = (item.price || 0) / (assigned.length || 1);
-      assigned.forEach(p => {
-        if (friendTotals[p] !== undefined) {
-          friendTotals[p] += perPerson;
-        } else {
-          friendTotals[p] = perPerson;
-        }
-      });
-      allocatedTotal += (item.price || 0);
+      if (assigned.length > 0) {
+        const perPerson = (item.price || 0) / assigned.length;
+        assigned.forEach(p => {
+          if (friendTotals[p] !== undefined) {
+            friendTotals[p] += perPerson;
+          } else {
+            friendTotals[p] = perPerson;
+          }
+        });
+        allocatedTotal += (item.price || 0);
+      }
     });
 
     // 3. Strict Tax & Total check: If bill items already sum to or exceed totalAmount, taxAmount MUST be 0!
@@ -821,12 +823,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const defaultAssigned = wizardState.participants.length > 0 ? [wizardState.participants[0]] : [(getCurrentUser()?.displayName || "You").split(" ")[0]];
-
     parsedItemsList.innerHTML = wizardState.items.map((item, idx) => {
       ensureItemFields(item);
       const isEditing = (editingItemIdx === idx);
-      const assignedList = (item.assigned && item.assigned.length > 0) ? item.assigned : defaultAssigned;
+      const assignedList = (item.assigned && Array.isArray(item.assigned)) ? item.assigned : [];
 
       if (isEditing) {
         return `
@@ -870,7 +870,10 @@ document.addEventListener("DOMContentLoaded", () => {
               <span class="dish-qty-rate-badge">${item.qty || 1} × ₹${item.rate || item.price}</span>
             </div>
             <div class="dish-chips-group">
-              ${assignedList.map(person => `<span class="dish-chip-tag">${person}</span>`).join("")}
+              ${assignedList.length > 0 
+                ? assignedList.map(person => `<span class="dish-chip-tag">${person}</span>`).join("") 
+                : '<span class="dish-chip-tag unassigned" title="Tell AI in chat who had this item"><i class="ph-bold ph-question"></i> Unassigned</span>'
+              }
             </div>
           </div>
           <div class="item-edit-right">
@@ -958,14 +961,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   document.getElementById("btn-add-dish-item")?.addEventListener("click", () => {
-    const defaultAssigned = wizardState.participants.length > 0 ? [wizardState.participants[0]] : [(getCurrentUser()?.displayName || "You").split(" ")[0]];
     const newItem = {
       id: Date.now(),
       name: `Custom Item ${wizardState.items.length + 1}`,
       qty: 1,
       rate: 100,
       price: 100,
-      assigned: defaultAssigned
+      assigned: []
     };
     wizardState.items.push(newItem);
     editingItemIdx = wizardState.items.length - 1;

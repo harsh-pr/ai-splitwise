@@ -427,7 +427,7 @@ Respond STRICTLY with raw JSON matching this schema:
         id: item.id || (idx + 1),
         name: String(item.name || `Item ${idx + 1}`).trim(),
         price: Number(item.price) || 0,
-        assigned: Array.isArray(item.assigned) && item.assigned.length > 0 ? item.assigned : [mergedParticipants[0] || 'You']
+        assigned: Array.isArray(item.assigned) ? item.assigned : []
       }));
     }
 

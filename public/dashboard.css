@@ -1710,6 +1710,15 @@ a:active,
   color: var(--text-muted);
 }
 
+.dish-chip-tag.unassigned {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  color: var(--amber-400);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .item-edit-right {
   display: flex;
   align-items: center;
