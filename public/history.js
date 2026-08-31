@@ -320,14 +320,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const isPaid = settlement ? settlement.paid : (personName === bill.payer);
 
     box.setAttribute("data-person", personName);
+    box.className = `history-user-breakdown-box ${isPaid ? 'status-paid' : 'status-pending'}`;
     box.innerHTML = `
       <div class="user-breakdown-header">
         <div class="user-breakdown-person-info">
-          <div class="breakdown-avatar">${personName.charAt(0)}</div>
+          <div class="breakdown-avatar ${isPaid ? 'paid' : 'pending'}">${personName.charAt(0)}</div>
           <div class="user-breakdown-title-wrap">
             <div class="user-breakdown-name-row">
               <strong class="user-breakdown-name">${personName} ${personName === bill.payer ? '(Payer)' : ''}</strong>
-              <span class="user-breakdown-dish-badge">
+              <span class="user-breakdown-dish-badge ${isPaid ? 'paid' : 'pending'}">
                 <i class="ph-bold ph-fork-knife"></i> ${assignedItems.length} ${assignedItems.length === 1 ? 'dish' : 'dishes'}
               </span>
             </div>
@@ -359,9 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         ` : ''}
 
-        <div class="breakdown-item-row total-row">
+        <div class="breakdown-item-row total-row ${isPaid ? 'paid' : 'pending'}">
           <span>Total Individual Share (${assignedItems.length} ${assignedItems.length === 1 ? 'dish' : 'dishes'})</span>
-          <strong class="text-emerald">₹${grandTotal.toLocaleString()}</strong>
+          <strong class="${isPaid ? 'text-emerald' : 'text-rose'}">₹${grandTotal.toLocaleString()}</strong>
         </div>
       </div>
     `;
