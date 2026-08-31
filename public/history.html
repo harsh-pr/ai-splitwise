@@ -233,10 +233,17 @@
           <h1>Saved Bills & History</h1>
           <p>Review past itemized splits, debt balances, and payment verification records.</p>
         </div>
-        <a href="/dashboard.html" class="btn btn-large btn-gradient">
-          <i class="ph-bold ph-plus"></i>
-          <span>Create New Split</span>
-        </a>
+        <div class="history-head-actions">
+          <button class="btn-hold-delete" id="delete-all-bills-btn" type="button" title="Hold for 1s to clear all bill history">
+            <span class="hold-progress-fill" id="delete-all-progress"></span>
+            <i class="ph-bold ph-trash"></i>
+            <span class="hold-btn-text" id="delete-all-text">Hold to Clear All</span>
+          </button>
+          <a href="/dashboard.html" class="btn btn-large btn-gradient">
+            <i class="ph-bold ph-plus"></i>
+            <span>Create New Split</span>
+          </a>
+        </div>
       </div>
 
       <!-- Lifetime Aggregate Statistics Cards -->

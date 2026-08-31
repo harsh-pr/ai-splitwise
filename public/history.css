@@ -126,11 +126,64 @@ button,
   font-size: 0.95rem;
 }
 
+.history-head-actions,
 .history-actions-row {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.btn-hold-delete {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.28);
+  border-radius: 12px;
+  color: #f87171;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all var(--trans-fast);
+  text-decoration: none !important;
+}
+
+.btn-hold-delete:hover {
+  background: rgba(244, 63, 94, 0.16);
+  border-color: #f87171;
+}
+
+.btn-hold-delete:active {
+  transform: scale(0.98);
+}
+
+.hold-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(244, 63, 94, 0.35), rgba(244, 63, 94, 0.7));
+  z-index: 1;
+  pointer-events: none;
+  transition: width 0.05s linear;
+}
+
+.btn-hold-delete i,
+.btn-hold-delete .hold-btn-text {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-hold-delete.is-holding {
+  border-color: #f43f5e;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
 }
 
 .btn-outline-danger {
@@ -455,21 +508,26 @@ button,
 
 .payer-tag-pill {
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: 4px 12px;
   border-radius: 100px;
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--emerald-400);
-  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-heading);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  cursor: pointer;
   transition: all var(--trans-fast);
 }
 
 .payer-tag-pill:hover {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: var(--emerald-400);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.payer-tag-pill i.ph-shield-check {
+  color: var(--emerald-400);
 }
 
 .friend-status-chip {
@@ -477,18 +535,35 @@ button,
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 100px;
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--emerald-400);
-  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-heading);
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  cursor: pointer;
   transition: all var(--trans-fast);
 }
 
 .friend-status-chip:hover {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: var(--emerald-400);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.friend-status-chip.is-paid i {
+  color: var(--emerald-400);
+}
+
+.friend-status-chip.is-pending i {
+  color: var(--rose-400);
+}
+
+.friend-status-chip.is-paid {
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.friend-status-chip.is-pending {
+  border-color: rgba(244, 63, 94, 0.25);
 }
 
 .settle-status-row {

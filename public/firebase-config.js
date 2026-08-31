@@ -544,6 +544,44 @@ async function deleteBillRecord(billId) {
 }
 
 /**
+ * Delete All Bill Records (Bulk permanent delete with tombstone tracking)
+ */
+async function deleteAllBillRecords() {
+  const uid = getUserId();
+  const isGuest = uid === "guest_demo_user" || !uid;
+
+  // 1. Clear local cache immediately and mark tombstones
+  const existingBills = getLocalBills();
+  existingBills.forEach(b => {
+    if (b && b.id) addDeletedBillId(b.id);
+  });
+  setLocalBills([]);
+  updateProfileTotalSettled([]);
+
+  if (isGuest) return;
+
+  // 2. Clear across all Firestore paths
+  if (db && uid) {
+    try {
+      await Promise.all([
+        billsDataDoc(uid).set({ list: [], updatedAt: Date.now() }),
+        ...existingBills.map(b => billItemDoc(uid, b.id).delete().catch(() => {}))
+      ]);
+      console.log(`[Firestore] Permanently deleted all bills for user ${uid}`);
+    } catch (e) {
+      console.warn("[Firestore] Bulk delete note:", e);
+    }
+  }
+
+  // 3. Backup server delete
+  try {
+    fetch(`/api/sync-bills?userId=${encodeURIComponent(uid || '')}&clearAll=true`, {
+      method: 'DELETE'
+    }).catch(() => { });
+  } catch (e) { }
+}
+
+/**
  * Update Settlement Status
  */
 async function updateBillSettlement(billId, settlements) {

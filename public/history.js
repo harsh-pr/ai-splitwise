@@ -125,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateStats(allBills);
+    if (typeof updateDeleteAllBtnVisibility === "function") updateDeleteAllBtnVisibility();
 
     // Apply Filter & Search
     const filtered = allBills.filter(bill => {
@@ -201,9 +202,11 @@ document.addEventListener("DOMContentLoaded", () => {
               <i class="ph-bold ph-shield-check"></i> Paid by ${bill.payer || 'User'} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
             </span>
             ${(bill.participants || []).map(p => {
+              const settlement = (bill.settlements || []).find(s => s.from === p);
+              const isPaid = settlement ? settlement.paid : (p === bill.payer);
               return `
-                <span class="friend-status-chip" onclick="toggleHistoryUserBreakdown('${bill.id}', '${p}', event)" style="cursor: pointer;" title="Click to view what ${p} ordered">
-                  <i class="ph-bold ph-user"></i>
+                <span class="friend-status-chip ${isPaid ? 'is-paid' : 'is-pending'}" onclick="toggleHistoryUserBreakdown('${bill.id}', '${p}', event)" style="cursor: pointer;" title="Click to view what ${p} ordered">
+                  <i class="ph-bold ${isPaid ? 'ph-check-circle' : 'ph-clock'}"></i>
                   ${p} <i class="ph-bold ph-caret-down" style="font-size: 0.65rem; margin-left: 2px;"></i>
                 </span>
               `;
@@ -580,6 +583,104 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     renderHistory(false);
   };
+
+  // ===================================================================
+  // Hold-To-Delete-All System (1s Hold + Confirmation Alert)
+  // ===================================================================
+  const deleteAllBtn = document.getElementById("delete-all-bills-btn");
+  const deleteAllProgress = document.getElementById("delete-all-progress");
+  const deleteAllText = document.getElementById("delete-all-text");
+  let holdStart = null;
+  let animFrame = null;
+  const HOLD_DURATION = 1000; // 1 second
+
+  function updateDeleteAllBtnVisibility() {
+    if (!deleteAllBtn) return;
+    const allBills = getAllBills();
+    if (allBills.length === 0) {
+      deleteAllBtn.style.opacity = '0.4';
+      deleteAllBtn.style.pointerEvents = 'none';
+      deleteAllBtn.title = "No saved bills in history";
+    } else {
+      deleteAllBtn.style.opacity = '1';
+      deleteAllBtn.style.pointerEvents = 'auto';
+      deleteAllBtn.title = "Hold for 1s to clear all bill history";
+    }
+  }
+
+  function startHold(e) {
+    const allBills = getAllBills();
+    if (allBills.length === 0) {
+      alert("No saved bills found in history to delete.");
+      return;
+    }
+
+    if (e.type === 'touchstart') e.preventDefault();
+    holdStart = Date.now();
+    deleteAllBtn?.classList.add("is-holding");
+    if (deleteAllText) deleteAllText.textContent = "Keep holding...";
+
+    function step() {
+      const elapsed = Date.now() - holdStart;
+      const progress = Math.min(100, (elapsed / HOLD_DURATION) * 100);
+      if (deleteAllProgress) deleteAllProgress.style.width = `${progress}%`;
+
+      if (elapsed >= HOLD_DURATION) {
+        cancelHold();
+        triggerDeleteAllConfirmation();
+      } else {
+        animFrame = requestAnimationFrame(step);
+      }
+    }
+
+    animFrame = requestAnimationFrame(step);
+  }
+
+  function cancelHold() {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    deleteAllBtn?.classList.remove("is-holding");
+    if (deleteAllProgress) deleteAllProgress.style.width = "0%";
+    if (deleteAllText) deleteAllText.textContent = "Hold to Clear All";
+    holdStart = null;
+  }
+
+  async function triggerDeleteAllConfirmation() {
+    const allBills = getAllBills();
+    if (allBills.length === 0) return;
+
+    const confirmed = confirm(`⚠️ Are you sure you want to permanently delete all ${allBills.length} saved bills from your history and cloud database?\n\nThis action cannot be undone.`);
+    if (!confirmed) return;
+
+    if (deleteAllBtn) {
+      deleteAllBtn.style.opacity = '0.5';
+      deleteAllBtn.style.pointerEvents = 'none';
+    }
+
+    try {
+      if (typeof deleteAllBillRecords === "function") {
+        await deleteAllBillRecords();
+      } else {
+        setLocalBills([]);
+      }
+      renderHistory(false);
+      alert("✓ All bills have been permanently cleared from history.");
+    } catch (err) {
+      console.error("Error clearing bills:", err);
+      alert("Failed to clear bills: " + err.message);
+    } finally {
+      updateDeleteAllBtnVisibility();
+    }
+  }
+
+  if (deleteAllBtn) {
+    deleteAllBtn.addEventListener("mousedown", startHold);
+    deleteAllBtn.addEventListener("touchstart", startHold, { passive: false });
+
+    window.addEventListener("mouseup", cancelHold);
+    deleteAllBtn.addEventListener("mouseleave", cancelHold);
+    deleteAllBtn.addEventListener("touchend", cancelHold);
+    deleteAllBtn.addEventListener("touchcancel", cancelHold);
+  }
 
   // 5. Search & Filter Listeners
   historySearchInput?.addEventListener("input", (e) => {
