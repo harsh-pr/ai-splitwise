@@ -1381,7 +1381,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("step-4-next-btn")?.addEventListener("click", () => goToStep(5));
 
   // ===================================================================
-  // STEP 5: Live Settlement Tracker (Paid vs Pending)
+  // STEP 5: Split Summary & Real-Time Tracking
   // ===================================================================
   const friendsSettlementList = document.getElementById("friends-settlement-list");
   const trackerTotalBill = document.getElementById("tracker-total-bill");
